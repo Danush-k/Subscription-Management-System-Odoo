@@ -1,369 +1,640 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   RotateCcw,
   FileText,
   CreditCard,
-  UserCheck,
-  CheckCircle2,
+  Building2,
   Clock,
-  Download,
-  PauseCircle,
-  PlayCircle,
-  XCircle,
+  Plus,
   AlertCircle,
-  ExternalLink,
-  ChevronRight,
+  CheckCircle2,
+  Shield,
+  Layers,
+  Sparkles,
+  RefreshCw,
+  LayoutDashboard,
+  ArrowRight,
+  User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BrightloopLogo } from "@/components/ui/logo";
+import { Button } from "@/components/ui/button";
 
-export default function CustomerDashboardPage() {
-  const [activeTab, setActiveTab] = useState<"subscriptions" | "invoices" | "payments">("subscriptions");
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
+// Modular Customer Portal Components
+import { CustomerHeader } from "@/components/customer/CustomerHeader";
+import { CustomerWelcomeBanner } from "@/components/customer/CustomerWelcomeBanner";
+import { CustomerOverviewCards } from "@/components/customer/CustomerOverviewCards";
+import { SubscriptionCard } from "@/components/customer/SubscriptionCard";
+import { SubscriptionDetailModal } from "@/components/customer/SubscriptionDetailModal";
+import { CancelSubscriptionModal } from "@/components/customer/CancelSubscriptionModal";
+import { InvoicesTable } from "@/components/customer/InvoicesTable";
+import { InvoiceDetailModal } from "@/components/customer/InvoiceDetailModal";
+import { PayInvoiceModal } from "@/components/customer/PayInvoiceModal";
+import { PaymentHistoryTable } from "@/components/customer/PaymentHistoryTable";
+import { BillingProfileSection } from "@/components/customer/BillingProfileSection";
+import { ActivityTimeline } from "@/components/customer/ActivityTimeline";
 
-  const [subscriptions, setSubscriptions] = useState([
-    {
-      id: "SUB-2026-0042",
-      planName: "Enterprise Cloud Suite",
-      frequency: "ANNUAL",
-      amount: "₹1,20,000.00",
-      startDate: "15 Nov 2025",
-      nextBillingDate: "15 Nov 2026",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
-      pauseAllowed: true,
-      earlyClosureAllowed: true,
-      renewalAllowed: true,
-    },
-    {
-      id: "SUB-2026-0018",
-      planName: "Odoo Business Sync Add-on",
-      frequency: "MONTHLY",
-      amount: "₹2,500.00",
-      startDate: "01 Jan 2026",
-      nextBillingDate: "01 Nov 2026",
-      status: "PAUSED" as "ACTIVE" | "PAUSED" | "CLOSED",
-      pauseAllowed: true,
-      earlyClosureAllowed: false,
-      renewalAllowed: true,
-    },
-  ]);
+// Types
+import {
+  PortalData,
+  SubscriptionItem,
+  InvoiceItem,
+} from "@/components/customer/types";
 
-  const invoices = [
-    {
-      id: "INV-2026-0086",
-      period: "15 Nov 2025 - 14 Nov 2026",
-      date: "15 Nov 2025",
-      amount: "₹1,20,000.00",
-      paid: "₹1,20,000.00",
-      outstanding: "₹0.00",
-      status: "PAID" as const,
-    },
-    {
-      id: "INV-2026-0045",
-      period: "01 Oct 2026 - 31 Oct 2026",
-      date: "01 Oct 2026",
-      amount: "₹2,500.00",
-      paid: "₹2,500.00",
-      outstanding: "₹0.00",
-      status: "PAID" as const,
-    },
-  ];
+function CustomerDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as any) || "overview";
 
-  const payments = [
-    {
-      id: "PAY-2026-0079",
-      invoiceId: "INV-2026-0086",
-      method: "Bank Transfer (NEFT)",
-      date: "15 Nov 2025",
-      amount: "₹1,20,000.00",
-      ref: "UTR247003099182",
-    },
-    {
-      id: "PAY-2026-0041",
-      invoiceId: "INV-2026-0045",
-      method: "UPI (Google Pay)",
-      date: "01 Oct 2026",
-      amount: "₹2,500.00",
-      ref: "UPI/390192837190",
-    },
-  ];
+  const [data, setData] = useState<PortalData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePauseRequest = (subId: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) =>
-        sub.id === subId ? { ...sub, status: sub.status === "ACTIVE" ? "PAUSED" : "ACTIVE" } : sub
-      )
-    );
-    setActionMessage(`Subscription ${subId} status successfully toggled!`);
+  // Active navigation tab
+  const [activeTab, setActiveTabState] = useState<
+    "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity"
+  >(initialTab);
+
+  const setActiveTab = (tab: any) => {
+    setActiveTabState(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.pushState({}, "", url.toString());
   };
 
-  const handleCancelRequest = (subId: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) => (sub.id === subId ? { ...sub, status: "CLOSED" } : sub))
-    );
-    setActionMessage(`Subscription cancellation request processed for ${subId}.`);
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTabState(tabParam as any);
+    }
+  }, [searchParams]);
+
+  // Global action message banner
+  const [actionMessage, setActionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Modal ID states (prevents object reference churn and infinite fetch loops)
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [cancellingSubscription, setCancellingSubscription] = useState<SubscriptionItem | null>(null);
+  const [selectedInvId, setSelectedInvId] = useState<string | null>(null);
+  const [payingInvoice, setPayingInvoice] = useState<InvoiceItem | null>(null);
+
+  // Derive current open items from loaded data
+  const selectedSubscription = useMemo(() => {
+    if (!selectedSubId || !data) return null;
+    return data.subscriptions.find((s) => s.id === selectedSubId) || null;
+  }, [selectedSubId, data]);
+
+  const selectedInvoice = useMemo(() => {
+    if (!selectedInvId || !data) return null;
+    return data.invoices.find((i) => i.id === selectedInvId) || null;
+  }, [selectedInvId, data]);
+
+  // Action loading state
+  const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+
+  // Fetch real portal data from API (zero dependencies to avoid infinite re-render loop)
+  const fetchPortalData = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await fetch("/api/customer/portal", { cache: "no-store" });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `HTTP ${res.status}: Failed to load portal data`);
+      }
+      const json: PortalData = await res.json();
+      setData(json);
+    } catch (err: any) {
+      console.error("Portal load error:", err);
+      setError(err.message || "Failed to load portal data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPortalData();
+  }, [fetchPortalData]);
+
+  // Subscription Actions: Pause / Resume
+  const handlePauseResume = async (sub: SubscriptionItem) => {
+    setLoadingActionId(sub.id);
+    setIsSubmittingAction(true);
+    const action = sub.status === "PAUSED" ? "resume" : "pause";
+
+    try {
+      const res = await fetch(`/api/customer/subscriptions/${sub.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || `Failed to ${action} subscription`);
+      }
+
+      setActionMessage({
+        type: "success",
+        text: `Subscription ${sub.subscriptionNumber} successfully ${
+          action === "pause" ? "paused" : "resumed"
+        }.`,
+      });
+
+      await fetchPortalData();
+    } catch (err: any) {
+      setActionMessage({
+        type: "error",
+        text: err.message || `Could not ${action} subscription`,
+      });
+    } finally {
+      setLoadingActionId(null);
+      setIsSubmittingAction(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
-      {/* Top Customer Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="hover:opacity-95 transition-opacity">
-              <BrightloopLogo size="sm" variant="colored" />
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-sm font-bold text-slate-800">Customer Self-Service Portal</span>
-          </div>
+  // Subscription Actions: Confirm Cancellation
+  const handleConfirmCancel = async (sub: SubscriptionItem, reason: string) => {
+    setIsSubmittingAction(true);
+    try {
+      const res = await fetch(`/api/customer/subscriptions/${sub.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel", reason }),
+      });
 
-          <div className="flex items-center gap-3 text-xs text-slate-600">
-            <span className="font-semibold text-slate-800">SSN Technology Labs</span>
-            <Badge variant="active">Active Customer</Badge>
-            <Link href="/login">
-              <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 hover:text-rose-600">
-                Sign Out
-              </Button>
-            </Link>
-          </div>
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || "Failed to cancel subscription");
+      }
+
+      setActionMessage({
+        type: "success",
+        text: `Subscription ${sub.subscriptionNumber} has been successfully closed.`,
+      });
+
+      setCancellingSubscription(null);
+      setSelectedSubId(null);
+      await fetchPortalData();
+    } catch (err: any) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Cancellation failed",
+      });
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
+  // Subscription Actions: Early Renewal
+  const handleRenew = async (sub: SubscriptionItem) => {
+    setLoadingActionId(sub.id);
+    setIsSubmittingAction(true);
+
+    try {
+      const res = await fetch(`/api/customer/subscriptions/${sub.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "renew" }),
+      });
+
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || "Failed to renew subscription");
+      }
+
+      setActionMessage({
+        type: "success",
+        text: `Subscription ${sub.subscriptionNumber} has been renewed early for the next billing cycle.`,
+      });
+
+      await fetchPortalData();
+    } catch (err: any) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Renewal failed",
+      });
+    } finally {
+      setLoadingActionId(null);
+      setIsSubmittingAction(false);
+    }
+  };
+
+  // Toggle Auto-Renew
+  const handleToggleAutoRenew = async (sub: SubscriptionItem) => {
+    setLoadingActionId(sub.id);
+    setIsSubmittingAction(true);
+
+    try {
+      const res = await fetch(`/api/customer/subscriptions/${sub.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggleAutoRenew" }),
+      });
+
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || "Failed to toggle auto-renewal");
+      }
+
+      await fetchPortalData();
+    } catch (err: any) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Failed to toggle auto-renew",
+      });
+    } finally {
+      setLoadingActionId(null);
+      setIsSubmittingAction(false);
+    }
+  };
+
+  // Quick Pay Balance
+  const handlePayBalance = () => {
+    if (!data) return;
+    const firstUnpaid = data.invoices.find((i) => Number(i.outstandingAmount) > 0);
+    if (firstUnpaid) {
+      setPayingInvoice(firstUnpaid);
+    } else {
+      setActiveTab("invoices");
+    }
+  };
+
+  // Loading Skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6 space-y-4">
+        <div className="w-10 h-10 border-4 border-[#714B67] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          Loading Customer Self-Service Portal...
+        </p>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6 text-center">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-3xl max-w-md w-full space-y-3">
+          <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
+          <h2 className="text-base font-bold text-slate-900">
+            Failed to connect to Customer Portal
+          </h2>
+          <p className="text-xs text-slate-500">{error || "Customer record not found"}</p>
+          <Button
+            onClick={() => {
+              setIsLoading(true);
+              fetchPortalData();
+            }}
+            size="sm"
+            className="bg-[#714B67] text-white text-xs font-bold w-full"
+          >
+            Retry Connection
+          </Button>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-6">
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 flex flex-col pb-20 font-sans">
+      {/* 1. Header with Horizontal Tabs & Customer Profile */}
+      <CustomerHeader
+        customer={data.customer}
+        notifications={data.notifications}
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+      />
+
+      <main className="dashboard-container pt-6 space-y-6 flex-1">
+        {/* Global Toast Alert Banner */}
         {actionMessage && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between animate-fadeIn">
+          <div
+            className={`p-4 rounded-2xl text-xs font-semibold flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 ${
+              actionMessage.type === "success"
+                ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                : "bg-rose-50 border border-rose-200 text-rose-800"
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              {actionMessage}
+              {actionMessage.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600" />
+              )}
+              {actionMessage.text}
             </div>
             <button
               onClick={() => setActionMessage(null)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold text-xs"
+              className="font-bold hover:underline ml-4"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* Customer KPI Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <Card>
-            <CardHeader className="p-5 pb-2">
-              <CardDescription className="text-xs font-semibold">Active Subscriptions</CardDescription>
-              <CardTitle className="text-2xl font-black text-slate-900">
-                {subscriptions.filter((s) => s.status === "ACTIVE").length}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 pt-0 text-xs text-slate-500">
-              1 Paused &bull; 0 Overdue
-            </CardContent>
-          </Card>
+        {/* 2. Welcome & Account Overview Banner */}
+        <CustomerWelcomeBanner
+          customer={data.customer}
+          metrics={data.metrics}
+          onEditProfile={() => router.push("/customer/profile")}
+          onPayBalance={handlePayBalance}
+          onSelectTab={(tab) => setActiveTab(tab)}
+        />
 
-          <Card>
-            <CardHeader className="p-5 pb-2">
-              <CardDescription className="text-xs font-semibold">Upcoming Renewal</CardDescription>
-              <CardTitle className="text-2xl font-black text-odoo-800">
-                15 Nov 2026
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 pt-0 text-xs text-emerald-600 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Auto-renew enabled
-            </CardContent>
-          </Card>
+        {/* 3. Subscription & Financial Summary Cards (6 Compact Metrics) */}
+        <CustomerOverviewCards
+          metrics={data.metrics}
+          onSelectTab={(tab) => setActiveTab(tab)}
+          onPayBalance={handlePayBalance}
+        />
 
-          <Card>
-            <CardHeader className="p-5 pb-2">
-              <CardDescription className="text-xs font-semibold">Outstanding Balance</CardDescription>
-              <CardTitle className="text-2xl font-black text-emerald-700">
-                ₹0.00
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 pt-0 text-xs text-slate-500">
-              All invoices settled
-            </CardContent>
-          </Card>
-        </div>
+        {/* 4. Tab Content Sections */}
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-200">
-          <button
-            onClick={() => setActiveTab("subscriptions")}
-            className={`pb-3 text-sm font-bold transition-all px-4 border-b-2 ${
-              activeTab === "subscriptions"
-                ? "border-odoo-700 text-odoo-800"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            My Subscriptions ({subscriptions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("invoices")}
-            className={`pb-3 text-sm font-bold transition-all px-4 border-b-2 ${
-              activeTab === "invoices"
-                ? "border-odoo-700 text-odoo-800"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Invoices &amp; Receipts ({invoices.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("payments")}
-            className={`pb-3 text-sm font-bold transition-all px-4 border-b-2 ${
-              activeTab === "payments"
-                ? "border-odoo-700 text-odoo-800"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Payment History ({payments.length})
-          </button>
-        </div>
+        {/* Tab 1: OVERVIEW COMPREHENSIVE VIEW */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Left Column: Subscriptions Snapshot */}
+              <div className="xl:col-span-2 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4 text-[#714B67]" />
+                    Contracted SaaS Subscriptions ({data.subscriptions.length})
+                  </h3>
+                  <button
+                    onClick={() => setActiveTab("subscriptions")}
+                    className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
+                  >
+                    View All &rarr;
+                  </button>
+                </div>
 
-        {/* Tab 1: Subscriptions */}
-        {activeTab === "subscriptions" && (
-          <div className="space-y-4">
-            {subscriptions.map((sub) => (
-              <Card key={sub.id} className="overflow-hidden">
-                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-base font-bold text-slate-900">{sub.planName}</h4>
-                      <Badge variant={sub.status === "ACTIVE" ? "active" : sub.status === "PAUSED" ? "paused" : "closed"}>
-                        {sub.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Subscription ID: <span className="font-mono text-slate-700">{sub.id}</span> &bull; Cadence: {sub.frequency}
-                    </p>
-                    <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
-                      <div>
-                        Started: <span className="font-semibold">{sub.startDate}</span>
-                      </div>
-                      <div>
-                        Next Billing: <span className="font-semibold">{sub.nextBillingDate}</span>
-                      </div>
-                    </div>
+                <div className="space-y-3">
+                  {data.subscriptions.slice(0, 2).map((sub) => (
+                    <SubscriptionCard
+                      key={sub.id}
+                      subscription={sub}
+                      onViewDetails={(s) => setSelectedSubId(s.id)}
+                      onPauseResume={handlePauseResume}
+                      onCancel={(s) => setCancellingSubscription(s)}
+                      onRenew={handleRenew}
+                      onToggleAutoRenew={handleToggleAutoRenew}
+                      loadingActionId={loadingActionId}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Pending Invoices & Profile Quick Summary */}
+              <div className="space-y-6">
+                {/* Recent Invoices Card */}
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#714B67]" />
+                      Recent Invoices
+                    </h3>
+                    <button
+                      onClick={() => setActiveTab("invoices")}
+                      className="text-xs font-bold text-[#714B67] hover:underline"
+                    >
+                      All ({data.invoices.length}) &rarr;
+                    </button>
                   </div>
 
-                  <div className="flex flex-col md:items-end gap-3">
-                    <span className="text-xl font-black text-slate-900">{sub.amount}</span>
-                    <div className="flex items-center gap-2">
-                      {sub.status !== "CLOSED" && sub.pauseAllowed && (
-                        <Button
-                          onClick={() => handlePauseRequest(sub.id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs font-semibold gap-1.5"
-                        >
-                          {sub.status === "PAUSED" ? (
-                            <>
-                              <PlayCircle className="w-3.5 h-3.5 text-emerald-600" /> Resume Subscription
-                            </>
-                          ) : (
-                            <>
-                              <PauseCircle className="w-3.5 h-3.5 text-amber-600" /> Pause Subscription
-                            </>
-                          )}
-                        </Button>
-                      )}
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {data.invoices.slice(0, 3).map((inv) => (
+                      <div key={inv.id} className="py-2.5 flex items-center justify-between">
+                        <div>
+                          <div className="font-mono font-bold text-slate-900">
+                            {inv.invoiceNumber}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            Due: {new Date(inv.dueDate).toLocaleDateString("en-IN")}
+                          </div>
+                        </div>
 
-                      {sub.status !== "CLOSED" && sub.earlyClosureAllowed && (
-                        <Button
-                          onClick={() => handleCancelRequest(sub.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                        >
-                          Cancel
-                        </Button>
-                      )}
+                        <div className="text-right flex items-center gap-2">
+                          <div>
+                            <div className="font-bold text-slate-900">
+                              ₹{Number(inv.totalAmount).toLocaleString("en-IN")}
+                            </div>
+                            <Badge variant={inv.status === "PAID" ? "paid" : "overdue"} className="text-[9px]">
+                              {inv.status}
+                            </Badge>
+                          </div>
+                          <Button
+                            onClick={() => setSelectedInvId(inv.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-[11px] font-bold h-7 px-2"
+                          >
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Account Entity Quick Card */}
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-[#714B67]" />
+                      Client Organization
+                    </h3>
+                    <Link
+                      href="/customer/profile"
+                      className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
+                    >
+                      Edit Profile &rarr;
+                    </Link>
+                  </div>
+
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1">
+                    <div className="font-bold text-slate-900 text-sm">
+                      {data.customer.companyName || data.customer.name}
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-500">
+                      GSTIN: {data.customer.taxId || "Not Registered"}
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {data.customer.billingAddress?.city}, {data.customer.billingAddress?.state}
                     </div>
                   </div>
                 </div>
-              </Card>
-            ))}
+              </div>
+            </div>
+
+            {/* Bottom Timeline Section in Overview */}
+            <div className="pt-2">
+              <ActivityTimeline timeline={data.timeline.slice(0, 5)} />
+            </div>
           </div>
         )}
 
-        {/* Tab 2: Invoices */}
-        {activeTab === "invoices" && (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
-                  <tr>
-                    <th className="p-4">Invoice #</th>
-                    <th className="p-4">Billing Period</th>
-                    <th className="p-4">Invoice Date</th>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-bold text-slate-900">{inv.id}</td>
-                      <td className="p-4 text-slate-600">{inv.period}</td>
-                      <td className="p-4 text-slate-600">{inv.date}</td>
-                      <td className="p-4 font-black text-slate-900">{inv.amount}</td>
-                      <td className="p-4">
-                        <Badge variant="paid">{inv.status}</Badge>
-                      </td>
-                      <td className="p-4 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5 text-xs font-bold"
-                          onClick={() => setActionMessage(`Invoice PDF downloaded for ${inv.id}`)}
-                        >
-                          <Download className="w-3.5 h-3.5" /> PDF
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Tab 2: Subscriptions Management */}
+        {activeTab === "subscriptions" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-900 tracking-tight">
+                  Contracted Subscriptions &amp; Active SaaS Licenses
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Manage deployment tiers, pause schedules, and auto-renewal policies.
+                </p>
+              </div>
+
+              <Badge variant="outline" className="text-xs font-semibold">
+                {data.subscriptions.filter((s) => s.status === "ACTIVE").length} active services
+              </Badge>
             </div>
-          </Card>
+
+            {data.subscriptions.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs text-slate-400">
+                No active or historical subscriptions found for this account.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {data.subscriptions.map((sub) => (
+                  <SubscriptionCard
+                    key={sub.id}
+                    subscription={sub}
+                    onViewDetails={(s) => setSelectedSubId(s.id)}
+                    onPauseResume={handlePauseResume}
+                    onCancel={(s) => setCancellingSubscription(s)}
+                    onRenew={handleRenew}
+                    onToggleAutoRenew={handleToggleAutoRenew}
+                    loadingActionId={loadingActionId}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Tab 3: Payments */}
-        {activeTab === "payments" && (
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
-                  <tr>
-                    <th className="p-4">Receipt #</th>
-                    <th className="p-4">Invoice Ref</th>
-                    <th className="p-4">Payment Method</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Transaction Ref</th>
-                    <th className="p-4 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {payments.map((pay) => (
-                    <tr key={pay.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-bold text-slate-900">{pay.id}</td>
-                      <td className="p-4 font-medium text-slate-600">{pay.invoiceId}</td>
-                      <td className="p-4 text-slate-600">{pay.method}</td>
-                      <td className="p-4 text-slate-600">{pay.date}</td>
-                      <td className="p-4 font-mono text-slate-500">{pay.ref}</td>
-                      <td className="p-4 text-right font-black text-emerald-700">{pay.amount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Tab 3: Invoices & Receipts Management */}
+        {activeTab === "invoices" && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-black text-slate-900 tracking-tight">
+                Invoices, Statements &amp; Tax Receipts
+              </h2>
+              <p className="text-xs text-slate-500">
+                Download verified tax invoices, review line-item GST calculations, and settle outstanding balances.
+              </p>
             </div>
-          </Card>
+
+            <InvoicesTable
+              invoices={data.invoices}
+              onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+              onPayInvoice={(inv) => setPayingInvoice(inv)}
+            />
+          </div>
         )}
-      </div>
+
+        {/* Tab 4: Payment History */}
+        {activeTab === "payments" && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-black text-slate-900 tracking-tight">
+                Payment History &amp; Bank Reconciliation
+              </h2>
+              <p className="text-xs text-slate-500">
+                Audited ledger of all received wire transfers, UPI remittances, and card charges.
+              </p>
+            </div>
+
+            <PaymentHistoryTable
+              payments={data.payments}
+              invoices={data.invoices}
+              onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+            />
+          </div>
+        )}
+
+        {/* Tab 5: Billing & Account Profile */}
+        {activeTab === "billing" && (
+          <BillingProfileSection
+            customer={data.customer}
+            onProfileUpdated={fetchPortalData}
+          />
+        )}
+
+        {/* Tab 6: Subscription Activity & Timeline */}
+        {activeTab === "activity" && (
+          <ActivityTimeline timeline={data.timeline} />
+        )}
+      </main>
+
+      {/* MODALS */}
+
+      {/* 1. Subscription Details Modal */}
+      <SubscriptionDetailModal
+        subscription={selectedSubscription}
+        onClose={() => setSelectedSubId(null)}
+        onPauseResume={handlePauseResume}
+        onCancel={(s) => setCancellingSubscription(s)}
+        onRenew={handleRenew}
+        onToggleAutoRenew={handleToggleAutoRenew}
+        onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+        isActionLoading={isSubmittingAction}
+      />
+
+      {/* 2. Cancel Subscription Confirmation Dialog */}
+      <CancelSubscriptionModal
+        subscription={cancellingSubscription}
+        onClose={() => setCancellingSubscription(null)}
+        onConfirm={handleConfirmCancel}
+        isLoading={isSubmittingAction}
+      />
+
+      {/* 3. Invoice Detail & Printable View Modal */}
+      <InvoiceDetailModal
+        invoice={selectedInvoice}
+        onClose={() => setSelectedInvId(null)}
+        onPayInvoice={(inv) => setPayingInvoice(inv)}
+      />
+
+      {/* 4. Pay Invoice Settlement Modal */}
+      <PayInvoiceModal
+        invoice={payingInvoice}
+        onClose={() => setPayingInvoice(null)}
+        onSuccess={() => {
+          setActionMessage({
+            type: "success",
+            text: "Invoice settlement recorded successfully!",
+          });
+          fetchPortalData();
+        }}
+      />
     </div>
+  );
+}
+
+export default function CustomerDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6 space-y-4">
+          <div className="w-10 h-10 border-4 border-[#714B67] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+            Loading Customer Portal...
+          </p>
+        </div>
+      }
+    >
+      <CustomerDashboardContent />
+    </Suspense>
   );
 }
