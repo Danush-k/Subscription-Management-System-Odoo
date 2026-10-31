@@ -9,6 +9,9 @@
     "lint": "next lint",
     "test": "node tests/run_tests.mjs",
     "test:watch": "vitest",
+    "seed": "node scripts/seed.mjs",
+    "db:setup": "prisma db push && node scripts/seed.mjs",
+    "db:seed": "node scripts/seed.mjs",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
@@ -58,5 +61,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vitest": "^3.0.7"
+  },
+  "prisma": {
+    "seed": "node scripts/seed.mjs"
   }
 }
