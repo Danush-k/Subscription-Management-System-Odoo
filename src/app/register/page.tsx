@@ -68,14 +68,35 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between text-slate-900 font-sans relative overflow-x-hidden select-none">
+    <div className="min-h-screen bg-[#EFEAF4] flex flex-col justify-between text-slate-900 font-sans relative overflow-x-hidden select-none">
+      {/* Upper Shaded Canvas: Soft lavender with clear color contrast */}
+      <div className="absolute top-0 left-0 right-0 h-[48vh] bg-[#ECE5F2] -z-0" />
+
+      {/* Middle Curvy Wave Separator */}
+      <div className="absolute top-[40vh] left-0 right-0 w-full overflow-hidden leading-none -z-0">
+        <svg
+          viewBox="0 0 1440 160"
+          fill="none"
+          preserveAspectRatio="none"
+          className="w-full h-36 sm:h-44 text-white block"
+        >
+          <path
+            d="M0,80 C360,160 1080,0 1440,80 L1440,160 L0,160 Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+
+      {/* Lower Canvas: Pure Crisp White */}
+      <div className="absolute top-[52vh] bottom-0 left-0 right-0 bg-white -z-0" />
+
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-slate-200/80 bg-[#FDFBF7]/90 backdrop-blur-xs relative z-10">
+      <header className="px-6 py-4 flex items-center justify-between border-b border-purple-200/60 bg-[#ECE5F2]/90 backdrop-blur-xs relative z-10">
         <Link href="/" className="hover:opacity-95 transition-opacity">
           <BrightLoopBrandMark size="md" />
         </Link>
 
-        <div className="text-xs text-slate-500 font-semibold">
+        <div className="text-xs text-slate-600 font-semibold">
           Already have an account?{" "}
           <Link href="/login" className="font-bold text-[#714B67] hover:underline">
             Sign In
@@ -85,7 +106,7 @@ export default function RegisterPage() {
 
       {/* Main Form */}
       <main className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
-        <div className="max-w-xl w-full bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-xl space-y-6">
+        <div className="max-w-xl w-full bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-2xl space-y-6">
           <div className="text-center space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#714B67]/10 text-[#714B67] text-xs font-bold mb-2">
               <Sparkles className="w-3.5 h-3.5 text-[#F59E0B]" />
@@ -283,21 +304,6 @@ export default function RegisterPage() {
           )}
         </div>
       </main>
-
-      {/* Curvy Color Differentiation Wave Separator in Background */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          preserveAspectRatio="none"
-          className="w-full h-24 text-white block opacity-90"
-        >
-          <path
-            d="M0,120 C480,20 960,20 1440,120 L1440,120 L0,120 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
 
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-slate-400 relative z-10">

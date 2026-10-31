@@ -100,44 +100,65 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between text-slate-900 font-sans select-none relative overflow-x-hidden">
-      {/* Top Brand Header matching DayFlow Screenshot (Image 1) */}
-      <header className="pt-10 pb-4 text-center px-4 relative z-10">
+    <div className="min-h-screen bg-[#EFEAF4] flex flex-col justify-between text-slate-900 font-sans select-none relative overflow-x-hidden">
+      {/* Upper Shaded Canvas: Soft lavender with clear, vibrant color contrast */}
+      <div className="absolute top-0 left-0 right-0 h-[52vh] bg-[#ECE5F2] -z-0" />
+
+      {/* Middle Curvy Wave Separator: Positioned at middle screen height */}
+      <div className="absolute top-[44vh] left-0 right-0 w-full overflow-hidden leading-none -z-0">
+        <svg
+          viewBox="0 0 1440 160"
+          fill="none"
+          preserveAspectRatio="none"
+          className="w-full h-36 sm:h-44 text-white block"
+        >
+          <path
+            d="M0,80 C360,160 1080,0 1440,80 L1440,160 L0,160 Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+
+      {/* Lower Canvas: Pure Crisp White */}
+      <div className="absolute top-[56vh] bottom-0 left-0 right-0 bg-white -z-0" />
+
+      {/* Top Brand Header */}
+      <header className="pt-8 sm:pt-10 pb-4 text-center px-4 relative z-10">
         <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
-          {/* BrightLoop with Capital 'B', Capital 'L', and colored 'oo' */}
-          <BrightLoopBrandMark size="lg" />
+          {/* BrightLoop: Capital 'B', Capital 'L', 'oo' in GREY, others in PURPLE */}
+          <BrightLoopBrandMark size="xl" />
         </Link>
 
-        {/* Subtitle with Yellow Marker and Blue Underline */}
-        <div className="mt-2.5 text-base sm:text-lg font-bold text-slate-900 leading-snug">
-          <span className="italic font-serif">All your workforce on </span>
+        {/* Subscription Slogans (NO HR references) */}
+        <div className="mt-3 text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+          <span>Subscriptions </span>
           <span className="relative inline-block mx-1">
-            <span className="relative z-10 px-2.5 py-0.5 text-slate-950 font-extrabold text-sm sm:text-base">
-              one platform.
+            <span className="relative z-10 px-2.5 py-0.5 text-[#714B67] font-black text-sm sm:text-base">
+              made simple
             </span>
-            <span className="absolute inset-0 bg-[#F59E0B] rounded-md -rotate-1 shadow-2xs -z-0 transform scale-105" />
+            <span className="absolute inset-0 bg-[#E9D5FF] rounded-md -rotate-1 shadow-2xs -z-0 transform scale-105" />
           </span>
+          <span> for modern businesses.</span>
           <br />
-          <span className="italic font-serif text-sm sm:text-base">Simple, efficient, yet </span>
-          <span className="relative inline-block font-extrabold text-slate-900 underline decoration-[#38BDF8] decoration-[4px] underline-offset-4 text-sm sm:text-base">
-            affordable!
+          <span className="font-handwriting text-xl text-[#714B67] font-bold">
+            ONE PLATFORM &bull; ALL SUBSCRIPTIONS
           </span>
         </div>
       </header>
 
-      {/* Main Centered Floating Card matching Screenshot (Image 1) */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
-        <div className="max-w-[420px] w-full bg-white rounded-3xl p-8 sm:p-9 shadow-xl border border-slate-200/80 space-y-6 relative">
+      {/* Main Centered Floating Card positioned right over the middle curve */}
+      <main className="flex-1 flex items-center justify-center px-4 py-4 relative z-10">
+        <div className="max-w-[420px] w-full bg-white rounded-3xl p-7 sm:p-9 shadow-2xl border border-slate-200/90 space-y-5 relative">
           <div className="text-center space-y-1">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
               Welcome back
             </h2>
             <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-              Use the Login ID issued by your HR officer, or your email address.
+              Sign in with your enterprise credentials to access your subscription workspace.
             </p>
           </div>
 
-          {/* Quick Demo Persona Chips */}
+          {/* 1-Click Demo Persona Chips */}
           <div className="space-y-1.5">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
               1-Click Demo Persona
@@ -184,8 +205,8 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your Login ID or email"
-                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all"
+                  placeholder="Enter your enterprise email"
+                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all font-medium"
                 />
               </div>
             </div>
@@ -227,7 +248,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => alert("Password reset dispatched to " + email)}
+                onClick={() => alert("Password reset link dispatched to " + email)}
                 className="text-xs font-semibold text-slate-700 hover:text-[#714B67] hover:underline"
               >
                 Forgot password?
@@ -243,15 +264,15 @@ export default function LoginPage() {
             </Button>
 
             <div className="pt-2 text-center text-xs text-slate-600">
-              Registering a company?{" "}
+              Registering an enterprise?{" "}
               <Link href="/register" className="font-bold text-slate-900 hover:underline">
                 Create an account
               </Link>
             </div>
           </form>
 
-          {/* Bottom Right Handwritten Annotation with Curved Arrow matching Image 1 */}
-          <div className="hidden sm:flex items-center gap-1.5 absolute -right-24 -bottom-9 whitespace-nowrap">
+          {/* Bottom Right Handwritten Annotation with Curved Arrow: ONE PLATFORM ALL SUBSCRIPTIONS */}
+          <div className="hidden sm:flex items-center gap-1.5 absolute -right-28 -bottom-9 whitespace-nowrap">
             <svg
               width="45"
               height="35"
@@ -269,30 +290,15 @@ export default function LoginPage() {
               />
             </svg>
             <span className="font-handwriting text-xl font-bold text-[#714B67]">
-              HR, Attendance &amp; Payroll in sync!
+              ONE PLATFORM, ALL SUBSCRIPTIONS!
             </span>
           </div>
         </div>
       </main>
 
-      {/* Curvy Color Differentiation Wave Separator in Background */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          preserveAspectRatio="none"
-          className="w-full h-28 text-white block opacity-90"
-        >
-          <path
-            d="M0,120 C480,20 960,20 1440,120 L1440,120 L0,120 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
-
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-slate-400 relative z-10">
-        &copy; 2026 BrightLoop Software. All rights reserved.
+        &copy; 2026 BrightLoop Software. Enterprise Subscription Management Platform.
       </footer>
     </div>
   );
