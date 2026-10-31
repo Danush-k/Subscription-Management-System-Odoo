@@ -74,7 +74,7 @@ export default function CustomerProfilePage() {
       setState(c.billingAddress?.state || "");
       setPostalCode(c.billingAddress?.postalCode || "");
       setCountry(c.billingAddress?.country || "India");
-    } catch (err: any) {
+    } catch (err) {
       setSaveError(err.message || "Failed to load profile");
     } finally {
       setIsLoading(false);
@@ -117,7 +117,7 @@ export default function CustomerProfilePage() {
 
       setSaveSuccess("Profile and billing information successfully saved!");
       await fetchProfile();
-    } catch (err: any) {
+    } catch (err) {
       setSaveError(err.message || "Could not save profile changes");
     } finally {
       setIsSaving(false);

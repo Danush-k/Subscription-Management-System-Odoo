@@ -44,7 +44,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ subscriptions: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Subscriptions Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load subscriptions" }, { status: 500 });
   }
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, subscription });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Create Subscription Error]", error);
     return NextResponse.json({ error: error.message || "Failed to create subscription" }, { status: 500 });
   }

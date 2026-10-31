@@ -8,6 +8,7 @@ export type SubscriptionState =
   | "EXPIRED";
 
 export type BillingFrequencyType = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+export type StaffSubscriptionAction = "ACTIVATE" | "PAUSE" | "RESUME" | "CLOSE";
 
 export interface PlanPolicy {
   pauseAllowed: boolean;
@@ -17,6 +18,24 @@ export interface PlanPolicy {
 }
 
 export class SubscriptionService {
+  public static isStaffRole(role: string): boolean {
+    return role === "STAFF" || role === "ADMIN";
+  }
+
+  public static targetStatusForAction(
+    action: StaffSubscriptionAction
+  ): SubscriptionState {
+    switch (action) {
+      case "ACTIVATE":
+      case "RESUME":
+        return "ACTIVE";
+      case "PAUSE":
+        return "PAUSED";
+      case "CLOSE":
+        return "CLOSED";
+    }
+  }
+
   /**
    * Validates state machine transition according to Brightloop business rules:
    * DRAFT -> QUOTATION -> CONFIRMED -> ACTIVE -> CLOSED

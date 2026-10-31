@@ -176,6 +176,28 @@ export default function StaffDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link href="/staff/subscriptions">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs font-bold gap-2 px-4 py-2.5 rounded-xl"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Manage Subscriptions</span>
+              </Button>
+            </Link>
+            <Link href="/staff/invoices">
+              <Button size="sm" variant="outline" className="text-xs font-bold gap-2 px-4 py-2.5 rounded-xl">
+                <Receipt className="w-4 h-4" />
+                <span>Invoice Operations</span>
+              </Button>
+            </Link>
+            <Link href="/staff/customers">
+              <Button size="sm" variant="outline" className="text-xs font-bold gap-2 px-4 py-2.5 rounded-xl">
+                <Users className="w-4 h-4" />
+                <span>Customer Operations</span>
+              </Button>
+            </Link>
             <Link href="/staff/quotations/new">
               <Button
                 size="sm"

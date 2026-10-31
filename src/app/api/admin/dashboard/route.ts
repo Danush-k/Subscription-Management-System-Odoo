@@ -107,7 +107,7 @@ export async function GET() {
       recentSubscriptions,
       recentInvoices,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Dashboard Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load admin dashboard metrics" }, { status: 500 });
   }

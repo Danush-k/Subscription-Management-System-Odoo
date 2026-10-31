@@ -75,7 +75,7 @@ export function BillingProfileSection({
       setSuccessMsg("Billing profile successfully updated!");
       setIsEditing(false);
       onProfileUpdated();
-    } catch (err: any) {
+    } catch (err) {
       setErrorMsg(err.message || "Could not save profile");
     } finally {
       setIsSaving(false);

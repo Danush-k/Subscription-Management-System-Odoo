@@ -22,7 +22,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ discounts: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Discounts Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load discounts" }, { status: 500 });
   }

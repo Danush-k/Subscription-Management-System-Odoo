@@ -1,30 +1,28 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { SubscriptionService, SubscriptionState } from "@/server/services/subscriptionService";
+import {
+  SubscriptionService,
+  StaffSubscriptionAction,
+  SubscriptionState,
+} from "@/server/services/subscriptionService";
 
-const actions = {
-  ACTIVATE: "ACTIVE",
-  PAUSE: "PAUSED",
-  RESUME: "ACTIVE",
-  CLOSE: "CLOSED",
-} as const;
-
-type Action = keyof typeof actions;
+const actions = ["ACTIVATE", "PAUSE", "RESUME", "CLOSE"] as const;
+type Action = (typeof actions)[number];
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession();
-  if (!session || (session.role !== "STAFF" && session.role !== "ADMIN")) {
+  if (!session || !SubscriptionService.isStaffRole(session.role)) {
     return NextResponse.json({ success: false, error: "Staff access required" }, { status: 403 });
   }
 
   try {
     const body = await request.json();
     const action = body?.action as Action;
-    if (!(action in actions)) {
+    if (!actions.includes(action)) {
       return NextResponse.json({ success: false, error: "Invalid subscription action" }, { status: 400 });
     }
 
@@ -37,7 +35,9 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Subscription not found" }, { status: 404 });
     }
 
-    const targetStatus = actions[action] as SubscriptionState;
+    const targetStatus = SubscriptionService.targetStatusForAction(
+      action as StaffSubscriptionAction
+    );
     const validation = SubscriptionService.validateTransition(
       subscription.status as SubscriptionState,
       targetStatus,
@@ -57,10 +57,23 @@ export async function POST(
         status: SubscriptionState;
         pausedAt?: Date | null;
         closedAt?: Date | null;
+        nextBillingDate?: Date;
       } = { status: targetStatus };
 
       if (targetStatus === "PAUSED") data.pausedAt = new Date();
-      if (targetStatus === "ACTIVE") data.pausedAt = null;
+      if (targetStatus === "ACTIVE") {
+        data.pausedAt = null;
+        const billingAnchor =
+          subscription.status === "CONFIRMED"
+            ? subscription.startDate
+            : subscription.nextBillingDate > new Date()
+              ? subscription.nextBillingDate
+              : new Date();
+        data.nextBillingDate = SubscriptionService.calculateNextBillingDate(
+          billingAnchor,
+          subscription.billingFrequency
+        );
+      }
       if (targetStatus === "CLOSED") data.closedAt = new Date();
 
       const result = await tx.subscription.update({ where: { id }, data });

@@ -47,7 +47,7 @@ export async function GET() {
       },
       monthlyTrend: formattedMonthlyTrend,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Reports Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load reports" }, { status: 500 });
   }

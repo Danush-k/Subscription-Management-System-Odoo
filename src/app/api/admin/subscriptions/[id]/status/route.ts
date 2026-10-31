@@ -45,7 +45,7 @@ export async function POST(
     }
 
     const updated = await prisma.$transaction(async (tx) => {
-      const updateData: any = { status: targetStatus };
+      const updateData: { status: SubscriptionState; pausedAt?: Date | null; closedAt?: Date } = { status: targetStatus };
       if (targetStatus === "PAUSED") updateData.pausedAt = new Date();
       if (targetStatus === "CLOSED") updateData.closedAt = new Date();
 
@@ -68,7 +68,7 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, subscription: updated });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Subscription Status Error]", error);
     return NextResponse.json({ error: error.message || "Failed to update subscription status" }, { status: 500 });
   }

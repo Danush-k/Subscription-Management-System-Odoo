@@ -73,7 +73,7 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true, ...result });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Invoice payment error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

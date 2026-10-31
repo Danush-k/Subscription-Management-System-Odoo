@@ -20,10 +20,10 @@ export async function POST() {
             subscriptionId: sub.id,
             executionDate: new Date(),
           });
-          results.push({ subscriptionNumber: sub.subscriptionNumber, invoiceNumber: run.invoice?.invoiceNumber || "N/A", success: true });
+          results.push({ subscriptionNumber: sub.subscriptionNumber, invoiceNumber: "invoice" in run && run.invoice ? run.invoice.invoiceNumber : "N/A", success: true });
           successCount++;
-        } catch (err: any) {
-          results.push({ subscriptionNumber: sub.subscriptionNumber, error: err.message, success: false });
+        } catch (err) {
+          results.push({ subscriptionNumber: sub.subscriptionNumber, error: err instanceof Error ? err.message : "Billing failed", success: false });
           failedCount++;
         }
       }
@@ -39,11 +39,11 @@ export async function POST() {
             subscriptionId: anyActive.id,
             executionDate: new Date(),
           });
-          results.push({ subscriptionNumber: anyActive.subscriptionNumber, invoiceNumber: run.invoice?.invoiceNumber || "N/A", success: true });
+          results.push({ subscriptionNumber: anyActive.subscriptionNumber, invoiceNumber: "invoice" in run && run.invoice ? run.invoice.invoiceNumber : "N/A", success: true });
           successCount++;
-        } catch (err: any) {
+        } catch (err) {
           // Idempotency or duplicate check caught correctly
-          results.push({ subscriptionNumber: anyActive.subscriptionNumber, note: err.message || "Already billed for current cycle", success: true });
+          results.push({ subscriptionNumber: anyActive.subscriptionNumber, note: err instanceof Error ? err.message : "Already billed for current cycle", success: true });
         }
       }
     }
@@ -55,8 +55,8 @@ export async function POST() {
       errors: failedCount,
       results,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Billing Run Error]", error);
-    return NextResponse.json({ error: error.message || "Failed to execute recurring billing run" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to execute recurring billing run" }, { status: 500 });
   }
 }

@@ -25,7 +25,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ plans: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Plans Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load plans" }, { status: 500 });
   }

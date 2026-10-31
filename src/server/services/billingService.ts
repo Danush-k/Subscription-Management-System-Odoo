@@ -1,6 +1,8 @@
 import Decimal from "decimal.js";
 import { prisma } from "@/lib/prisma";
 import { SubscriptionService, BillingFrequencyType } from "./subscriptionService";
+import { createInvoicePdf } from "./documentService";
+import { dispatchEmail } from "./emailDispatchService";
 
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
@@ -211,10 +213,30 @@ export class BillingEngineService {
       return { invoice, history };
     });
 
+    const emailResult = await dispatchEmail({
+      to: sub.customer.email,
+      toName: sub.customer.name,
+      subject: `Invoice ${result.invoice.invoiceNumber} from Brightloop`,
+      htmlContent: `<p>Hello ${sub.customer.name},</p><p>Your invoice <strong>${result.invoice.invoiceNumber}</strong> totals ₹${totalAmount.toFixed(2)} and is due on ${dueDate.toLocaleDateString("en-IN")}.</p>`,
+      entityType: "Invoice",
+      entityId: result.invoice.id,
+      attachment: {
+        name: `${result.invoice.invoiceNumber}.pdf`,
+        content: createInvoicePdf({
+          invoiceNumber: result.invoice.invoiceNumber,
+          customerName: sub.customer.name,
+          totalAmount: totalAmount.toFixed(2),
+          dueDate,
+        }),
+      },
+    });
+
     return {
       success: true,
       invoice: result.invoice,
       billingHistory: result.history,
+      emailSent: emailResult.sent,
+      emailError: emailResult.error,
     };
   }
 }

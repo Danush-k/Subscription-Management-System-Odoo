@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const queryEmail = searchParams.get("email");
     const queryCustomerId = searchParams.get("customerId");
 
-    let customerWhere: any = undefined;
+    let customerWhere: { id?: string; email?: string } | undefined;
     if (session?.customerId) {
       customerWhere = { id: session.customerId };
     } else if (session?.email && session.role === "CUSTOMER") {
@@ -269,7 +269,7 @@ export async function GET(req: NextRequest) {
       timeline,
       notifications,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Portal API error:", error);
     return NextResponse.json(
       { error: "Internal Server Error", details: error.message },
@@ -277,4 +277,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

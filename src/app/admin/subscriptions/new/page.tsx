@@ -145,8 +145,8 @@ export default function NewSubscriptionPage() {
       } else {
         setErrorMessage(data.error || "Failed to create subscription agreement.");
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Network error occurred.");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Network error occurred.");
     } finally {
       setIsSubmitting(false);
     }

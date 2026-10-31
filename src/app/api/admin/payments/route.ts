@@ -27,7 +27,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ payments: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Payments Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load payments" }, { status: 500 });
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, payment: result.payment, invoice: result.invoice });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Record Payment Error]", error);
     return NextResponse.json({ error: error.message || "Failed to record payment" }, { status: 500 });
   }

@@ -38,7 +38,7 @@ export async function GET(
     }
 
     return NextResponse.json(subscription);
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -220,7 +220,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Subscription update error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

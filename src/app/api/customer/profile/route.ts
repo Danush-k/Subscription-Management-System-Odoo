@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const queryEmail = searchParams.get("email");
     const queryCustomerId = searchParams.get("customerId");
 
-    let customerWhere: any = undefined;
+    let customerWhere: { id?: string; email?: string } | undefined;
     if (session?.customerId) {
       customerWhere = { id: session.customerId };
     } else if (session?.email && session.role === "CUSTOMER") {
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ customer });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     const { name, email, companyName, phone, taxId, billingAddress, customerId } = body;
     const session = await getServerSession();
 
-    let targetWhere: any = undefined;
+    let targetWhere: { id?: string; userId?: string; email?: string } | undefined;
     if (customerId) {
       targetWhere = { id: customerId };
     } else if (session?.customerId) {
@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, customer: updated });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Profile update error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

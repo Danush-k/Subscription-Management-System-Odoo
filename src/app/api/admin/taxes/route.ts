@@ -20,7 +20,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ taxes: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Taxes Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load taxes" }, { status: 500 });
   }
