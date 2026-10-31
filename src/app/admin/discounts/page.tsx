@@ -6,7 +6,18 @@ import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BrightLoopModuleIcon } from "@/components/home/odoo-app-icons";
-import { Tag, Plus, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import {
+  Tag,
+  Plus,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  X,
+  CreditCard,
+  Percent,
+  Calendar,
+  Layers,
+} from "lucide-react";
 
 interface DiscountItem {
   id: string;
@@ -60,6 +71,7 @@ export default function DiscountsPage() {
   const [discounts, setDiscounts] = useState<DiscountItem[]>(INITIAL_DISCOUNTS);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDiscount, setSelectedDiscount] = useState<DiscountItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -138,7 +150,7 @@ export default function DiscountsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
@@ -150,7 +162,7 @@ export default function DiscountsPage() {
                 Discount Coupons &amp; Promotion Rules
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Percentage and fixed discounts, redemption caps, and minimum purchase thresholds.
+                Percentage and fixed discounts, redemption caps, and minimum purchase thresholds. Click any row for details.
               </p>
             </div>
           </div>
@@ -165,13 +177,13 @@ export default function DiscountsPage() {
         </div>
 
         {notification && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>{notification}</span>
           </div>
         )}
 
-        {/* Discounts Table */}
+        {/* Discounts Table with Clickable Rows */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -187,8 +199,12 @@ export default function DiscountsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {discounts.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-6 font-mono font-bold text-[#714B67] text-sm">
+                  <tr
+                    key={d.id}
+                    onClick={() => setSelectedDiscount(d)}
+                    className="hover:bg-purple-50/20 cursor-pointer transition-colors group"
+                  >
+                    <td className="py-4 px-6 font-mono font-bold text-[#714B67] text-sm group-hover:underline">
                       {d.code}
                     </td>
                     <td className="py-4 px-6 font-semibold text-slate-900">{d.name}</td>
@@ -224,10 +240,121 @@ export default function DiscountsPage() {
         </div>
       </main>
 
+      {/* Discount Detailed View Modal */}
+      {selectedDiscount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-mono font-black text-slate-900 text-lg">{selectedDiscount.code}</h3>
+                    <Badge variant="active">{selectedDiscount.status}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 font-semibold">{selectedDiscount.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDiscount(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <div className="text-slate-900 font-bold text-xs uppercase tracking-wider border-b border-slate-200/60 pb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#714B67]" />
+                  <span>Deduction &amp; Qualification Terms</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Deduction Format</span>
+                    <span className="font-bold text-slate-900 uppercase">
+                      {selectedDiscount.type === "PERCENTAGE" ? "Percentage (% Rebate)" : "Fixed Amount (₹ Credit)"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Discount Value</span>
+                    <span className="font-mono font-black text-[#714B67] text-base">
+                      {selectedDiscount.type === "PERCENTAGE"
+                        ? `${selectedDiscount.value}% Off Subtotal`
+                        : `₹${selectedDiscount.value.toLocaleString("en-IN")} Flat Off`}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Minimum Order Requirement</span>
+                    <span className="font-mono font-bold text-slate-900">
+                      {selectedDiscount.minPurchase > 0
+                        ? `₹${selectedDiscount.minPurchase.toLocaleString("en-IN")}.00`
+                        : "No Minimum"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Lifecycle Status</span>
+                    <span className="font-semibold text-emerald-700">Active &amp; Redeemable</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Redemptions Progress */}
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900">
+                  <span>Redemption Usage Statistics</span>
+                  <span className="font-mono text-[#714B67]">
+                    {selectedDiscount.usedCount} of {selectedDiscount.maxUsage} used
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-[#714B67] h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, (selectedDiscount.usedCount / (selectedDiscount.maxUsage || 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Remaining available redemptions:{" "}
+                  <span className="font-bold text-slate-800">
+                    {Math.max(0, selectedDiscount.maxUsage - selectedDiscount.usedCount)}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedDiscount(null)}
+              >
+                Close
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(selectedDiscount.code);
+                  setNotification(`Promo code "${selectedDiscount.code}" copied to clipboard!`);
+                  setTimeout(() => setNotification(null), 3000);
+                  setSelectedDiscount(null);
+                }}
+                className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs"
+              >
+                Copy Promo Code
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Discount Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-[#714B67]/10 flex items-center justify-center text-[#714B67]">

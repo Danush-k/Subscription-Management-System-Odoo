@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -10,77 +10,87 @@ import {
   Layers,
   Plus,
   CheckCircle2,
-  Calendar,
-  Clock,
-  Shield,
+  AlertCircle,
   HelpCircle,
+  Sparkles,
+  Calendar,
+  Shield,
+  X,
+  Info,
+  ArrowRight,
+  RotateCcw,
 } from "lucide-react";
 
 interface PlanItem {
   id: string;
-  planCode: string;
   name: string;
-  frequency: "MONTHLY" | "YEARLY" | "QUARTERLY" | "WEEKLY";
+  planCode: string;
+  description: string;
+  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
   price: number;
   trialDays: number;
+  monthEndBilling: boolean;
   pauseAllowed: boolean;
   earlyClosureAllowed: boolean;
   autoClose: boolean;
-  monthEndBilling: boolean;
   status: "ACTIVE" | "ARCHIVED";
 }
 
 const INITIAL_PLANS: PlanItem[] = [
   {
-    id: "p-1",
-    planCode: "PLAN-ENT-ANNUAL",
+    id: "plan-1",
     name: "Enterprise Cloud Suite",
+    planCode: "PLAN-ENT-ANNUAL",
+    description: "Complete ERP subscription with unlimited users, automated billing, and priority SLA.",
     frequency: "YEARLY",
     price: 120000,
-    trialDays: 14,
+    trialDays: 30,
+    monthEndBilling: true,
     pauseAllowed: true,
     earlyClosureAllowed: true,
     autoClose: true,
-    monthEndBilling: true,
     status: "ACTIVE",
   },
   {
-    id: "p-2",
-    planCode: "PLAN-ODOO-MONTH",
+    id: "plan-2",
     name: "Odoo Business Suite",
+    planCode: "PLAN-BIZ-MTH",
+    description: "Core accounting, CRM, and inventory modules with standard business hours support.",
     frequency: "MONTHLY",
     price: 18500,
-    trialDays: 7,
+    trialDays: 14,
+    monthEndBilling: true,
     pauseAllowed: true,
     earlyClosureAllowed: false,
     autoClose: true,
-    monthEndBilling: true,
     status: "ACTIVE",
   },
   {
-    id: "p-3",
-    planCode: "PLAN-GROWTH-MONTH",
+    id: "plan-3",
     name: "Growth Monthly Tier",
+    planCode: "PLAN-GROWTH-MTH",
+    description: "SaaS starter pack designed for scaling operations with basic quotation management.",
     frequency: "MONTHLY",
     price: 8400,
-    trialDays: 0,
-    pauseAllowed: true,
+    trialDays: 7,
+    monthEndBilling: false,
+    pauseAllowed: false,
     earlyClosureAllowed: true,
     autoClose: false,
-    monthEndBilling: false,
     status: "ACTIVE",
   },
   {
-    id: "p-4",
-    planCode: "PLAN-STARTER-QUARTER",
-    name: "Starter Quarterly License",
-    frequency: "QUARTERLY",
-    price: 22000,
+    id: "plan-4",
+    name: "Standard Core License",
+    planCode: "PLAN-CORE-MTH",
+    description: "Base recurring software license with self-serve billing portal access.",
+    frequency: "MONTHLY",
+    price: 24000,
     trialDays: 0,
-    pauseAllowed: false,
-    earlyClosureAllowed: false,
-    autoClose: true,
     monthEndBilling: true,
+    pauseAllowed: true,
+    earlyClosureAllowed: true,
+    autoClose: true,
     status: "ACTIVE",
   },
 ];
@@ -88,6 +98,7 @@ const INITIAL_PLANS: PlanItem[] = [
 export default function PlansPage() {
   const [plans, setPlans] = useState<PlanItem[]>(INITIAL_PLANS);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -95,8 +106,8 @@ export default function PlansPage() {
   // New plan form state
   const [formName, setFormName] = useState("");
   const [formCode, setFormCode] = useState("");
+  const [formFrequency, setFormFrequency] = useState<"DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY">("MONTHLY");
   const [formPrice, setFormPrice] = useState("15000");
-  const [formFrequency, setFormFrequency] = useState<"MONTHLY" | "YEARLY" | "QUARTERLY" | "WEEKLY">("MONTHLY");
   const [formTrialDays, setFormTrialDays] = useState("14");
   const [formDescription, setFormDescription] = useState("");
   const [formPauseAllowed, setFormPauseAllowed] = useState(true);
@@ -117,7 +128,7 @@ export default function PlansPage() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchPlans();
   }, []);
 
@@ -168,7 +179,7 @@ export default function PlansPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
@@ -177,10 +188,10 @@ export default function PlansPage() {
             <BrightLoopModuleIcon appId="plans" className="w-12 h-12" />
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                Subscription Recurring Plans &amp; Policies
+                Subscription Recurring Plans
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Recurrence schedules, month-end leap-year rollover rules, pause permissions, and trial periods.
+                Define billing frequencies, trial policies, leap-year rollover, and automated closure triggers. Click any card to inspect full terms.
               </p>
             </div>
           </div>
@@ -201,23 +212,26 @@ export default function PlansPage() {
           </div>
         )}
 
-        {/* Plans Grid */}
+        {/* Plans Grid with Clickable Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((p) => (
             <div
               key={p.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
+              onClick={() => setSelectedPlan(p)}
+              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between hover:shadow-lg hover:border-[#714B67]/40 cursor-pointer transition-all group"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded group-hover:text-[#714B67] transition-colors">
                     {p.planCode}
                   </span>
                   <Badge variant="active">{p.status}</Badge>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">{p.name}</h3>
+                  <h3 className="font-bold text-slate-900 text-lg group-hover:text-[#714B67] transition-colors">
+                    {p.name}
+                  </h3>
                   <div className="flex items-baseline gap-1 mt-1">
                     <span className="text-2xl font-black text-slate-900 font-mono">
                       ₹{p.price.toLocaleString("en-IN")}
@@ -259,10 +273,123 @@ export default function PlansPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between text-xs text-[#714B67] font-bold">
+                <span>View Plan Terms &amp; Policies</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
           ))}
         </div>
       </main>
+
+      {/* Plan Detailed View Modal */}
+      {selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-slate-900 text-lg">{selectedPlan.name}</h3>
+                    <Badge variant="active">{selectedPlan.status}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono">{selectedPlan.planCode}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedPlan(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Description */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed">
+                {selectedPlan.description || "Configured BrightLoop enterprise subscription recurring plan with automated payment gateway synchronization."}
+              </div>
+
+              {/* Price & Cadence Details */}
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <div className="text-slate-900 font-bold text-xs uppercase tracking-wider border-b border-slate-200/60 pb-1.5">
+                  Billing &amp; Rate Structure
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Base Subscription Price</span>
+                    <span className="font-mono font-black text-slate-900 text-base">
+                      ₹{selectedPlan.price.toLocaleString("en-IN")}.00
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Cadence Frequency</span>
+                    <span className="font-bold text-[#714B67] uppercase">{selectedPlan.frequency}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Free Trial Days</span>
+                    <span className="font-bold text-slate-900">
+                      {selectedPlan.trialDays > 0 ? `${selectedPlan.trialDays} Days Complimentary` : "No Free Trial"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Month-End Leap Calculation</span>
+                    <span className="font-semibold text-emerald-700">
+                      {selectedPlan.monthEndBilling ? "Active (28/29/30/31 Rollover)" : "Fixed 30-Day Span"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lifecycle Policies */}
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <div className="text-slate-900 font-bold text-xs uppercase tracking-wider border-b border-slate-200/60 pb-1.5">
+                  Customer &amp; Invoicing Lifecycle Policies
+                </div>
+                <div className="space-y-2 pt-1 text-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span>Self-Service Customer Pause Allowed:</span>
+                    <span className={`font-bold ${selectedPlan.pauseAllowed ? "text-emerald-700" : "text-rose-600"}`}>
+                      {selectedPlan.pauseAllowed ? "Permitted" : "Prohibited"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Early Contract Termination / Closure:</span>
+                    <span className={`font-bold ${selectedPlan.earlyClosureAllowed ? "text-emerald-700" : "text-rose-600"}`}>
+                      {selectedPlan.earlyClosureAllowed ? "Permitted without penalty" : "Manual Review Required"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Auto-Close on Failed Billing:</span>
+                    <span className="font-semibold text-slate-900">
+                      {selectedPlan.autoClose ? "Auto-Closes after 3 failed webhook retries" : "Remains active in Dunning queue"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedPlan(null)}
+              >
+                Close
+              </Button>
+              <Link href="/admin/subscriptions/new">
+                <Button size="sm" className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs">
+                  Create Subscription With Plan &rarr;
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Plan Modal */}
       {isModalOpen && (
@@ -298,7 +425,7 @@ export default function PlansPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Enterprise Cloud Suite"
+                  placeholder="e.g. Enterprise Cloud Annual"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
@@ -307,12 +434,13 @@ export default function PlansPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Plan Code / SKU</label>
+                  <label className="block font-bold text-slate-700 mb-1">Plan Code / SKU *</label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g. PLAN-ENT-ANNUAL"
                     value={formCode}
-                    onChange={(e) => setFormCode(e.target.value)}
+                    onChange={(e) => setFormCode(e.target.value.toUpperCase())}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                   />
                 </div>
@@ -323,17 +451,17 @@ export default function PlansPage() {
                     onChange={(e) => setFormFrequency(e.target.value as any)}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                   >
-                    <option value="MONTHLY">MONTHLY (Every Month)</option>
-                    <option value="YEARLY">YEARLY (Annual Recurring)</option>
-                    <option value="QUARTERLY">QUARTERLY (Every 3 Months)</option>
-                    <option value="WEEKLY">WEEKLY (Every 7 Days)</option>
+                    <option value="MONTHLY">MONTHLY</option>
+                    <option value="YEARLY">YEARLY</option>
+                    <option value="WEEKLY">WEEKLY</option>
+                    <option value="DAILY">DAILY</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Recurring Price (₹ INR) *</label>
+                  <label className="block font-bold text-slate-700 mb-1">Recurring Price (₹) *</label>
                   <input
                     type="number"
                     min="0"
@@ -356,20 +484,18 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Plan Description</label>
+                <label className="block font-bold text-slate-700 mb-1">Description</label>
                 <textarea
                   rows={2}
-                  placeholder="Outline feature inclusions, user seats, and service terms..."
+                  placeholder="Summary of modules and SLA included..."
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                 />
               </div>
 
-              <div className="border-t border-slate-100 pt-3 space-y-2">
-                <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] block">
-                  Lifecycle Policies &amp; Permissions
-                </span>
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <span className="font-bold text-slate-700 block">Lifecycle Rules:</span>
 
                 <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
                   <input

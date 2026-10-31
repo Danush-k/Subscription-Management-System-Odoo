@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,10 @@ import {
   CheckCircle2,
   ShieldCheck,
   Building,
+  Plus,
+  X,
+  Info,
+  ArrowRight,
 } from "lucide-react";
 
 interface TaxRule {
@@ -67,6 +71,7 @@ export default function TaxesPage() {
   const [taxes, setTaxes] = useState<TaxRule[]>(INITIAL_TAXES);
   const [calcAmount, setCalcAmount] = useState<number>(10000);
   const [selectedTax, setSelectedTax] = useState<string>("tax-1");
+  const [selectedTaxRule, setSelectedTaxRule] = useState<TaxRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
@@ -96,7 +101,7 @@ export default function TaxesPage() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchTaxes();
   }, []);
 
@@ -152,7 +157,6 @@ export default function TaxesPage() {
       computedTax = (calcAmount * activeTax.rate) / 100;
       finalGross = taxableBase + computedTax;
     } else {
-      // Inclusive: Tax = Gross - (Gross / (1 + Rate))
       taxableBase = calcAmount / (1 + activeTax.rate / 100);
       computedTax = calcAmount - taxableBase;
       finalGross = calcAmount;
@@ -160,7 +164,7 @@ export default function TaxesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
@@ -172,7 +176,7 @@ export default function TaxesPage() {
                 Tax Engine &amp; Compliance Rules
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes.
+                Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes. Click any row for details.
               </p>
             </div>
           </div>
@@ -202,25 +206,25 @@ export default function TaxesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Input Amount (₹ INR)
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Base Line Subtotal (₹)
               </label>
               <input
                 type="number"
                 value={calcAmount}
                 onChange={(e) => setCalcAmount(Number(e.target.value) || 0)}
-                className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] font-mono"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#714B67]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Select Tax Rule
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Applied Tax Schedule
               </label>
               <select
                 value={selectedTax}
                 onChange={(e) => setSelectedTax(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67]"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#714B67]"
               >
                 {taxes.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -230,47 +234,55 @@ export default function TaxesPage() {
               </select>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span>Taxable Base:</span>
-                <span className="font-mono font-bold">
-                  ₹{taxableBase.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                </span>
-              </div>
-              <div className="flex justify-between text-[#714B67]">
-                <span>Tax Amount ({activeTax ? activeTax.rate : 0}%):</span>
-                <span className="font-mono font-bold">
-                  ₹{computedTax.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                </span>
-              </div>
-              <div className="border-t border-slate-200 pt-1 flex justify-between font-black text-slate-900 text-sm">
-                <span>Gross Invoice Total:</span>
-                <span className="font-mono">
-                  ₹{finalGross.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                </span>
-              </div>
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex flex-col justify-center">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Resulting Gross Total
+              </span>
+              <span className="text-xl font-black text-slate-900 font-mono">
+                ₹{finalGross.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             </div>
           </div>
+
+          {activeTax && (
+            <div className="p-3 bg-purple-50/40 rounded-xl border border-purple-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-600">Calculated Tax Amount:</span>
+                <span className="font-mono font-bold text-[#714B67] text-sm">
+                  ₹{computedTax.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-slate-400">({activeTax.rate}% {activeTax.type})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-600">Jurisdiction:</span>
+                <span className="font-bold text-slate-800">{activeTax.jurisdiction}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Taxes Table */}
+        {/* Taxes Table with Clickable Rows */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 font-semibold text-xs uppercase border-b border-slate-200">
                 <tr>
                   <th className="py-3.5 px-6">Tax Code</th>
-                  <th className="py-3.5 px-6">Tax Rule Name</th>
-                  <th className="py-3.5 px-6">Rate</th>
-                  <th className="py-3.5 px-6">Calculation Type</th>
+                  <th className="py-3.5 px-6">Rule Description</th>
+                  <th className="py-3.5 px-6">Rate %</th>
+                  <th className="py-3.5 px-6">Type</th>
                   <th className="py-3.5 px-6">Jurisdiction</th>
                   <th className="py-3.5 px-6">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {taxes.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-6 font-mono font-bold text-slate-900 text-xs">
+                  <tr
+                    key={t.id}
+                    onClick={() => setSelectedTaxRule(t)}
+                    className="hover:bg-purple-50/20 cursor-pointer transition-colors group"
+                  >
+                    <td className="py-4 px-6 font-mono font-bold text-slate-900 text-xs group-hover:text-[#714B67] transition-colors">
                       {t.code}
                     </td>
                     <td className="py-4 px-6 font-semibold text-slate-900">{t.name}</td>
@@ -299,6 +311,93 @@ export default function TaxesPage() {
           </div>
         </div>
       </main>
+
+      {/* Tax Rule Detailed View Modal */}
+      {selectedTaxRule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <Percent className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-slate-900 text-lg">{selectedTaxRule.name}</h3>
+                    <Badge variant="active">{selectedTaxRule.status}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono">{selectedTaxRule.code}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedTaxRule(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2.5">
+                <div className="text-slate-900 font-bold text-xs uppercase tracking-wider border-b border-slate-200/60 pb-1.5">
+                  Tax Calculation Parameters
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Applied Percentage</span>
+                    <span className="font-mono font-black text-slate-900 text-lg">
+                      {selectedTaxRule.rate}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Calculation Logic</span>
+                    <span className={`font-bold px-2 py-0.5 rounded text-xs inline-block ${
+                      selectedTaxRule.type === "EXCLUSIVE" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"
+                    }`}>
+                      {selectedTaxRule.type}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Tax Jurisdiction</span>
+                    <span className="font-semibold text-slate-900">{selectedTaxRule.jurisdiction}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Compliance Lock</span>
+                    <span className="font-semibold text-emerald-700">Audit-Safe Freeze Active</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed">
+                <span className="font-bold text-slate-900 block mb-1">Execution Rule:</span>
+                {selectedTaxRule.type === "EXCLUSIVE"
+                  ? `Subtotal line items are taxed at ${selectedTaxRule.rate}%, and the resulting tax is added onto the invoice total.`
+                  : `Line item rates are inclusive of ${selectedTaxRule.rate}% tax. Base amounts are back-calculated as (Price / ${(1 + selectedTaxRule.rate/100).toFixed(4)}).`}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedTaxRule(null)}
+              >
+                Close
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSelectedTax(selectedTaxRule.id);
+                  setSelectedTaxRule(null);
+                }}
+                className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs"
+              >
+                Test in Simulator &rarr;
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Tax Rule Modal */}
       {isModalOpen && (

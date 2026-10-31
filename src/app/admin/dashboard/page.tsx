@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -29,135 +29,151 @@ import {
   PlayCircle,
   ChevronRight,
   ShieldAlert,
+  Loader2,
+  X,
+  Eye,
+  Info,
 } from "lucide-react";
 
+interface DashboardMetrics {
+  totalCustomers: number;
+  totalProducts: number;
+  totalPlans: number;
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  pausedSubscriptions: number;
+  closedSubscriptions: number;
+  totalInvoices: number;
+  revenueCollected: number;
+  outstandingAmount: number;
+  overdueInvoices: number;
+  overdueAmount: number;
+  mrr: number;
+  arr: number;
+}
+
+interface DashboardSubscription {
+  id: string;
+  dbId: string;
+  customer: string;
+  companyName?: string;
+  plan: string;
+  variant: string;
+  amount: string;
+  rawAmount: number;
+  cadence: string;
+  nextBilling: string;
+  status: "ACTIVE" | "PAUSED" | "CLOSED" | "CONFIRMED" | "DRAFT";
+}
+
+interface DashboardInvoice {
+  id: string;
+  dbId: string;
+  customer: string;
+  date: string;
+  dueDate: string;
+  amount: string;
+  paid: string;
+  status: "PAID" | "CONFIRMED" | "OVERDUE" | "DRAFT" | "CANCELLED";
+}
+
 export default function AdminDashboardPage() {
+  const [loading, setLoading] = useState(true);
   const [billingRunning, setBillingRunning] = useState(false);
   const [billingResult, setBillingResult] = useState<string | null>(null);
 
-  const [metrics, setMetrics] = useState({
-    totalCustomers: 24,
-    totalProducts: 12,
-    totalPlans: 6,
-    totalSubscriptions: 38,
-    activeSubscriptions: 29,
-    pausedSubscriptions: 4,
-    closedSubscriptions: 5,
-    totalInvoices: 86,
-    totalPayments: 79,
-    revenueCollected: 1485600.0,
-    outstandingAmount: 182400.0,
-    overdueInvoices: 3,
-    overdueAmount: 54000.0,
-    mrr: 248000.0,
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    totalCustomers: 0,
+    totalProducts: 0,
+    totalPlans: 0,
+    totalSubscriptions: 0,
+    activeSubscriptions: 0,
+    pausedSubscriptions: 0,
+    closedSubscriptions: 0,
+    totalInvoices: 0,
+    revenueCollected: 0,
+    outstandingAmount: 0,
+    overdueInvoices: 0,
+    overdueAmount: 0,
+    mrr: 0,
+    arr: 0,
   });
 
-  const [subscriptionsList, setSubscriptionsList] = useState([
-    {
-      id: "SUB-2026-0042",
-      customer: "SSN Technology Labs",
-      plan: "Enterprise Cloud Suite",
-      variant: "Odoo Enterprise Edition",
-      amount: "₹1,20,000.00",
-      cadence: "Annual",
-      nextBilling: "15 Jan 2027",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
-    },
-    {
-      id: "SUB-2026-0041",
-      customer: "Kalyan Retailers LLP",
-      plan: "Odoo Business Suite",
-      variant: "Standard Cloud Tier",
-      amount: "₹18,500.00",
-      cadence: "Monthly",
-      nextBilling: "01 Nov 2026",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
-    },
-    {
-      id: "SUB-2026-0040",
-      customer: "AeroDynamics Corp",
-      plan: "Growth Monthly Tier",
-      variant: "SAP Migration Edition",
-      amount: "₹8,400.00",
-      cadence: "Monthly",
-      nextBilling: "10 Nov 2026",
-      status: "PAUSED" as "ACTIVE" | "PAUSED" | "CLOSED",
-    },
-    {
-      id: "SUB-2026-0039",
-      customer: "Zenith Financials Ltd",
-      plan: "Standard Core License",
-      variant: "Standard Cloud Tier",
-      amount: "₹24,000.00",
-      cadence: "Monthly",
-      nextBilling: "15 Nov 2026",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
-    },
-  ]);
+  const [subscriptionsList, setSubscriptionsList] = useState<DashboardSubscription[]>([]);
+  const [invoicesList, setInvoicesList] = useState<DashboardInvoice[]>([]);
 
-  const [invoicesList, setInvoicesList] = useState([
-    {
-      id: "INV-2026-0086",
-      customer: "SSN Technology Labs Pvt Ltd",
-      date: "31 Oct 2026",
-      dueDate: "15 Nov 2026",
-      amount: "₹1,20,000.00",
-      status: "PAID" as const,
-    },
-    {
-      id: "INV-2026-0085",
-      customer: "Kalyan Retailers LLP",
-      date: "30 Oct 2026",
-      dueDate: "14 Nov 2026",
-      amount: "₹18,500.00",
-      status: "CONFIRMED" as const,
-    },
-    {
-      id: "INV-2026-0084",
-      customer: "Apex Logistics & Supply",
-      date: "15 Oct 2026",
-      dueDate: "25 Oct 2026",
-      amount: "₹35,500.00",
-      status: "OVERDUE" as const,
-    },
-    {
-      id: "INV-2026-0083",
-      customer: "Digital Dynamics Corp",
-      date: "28 Oct 2026",
-      dueDate: "12 Nov 2026",
-      amount: "₹14,200.00",
-      status: "PAID" as const,
-    },
-  ]);
+  // Detailed view modal state
+  const [selectedSub, setSelectedSub] = useState<DashboardSubscription | null>(null);
+  const [selectedInv, setSelectedInv] = useState<DashboardInvoice | null>(null);
 
-  const handleToggleSubStatus = (subId: string) => {
-    setSubscriptionsList((prev) =>
-      prev.map((sub) => {
-        if (sub.id === subId) {
-          const next = sub.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
-          setBillingResult(`Subscription ${subId} state toggled to ${next}!`);
-          return { ...sub, status: next };
-        }
-        return sub;
-      })
-    );
+  const fetchDashboardData = async () => {
+    try {
+      const res = await fetch("/api/admin/dashboard", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.metrics) setMetrics(data.metrics);
+        if (data.recentSubscriptions) setSubscriptionsList(data.recentSubscriptions);
+        if (data.recentInvoices) setInvoicesList(data.recentInvoices);
+      }
+    } catch (err) {
+      console.error("Failed to load dashboard data", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const triggerBillingEngine = () => {
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const handleToggleSubStatus = async (sub: DashboardSubscription, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const action = sub.status === "ACTIVE" ? "PAUSE" : "RESUME";
+
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${sub.dbId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update subscription status");
+      }
+
+      setBillingResult(`Subscription ${sub.id} successfully updated to ${action === "PAUSE" ? "PAUSED" : "ACTIVE"}!`);
+      setTimeout(() => setBillingResult(null), 5000);
+      await fetchDashboardData();
+      if (selectedSub && selectedSub.id === sub.id) {
+        setSelectedSub((prev) => (prev ? { ...prev, status: action === "PAUSE" ? "PAUSED" : "ACTIVE" } : null));
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to transition status");
+    }
+  };
+
+  const triggerBillingEngine = async () => {
     setBillingRunning(true);
     setBillingResult(null);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/admin/billing/run", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBillingResult(data.message || "Automated recurring billing run completed successfully.");
+        await fetchDashboardData();
+      } else {
+        setBillingResult(data.error || "Billing run error.");
+      }
+    } catch (err) {
+      setBillingResult("Recurring billing execution failed.");
+    } finally {
       setBillingRunning(false);
-      setBillingResult(
-        "Automated recurring billing run complete: 3 subscriptions renewed, 3 invoices posted with zero duplicates."
-      );
-      setMetrics((prev) => ({
-        ...prev,
-        totalInvoices: prev.totalInvoices + 3,
-        outstandingAmount: prev.outstandingAmount + 42000,
-      }));
-    }, 1000);
+      setTimeout(() => setBillingResult(null), 6000);
+    }
   };
 
   return (
@@ -178,8 +194,9 @@ export default function AdminDashboardPage() {
                 Financial Operations &amp; Subscription Cadence
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Executive Overview
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1 flex items-center gap-3">
+              <span>Executive Overview</span>
+              {loading && <Loader2 className="w-5 h-5 animate-spin text-[#714B67]" />}
             </h1>
           </div>
 
@@ -192,7 +209,7 @@ export default function AdminDashboardPage() {
               className="gap-2 font-bold text-xs bg-white hover:bg-slate-50 text-slate-800 border-slate-300 rounded-xl transition-all active:scale-95 shadow-2xs"
             >
               <Play className="w-3.5 h-3.5 text-[#714B67] fill-[#714B67]" />
-              <span>{billingRunning ? "Processing..." : "Run Recurring Billing"}</span>
+              <span>{billingRunning ? "Processing Billing..." : "Run Recurring Billing"}</span>
             </Button>
 
             <Link href="/admin/subscriptions/new">
@@ -256,7 +273,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* 4 Professional Financial & Operational Cadence KPI Cards (Odoo / Zoho Books style) */}
+        {/* 4 Professional Financial & Operational Cadence KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: MRR */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
@@ -274,9 +291,11 @@ export default function AdminDashboardPage() {
             <div className="mt-2.5 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
                 <Sparkles className="w-3 h-3" />
-                <span>+14.2% MoM</span>
+                <span>Active Run Rate</span>
               </span>
-              <span className="text-[11px] text-slate-400">ARR ₹29.76L</span>
+              <span className="text-[11px] text-slate-400">
+                ARR ₹{((metrics.arr || metrics.mrr * 12) / 100000).toFixed(2)}L
+              </span>
             </div>
           </div>
 
@@ -291,13 +310,13 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              ₹{metrics.revenueCollected.toLocaleString("en-IN")}
+              ₹{metrics.revenueCollected.toLocaleString("en-IN")}.00
             </div>
             <div className="mt-2.5 flex items-center gap-2">
               <span className="inline-flex items-center text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                {metrics.totalPayments} Settled
+                {metrics.totalInvoices} Invoices
               </span>
-              <span className="text-[11px] text-slate-400">100% Reconciled</span>
+              <span className="text-[11px] text-slate-400">Database Verified</span>
             </div>
           </div>
 
@@ -312,13 +331,13 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              ₹{metrics.outstandingAmount.toLocaleString("en-IN")}
+              ₹{metrics.outstandingAmount.toLocaleString("en-IN")}.00
             </div>
             <div className="mt-2.5 flex items-center gap-2">
               <span className="inline-flex items-center text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
                 {metrics.overdueInvoices} Overdue
               </span>
-              <span className="text-[11px] text-slate-400">Across {metrics.totalInvoices} Invoices</span>
+              <span className="text-[11px] text-slate-400">Total Unpaid</span>
             </div>
           </div>
 
@@ -340,12 +359,14 @@ export default function AdminDashboardPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>{metrics.activeSubscriptions} Active</span>
               </span>
-              <span className="text-[11px] text-slate-400">{metrics.pausedSubscriptions} Paused &bull; {metrics.closedSubscriptions} Closed</span>
+              <span className="text-[11px] text-slate-400">
+                {metrics.pausedSubscriptions} Paused &bull; {metrics.closedSubscriptions} Closed
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Minimalist Odoo-Style Quick Launchpad: Clean, compact 12 vector glyph icons */}
+        {/* Minimalist Quick Launchpad */}
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
@@ -361,7 +382,6 @@ export default function AdminDashboardPage() {
             </span>
           </div>
 
-          {/* Sleek, compact 12-icon grid with custom Odoo vector graphics from main page */}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-3 sm:gap-4 pt-1">
             {BRIGHTLOOP_APPS.map((app) => (
               <Link
@@ -381,7 +401,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Operational Queues: 2 Elevated Zoho Books Tables */}
+        {/* Operational Queues: 2 Elevated Zoho Books Tables with Clickable Detailed View */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Table 1: Recent Active Subscriptions */}
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col justify-between">
@@ -389,7 +409,7 @@ export default function AdminDashboardPage() {
               <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">Active Subscription Agreements</h3>
-                  <p className="text-xs text-slate-400">Live agreement states and recurrence schedules</p>
+                  <p className="text-xs text-slate-400">Click any agreement to inspect comprehensive terms</p>
                 </div>
                 <Link
                   href="/admin/subscriptions"
@@ -401,63 +421,74 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="divide-y divide-slate-100 text-xs">
-                {subscriptionsList.map((sub) => {
-                  const isActive = sub.status === "ACTIVE";
-                  return (
-                    <div
-                      key={sub.id}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-900">{sub.id}</span>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}
-                          >
+                {subscriptionsList.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    No subscriptions in database yet.
+                  </div>
+                ) : (
+                  subscriptionsList.map((sub) => {
+                    const isActive = sub.status === "ACTIVE";
+                    return (
+                      <div
+                        key={sub.id}
+                        onClick={() => setSelectedSub(sub)}
+                        className="p-4 flex items-center justify-between hover:bg-purple-50/30 cursor-pointer transition-colors group"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-900 group-hover:text-[#714B67] transition-colors">
+                              {sub.id}
+                            </span>
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                isActive
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
                               }`}
-                            />
-                            {sub.status}
-                          </span>
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                                }`}
+                              />
+                              {sub.status}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">{sub.customer}</p>
+                          <p className="text-[11px] text-slate-500">
+                            {sub.plan} &bull; Next: {sub.nextBilling}
+                          </p>
                         </div>
-                        <p className="text-xs font-bold text-slate-800">{sub.customer}</p>
-                        <p className="text-[11px] text-slate-500">
-                          {sub.plan} &bull; Next: {sub.nextBilling}
-                        </p>
-                      </div>
 
-                      <div className="text-right space-y-1.5">
-                        <span className="text-sm font-black text-slate-900 font-mono block">
-                          {sub.amount}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-[11px] font-bold text-slate-600 hover:text-[#714B67] gap-1 px-2"
-                          onClick={() => handleToggleSubStatus(sub.id)}
-                        >
-                          {isActive ? (
-                            <>
-                              <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Pause</span>
-                            </>
-                          ) : (
-                            <>
-                              <PlayCircle className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Resume</span>
-                            </>
-                          )}
-                        </Button>
+                        <div className="text-right space-y-1.5">
+                          <span className="text-sm font-black text-slate-900 font-mono block">
+                            {sub.amount}
+                          </span>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-[11px] font-bold text-slate-600 hover:text-[#714B67] gap-1 px-2"
+                              onClick={(e) => handleToggleSubStatus(sub, e)}
+                            >
+                              {isActive ? (
+                                <>
+                                  <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
+                                  <span>Pause</span>
+                                </>
+                              ) : (
+                                <>
+                                  <PlayCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Resume</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -477,7 +508,7 @@ export default function AdminDashboardPage() {
               <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">Recent Invoices &amp; Billing Cycles</h3>
-                  <p className="text-xs text-slate-400">Automated cycle runs and payment settlements</p>
+                  <p className="text-xs text-slate-400">Click any invoice to view detailed ledger entry</p>
                 </div>
                 <Link
                   href="/admin/invoices"
@@ -489,48 +520,49 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="divide-y divide-slate-100 text-xs">
-                {invoicesList.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900">{inv.id}</span>
-                        <Badge
-                          variant={
-                            inv.status === "PAID"
-                              ? "paid"
-                              : inv.status === "OVERDUE"
-                              ? "overdue"
-                              : "confirmed"
-                          }
-                        >
-                          {inv.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs font-bold text-slate-800">{inv.customer}</p>
-                      <p className="text-[11px] text-slate-500">Due: {inv.dueDate}</p>
-                    </div>
-
-                    <div className="text-right space-y-1.5">
-                      <span className="text-sm font-black text-slate-900 font-mono block">
-                        {inv.amount}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-[11px] font-bold text-slate-600 hover:text-slate-900 gap-1 px-2"
-                        onClick={() =>
-                          setBillingResult(`Tax invoice receipt downloaded for ${inv.id}.`)
-                        }
-                      >
-                        <Download className="w-3 h-3" />
-                        <span>PDF</span>
-                      </Button>
-                    </div>
+                {invoicesList.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    No invoices generated yet.
                   </div>
-                ))}
+                ) : (
+                  invoicesList.map((inv) => (
+                    <div
+                      key={inv.id}
+                      onClick={() => setSelectedInv(inv)}
+                      className="p-4 flex items-center justify-between hover:bg-purple-50/30 cursor-pointer transition-colors group"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900 group-hover:text-[#714B67] transition-colors">
+                            {inv.id}
+                          </span>
+                          <Badge
+                            variant={
+                              inv.status === "PAID"
+                                ? "paid"
+                                : inv.status === "OVERDUE"
+                                ? "overdue"
+                                : "confirmed"
+                            }
+                          >
+                            {inv.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">{inv.customer}</p>
+                        <p className="text-[11px] text-slate-500">Date: {inv.date} &bull; Due: {inv.dueDate}</p>
+                      </div>
+
+                      <div className="text-right space-y-1.5">
+                        <span className="text-sm font-black text-slate-900 font-mono block">
+                          {inv.amount}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block font-mono">
+                          Paid: {inv.paid}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -545,6 +577,165 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Subscription Detail Modal */}
+      {selectedSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{selectedSub.id}</h3>
+                  <p className="text-xs text-slate-400">Subscription Contract Overview</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedSub(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 border border-slate-100">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Customer:</span>
+                  <span className="font-bold text-slate-900">{selectedSub.customer}</span>
+                </div>
+                {selectedSub.companyName && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Company:</span>
+                    <span className="font-semibold text-slate-800">{selectedSub.companyName}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Status:</span>
+                  <Badge variant={selectedSub.status === "ACTIVE" ? "active" : "paused"}>
+                    {selectedSub.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 border border-slate-100">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Plan:</span>
+                  <span className="font-bold text-slate-900">{selectedSub.plan}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Edition / Variant:</span>
+                  <span className="font-semibold text-slate-800">{selectedSub.variant}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Billing Cadence:</span>
+                  <span className="font-semibold text-slate-800">{selectedSub.cadence}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Recurring Price:</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm">{selectedSub.amount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Next Scheduled Billing:</span>
+                  <span className="font-mono font-semibold text-[#714B67]">{selectedSub.nextBilling}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => handleToggleSubStatus(selectedSub, e)}
+                className="font-bold text-xs"
+              >
+                {selectedSub.status === "ACTIVE" ? "Pause Subscription" : "Resume Subscription"}
+              </Button>
+              <Link href={`/admin/invoices?sub=${selectedSub.id}`}>
+                <Button size="sm" className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs">
+                  View Invoices &rarr;
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Detail Modal */}
+      {selectedInv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{selectedInv.id}</h3>
+                  <p className="text-xs text-slate-400">Invoice Ledger Summary</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedInv(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 border border-slate-100">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Account / Customer:</span>
+                  <span className="font-bold text-slate-900">{selectedInv.customer}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Invoice Status:</span>
+                  <Badge variant={selectedInv.status === "PAID" ? "paid" : selectedInv.status === "OVERDUE" ? "overdue" : "confirmed"}>
+                    {selectedInv.status}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Invoice Issue Date:</span>
+                  <span className="font-mono text-slate-800">{selectedInv.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Payment Due Date:</span>
+                  <span className="font-mono text-slate-800">{selectedInv.dueDate}</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 border border-slate-100">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Total Billed:</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm">{selectedInv.amount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Paid Amount:</span>
+                  <span className="font-mono font-semibold text-emerald-600">{selectedInv.paid}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedInv(null)}
+              >
+                Close
+              </Button>
+              <Link href="/admin/invoices">
+                <Button size="sm" className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs">
+                  Open Invoicing Ledger &rarr;
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

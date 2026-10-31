@@ -492,11 +492,17 @@ export default function InvoicesPage() {
                     const balanceDue = inv.totalAmount - inv.paidAmount;
                     const isPaid = inv.status === "PAID";
                     const isOverdue = inv.status === "OVERDUE";
-
-                  return (
-                    <tr
+                    return (
+                      <tr
                       key={inv.id}
-                      className="hover:bg-slate-50/80 transition-colors group"
+                      onClick={() => setSelectedInvoice(inv)}
+                      className={`hover:bg-purple-50/20 cursor-pointer transition-colors relative ${
+                        isPaid
+                          ? "border-l-4 border-l-emerald-500"
+                          : isOverdue
+                          ? "border-l-4 border-l-rose-500"
+                          : "border-l-4 border-l-amber-400"
+                      }`}
                     >
                       <td className="py-4 px-5 font-mono font-bold text-slate-900">
                         {inv.invoiceNumber}
@@ -563,7 +569,10 @@ export default function InvoicesPage() {
                           </button>
                           {balanceDue > 0 && (
                             <button
-                              onClick={() => handleRegisterPayment(inv)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRegisterPayment(inv);
+                              }}
                               className="px-2.5 py-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-2xs transition-all active:scale-95 flex items-center gap-1"
                               title="Register Payment"
                             >
@@ -575,7 +584,8 @@ export default function InvoicesPage() {
                       </td>
                     </tr>
                   );
-                }))}
+                })
+              )}
               </tbody>
             </table>
           </div>
