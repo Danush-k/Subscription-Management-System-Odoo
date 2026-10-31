@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+
+    /* Odoo deep plum purple as brand primary */
+    --primary: 316 20% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 316 15% 95%;
+    --secondary-foreground: 316 25% 25%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 316 18% 92%;
+    --accent-foreground: 316 25% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 316 20% 37%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 240 10% 7%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 316 35% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 240 5% 18%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 316 35% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Odoo-style highlight marker */
+.odoo-highlight {
+  position: relative;
+  display: inline-block;
+  z-index: 1;
+}
+.odoo-highlight::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 2px;
+  height: 40%;
+  background: #FBBF24;
+  opacity: 0.45;
+  border-radius: 4px;
+  transform: rotate(-1deg);
+  z-index: -1;
+}
+
+/* Zoho-style scribble underline */
+.zoho-underline {
+  text-decoration: underline;
+  text-decoration-color: #38BDF8;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
