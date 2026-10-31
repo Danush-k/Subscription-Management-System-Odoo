@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIE_NAME } from "./src/lib/auth";
+import { AUTH_COOKIE_NAME } from "./lib/auth";
 
 const protectedRoutes = [
   { prefix: "/admin", roles: ["ADMIN"] },
