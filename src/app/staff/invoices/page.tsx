@@ -94,7 +94,7 @@ export default function StaffInvoicesPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-20">
       <PortalNav portalType="staff" portalTitle="Staff Operations Portal" userName="Staff User" userRole="Invoice Operations" companyName="Brightloop Enterprise Ops" />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="dashboard-container pt-8 space-y-6">
         <div>
           <Link href="/staff/dashboard" className="inline-flex items-center gap-1 text-xs font-bold text-[#714B67] mb-3"><ArrowLeft className="w-3.5 h-3.5" /> Back to dashboard</Link>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Invoice &amp; Payment Operations</h1>
