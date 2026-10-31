@@ -36,7 +36,7 @@ export function BrightloopLogo({
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Precision Vector Emblem - Interlocking Subscription Recurrence Loops */}
+      {/* Precision Vector Emblem - Interlocking Subscription Loops */}
       <div className={`relative ${iconSizes[size]} shrink-0 transition-transform hover:scale-105 duration-200`}>
         <svg
           viewBox="0 0 44 44"
@@ -51,9 +51,9 @@ export function BrightloopLogo({
               <stop offset="100%" stopColor="#54304D" />
             </linearGradient>
             <linearGradient id="blLoopGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#F59E0B" />
-              <stop offset="50%" stopColor="#FBBF24" />
-              <stop offset="100%" stopColor="#FCD34D" />
+              <stop offset="0%" stopColor="#71717A" />
+              <stop offset="50%" stopColor="#94A3B8" />
+              <stop offset="100%" stopColor="#CBD5E1" />
             </linearGradient>
           </defs>
 
@@ -64,12 +64,12 @@ export function BrightloopLogo({
             width="40"
             height="40"
             rx="12"
-            fill={isLight ? "rgba(255, 255, 255, 0.14)" : "url(#blLoopGrad1)"}
-            stroke={isLight ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.2)"}
+            fill={isLight ? "rgba(255, 255, 255, 0.16)" : "url(#blLoopGrad1)"}
+            stroke={isLight ? "rgba(255, 255, 255, 0.35)" : "rgba(255, 255, 255, 0.2)"}
             strokeWidth="1.2"
           />
 
-          {/* Dynamic Interlocking Infinity Loop */}
+          {/* Dynamic Interlocking Infinity Loop with Grey Secondary */}
           <path
             d="M15 17C12.8 17 11 18.8 11 21C11 23.2 12.8 25 15 25C17.5 25 20.5 21 23 19C25.5 17 28.5 17 30.5 18.5C32.5 20 33 22 33 23C33 25.2 31.2 27 29 27C26.5 27 23.5 23 21 21"
             stroke="url(#blLoopGrad2)"
@@ -80,39 +80,36 @@ export function BrightloopLogo({
 
           {/* Inner Accent Rings */}
           <circle cx="16" cy="21" r="2.2" fill="#FFFFFF" opacity="0.95" />
-          <circle cx="28" cy="23" r="2" fill="#FBBF24" />
+          <circle cx="28" cy="23" r="2" fill="#94A3B8" />
         </svg>
       </div>
 
-      {/* Brand Wordmark with Capital 'B', Capital 'L', and Distinct 'oo' Color */}
+      {/* Brand Wordmark: Capital 'B', Capital 'L', and ONLY 'oo' in Grey, all others in Purple/White */}
       {showText && (
         <div className="flex items-center gap-2">
-          <div className="flex items-baseline tracking-tight font-extrabold">
+          <div className="flex items-baseline tracking-tight font-black">
+            {/* 'BrightL' in Purple (or White on dark headers) */}
             <span
               className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-white" : "text-slate-900"
+                isLight ? "text-white" : "text-[#714B67]"
               }`}
             >
-              Bright
+              BrightL
             </span>
+
+            {/* ONLY 'oo' in GREY */}
             <span
               className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-white/90" : "text-slate-800"
-              }`}
-            >
-              L
-            </span>
-            {/* Signature 'oo' color differentiation inspired by Odoo */}
-            <span
-              className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-[#FCD34D]" : "text-[#714B67]"
+                isLight ? "text-slate-300" : "text-[#71717A]"
               }`}
             >
               oo
             </span>
+
+            {/* 'p' in Purple (or White on dark headers) */}
             <span
               className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-white/90" : "text-slate-800"
+                isLight ? "text-white" : "text-[#714B67]"
               }`}
             >
               p
@@ -124,7 +121,7 @@ export function BrightloopLogo({
               className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                 isLight
                   ? "bg-white/10 text-white border-white/20"
-                  : "bg-amber-100/80 text-amber-900 border-amber-300"
+                  : "bg-purple-50 text-[#714B67] border-purple-200"
               }`}
             >
               SaaS
@@ -138,7 +135,7 @@ export function BrightloopLogo({
 
 /**
  * Pure Odoo-inspired Wordmark:
- * Capital B ('Bright'), Capital L, with geometric circular 'oo' color differentiation
+ * Capital 'B', Capital 'L', with the two 'oo's in GREY, and the rest in PURPLE (#714B67)
  */
 export function BrightLoopBrandMark({
   size = "md",
@@ -154,50 +151,13 @@ export function BrightLoopBrandMark({
     xl: "text-4xl sm:text-5xl",
   };
 
-  const loopSizes = {
-    sm: "w-6 h-4",
-    md: "w-8 h-5",
-    lg: "w-10 h-6",
-    xl: "w-12 h-7",
-  };
-
   return (
-    <div className={`inline-flex items-center gap-2 select-none ${className}`}>
-      {/* Brand Lettering: Capital 'B' Bright, Capital 'L', with Odoo-style circular 'oo' color loops */}
-      <span className={`font-black ${fontSizes[size]} tracking-tight flex items-center`}>
-        <span className="text-[#714B67]">Bright</span>
-        <span className="text-slate-800 ml-0.5 inline-flex items-center">
-          L
-          {/* Overlapping double-o loop with signature Odoo plum + amber colors */}
-          <span className="relative inline-flex items-center mx-[-1px]">
-            <svg
-              viewBox="0 0 34 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={`${loopSizes[size]} inline-block align-middle`}
-            >
-              {/* First 'o' in signature Odoo Plum */}
-              <circle
-                cx="10"
-                cy="10"
-                r="7"
-                stroke="#714B67"
-                strokeWidth="3.4"
-                fill="none"
-              />
-              {/* Second 'o' in vibrant Golden Amber */}
-              <circle
-                cx="24"
-                cy="10"
-                r="7"
-                stroke="#F59E0B"
-                strokeWidth="3.4"
-                fill="none"
-              />
-            </svg>
-          </span>
-          p
-        </span>
+    <div className={`inline-flex items-center gap-1.5 select-none ${className}`}>
+      {/* 'BrightL' in PURPLE, 'oo' in GREY, 'p' in PURPLE */}
+      <span className={`font-black ${fontSizes[size]} tracking-tight flex items-baseline`}>
+        <span className="text-[#714B67]">BrightL</span>
+        <span className="text-[#71717A]">oo</span>
+        <span className="text-[#714B67]">p</span>
       </span>
     </div>
   );

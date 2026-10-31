@@ -8,18 +8,18 @@ import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans select-none overflow-x-hidden">
-      {/* Top Navigation Bar - Professional Odoo / DayFlow Style */}
-      <header className="sticky top-0 z-50 bg-[#FDFBF7]/95 backdrop-blur-md px-6 lg:px-12 py-3.5 flex items-center justify-between border-b border-slate-200/60">
+    <div className="min-h-screen bg-[#F5F2F7] text-slate-900 flex flex-col font-sans select-none overflow-x-hidden">
+      {/* Top Navigation Bar with BrightLoop Brand */}
+      <header className="sticky top-0 z-50 bg-[#F5F2F7]/95 backdrop-blur-md px-6 lg:px-12 py-3.5 flex items-center justify-between border-b border-purple-200/60">
         <div className="flex items-center gap-10">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            {/* BrightLoop with Capital 'B', Capital 'L', and Odoo-inspired 'oo' color differentiation */}
+            {/* BrightLoop: Capital 'B', Capital 'L', with 'oo' in GREY and others in PURPLE */}
             <BrightLoopBrandMark size="md" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-700">
             <a href="#apps" className="hover:text-[#714B67] transition-colors">
-              Apps
+              Apps &amp; Modules
             </a>
             <Link href="/admin/subscriptions" className="hover:text-[#714B67] transition-colors">
               Subscriptions
@@ -55,26 +55,32 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with Headline, Yellow Highlight, and Blue Underline */}
+      {/* Hero Section with Exact Headline Requested by User */}
       <main className="flex-1">
         <section className="relative pt-14 pb-20 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.18] sm:leading-[1.12]">
-            <span className="italic font-serif">All your business on </span>
-            <span className="relative inline-block mx-1">
-              <span className="relative z-10 px-3 py-1 font-extrabold text-slate-950">
-                one platform.
+          {/* Main Headline requested by User in Image 1:
+              "Subscriptions made simple for modern businesses." */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-950 tracking-tight leading-[1.14] sm:leading-[1.12]">
+            <span>Subscriptions</span>
+            <br />
+            <span className="relative inline-block my-1">
+              <span className="relative z-10 px-4 py-0.5 font-black text-[#714B67]">
+                made simple
               </span>
-              <span className="absolute inset-0 bg-[#F59E0B] rounded-xl -rotate-1 shadow-xs -z-0 transform scale-105" />
+              {/* Lavender/Purple Highlight Box matching Image 1 */}
+              <span className="absolute inset-0 bg-[#E9D5FF] rounded-2xl -rotate-1 shadow-2xs -z-0 transform scale-105 opacity-90" />
             </span>
             <br />
-            <span className="italic font-serif">Simple, efficient, yet </span>
-            <span className="relative inline-block font-extrabold text-slate-900 underline decoration-[#38BDF8] decoration-[6px] sm:decoration-[8px] underline-offset-8">
-              affordable!
+            <span className="font-black text-slate-950">
+              for modern businesses.
             </span>
           </h1>
 
-          {/* Action Buttons & Hand-drawn Pricing Doodle matching Image 2 */}
+          <p className="mt-5 text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Automate recurring billing, lifecycle state machines, tax compliance, and client self-service in one unified enterprise system.
+          </p>
+
+          {/* Action Buttons & Hand-drawn Doodle Arrow with "ONE PLATFORM ALL SUBSCRIPTIONS" */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 relative max-w-lg mx-auto">
             <Link href="/register" className="w-full sm:w-auto">
               <Button
@@ -95,8 +101,8 @@ export default function HomePage() {
               </Button>
             </Link>
 
-            {/* Handwritten Doodle Arrow & Callout */}
-            <div className="hidden lg:flex items-start gap-1 absolute left-[102%] -top-4 text-left whitespace-nowrap">
+            {/* Handwritten Doodle Arrow & "ONE PLATFORM ALL SUBSCRIPTIONS" matching Image 2 */}
+            <div className="hidden lg:flex items-start gap-1 absolute left-[102%] -top-6 text-left whitespace-nowrap">
               {/* Curved SVG Doodle Arrow */}
               <svg
                 width="64"
@@ -104,7 +110,7 @@ export default function HomePage() {
                 viewBox="0 0 64 54"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-[#714B67] transform -rotate-12 shrink-0 mt-3"
+                className="text-[#714B67] transform -rotate-12 shrink-0 mt-2"
               >
                 <path
                   d="M10 10C25 15 45 25 50 42M50 42L42 38M50 42L53 32"
@@ -115,22 +121,22 @@ export default function HomePage() {
                 />
               </svg>
               <div className="font-handwriting text-2xl font-bold text-[#714B67] leading-tight">
-                580.00 Rs / month
+                ONE PLATFORM
                 <br />
-                <span className="text-xl text-slate-600">for ALL apps</span>
+                <span className="text-xl text-slate-700">ALL SUBSCRIPTIONS</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Curvy Color Differentiation Wave Separator matching Image 1 & Image 3 */}
+        {/* Curvy Color Differentiation Wave Separator (Distinct two-tone contrast) */}
         <div className="relative w-full">
-          {/* Smooth upward arching SVG curve creating two-tone color boundary */}
+          {/* Smooth upward arching SVG curve transitioning from lavender shaded canvas into pure white */}
           <svg
             viewBox="0 0 1440 100"
             fill="none"
             preserveAspectRatio="none"
-            className="w-full h-14 sm:h-20 md:h-24 text-white block -mb-[1px]"
+            className="w-full h-16 sm:h-22 md:h-26 text-white block -mb-[1px]"
           >
             <path
               d="M0,100 C480,15 960,15 1440,100 L1440,100 L0,100 Z"
@@ -138,10 +144,10 @@ export default function HomePage() {
             />
           </svg>
 
-          {/* 12 BrightLoop Application Modules Grid on pure white background (Image 4) */}
+          {/* 12 Dedicated BrightLoop Modules Grid on pure white background (Image 4) */}
           <div className="w-full bg-white pt-6 pb-24 px-4 sm:px-6 lg:px-8 border-b border-slate-100">
             <div id="apps" className="max-w-6xl mx-auto space-y-6">
-              <div className="text-center max-w-2xl mx-auto space-y-1 pb-4">
+              <div className="text-center max-w-2xl mx-auto space-y-1.5 pb-2">
                 <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
                   BrightLoop Enterprise Suite
                 </span>
@@ -153,7 +159,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 12 BrightLoop Modules */}
+              {/* 12 BrightLoop Modules in Odoo Visual Language */}
               <OdooAppIconGrid />
             </div>
           </div>
