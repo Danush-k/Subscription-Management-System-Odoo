@@ -43,7 +43,7 @@ export function CustomerOverviewCards({
             Active Subscriptions
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">
@@ -68,7 +68,7 @@ export function CustomerOverviewCards({
             Next Renewal
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <CalendarCheck className="w-4 h-4" />
+            <CalendarCheck className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">
@@ -88,7 +88,7 @@ export function CustomerOverviewCards({
             Monthly Run-Rate (MRR)
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">
@@ -107,7 +107,7 @@ export function CustomerOverviewCards({
         onClick={metrics.outstandingBalance > 0 ? onPayBalance : () => onSelectTab("invoices")}
         className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-2xs transition-all cursor-pointer group flex flex-col justify-between ${
           metrics.outstandingBalance > 0
-            ? "border-amber-200 bg-amber-50/20 hover:border-amber-300"
+            ? "border-[#714B67]/20 bg-[#714B67]/5 hover:border-amber-300"
             : "border-slate-200/90 hover:border-[#714B67]/40"
         }`}
       >
@@ -116,7 +116,7 @@ export function CustomerOverviewCards({
             Outstanding Due
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">
@@ -151,7 +151,7 @@ export function CustomerOverviewCards({
             Paused Services
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <PauseCircle className="w-4 h-4" />
+            <PauseCircle className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">
@@ -169,7 +169,7 @@ export function CustomerOverviewCards({
         onClick={() => onSelectTab("invoices")}
         className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-2xs transition-all cursor-pointer group flex flex-col justify-between ${
           metrics.overdueInvoices > 0
-            ? "border-rose-200 bg-rose-50/20 hover:border-rose-300"
+            ? "border-[#714B67]/20 bg-[#714B67]/5 hover:border-rose-300"
             : "border-slate-200/90 hover:border-[#714B67]/40"
         }`}
       >
@@ -178,7 +178,7 @@ export function CustomerOverviewCards({
             Overdue Invoices
           </span>
           <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-            <AlertOctagon className="w-4 h-4" />
+            <AlertOctagon className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
         <div className="mt-4">

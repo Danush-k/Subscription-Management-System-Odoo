@@ -193,7 +193,7 @@ export function SubscriptionCard({
                 size="sm"
                 className="text-xs font-semibold text-amber-700 hover:bg-amber-50 hover:border-amber-300 gap-1.5"
               >
-                <PauseCircle className="w-3.5 h-3.5" />
+                <PauseCircle className="w-3.5 h-3.5 text-[#714B67]" />
                 Pause
               </Button>
             )}
@@ -206,7 +206,7 @@ export function SubscriptionCard({
                 size="sm"
                 className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 gap-1.5"
               >
-                <PlayCircle className="w-3.5 h-3.5" />
+                <PlayCircle className="w-3.5 h-3.5 text-[#714B67]" />
                 Resume
               </Button>
             )}
