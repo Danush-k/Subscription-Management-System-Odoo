@@ -255,6 +255,29 @@ export function QuotationsSection({
                     </p>
                   </div>
 
+                  {/* Discount / Negotiation Callout */}
+                  {Number(quotation.discountAmount) > 0 ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Approved Discount Applied: -{formatCurrency(quotation.discountAmount)}</span>
+                    </div>
+                  ) : (
+                    quotation.status === "QUOTATION" && negotiations.length > 0 && (
+                      (() => {
+                        const latest = negotiations[negotiations.length - 1];
+                        if (latest?.proposedDiscount) {
+                          return (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-bold">
+                              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span>Discount Counter-Offer In Review ({latest.proposedDiscount}% Req.)</span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()
+                    )
+                  )}
+
                   {/* Proposal Value Callout */}
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-100/80 flex items-center justify-between">
                     <div>

@@ -181,6 +181,16 @@ export default function StaffDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link href="/staff/quotations">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs font-bold gap-2 px-4 py-2.5 rounded-xl"
+              >
+                <Receipt className="w-4 h-4 text-[#714B67]" />
+                <span>Quotations Pipeline</span>
+              </Button>
+            </Link>
             <Link href="/staff/subscriptions">
               <Button
                 size="sm"
@@ -212,7 +222,6 @@ export default function StaffDashboardPage() {
                 <span>Create Quotation</span>
               </Button>
             </Link>
-
           </div>
         </div>
 
@@ -336,17 +345,24 @@ export default function StaffDashboardPage() {
                       <span className="text-base font-black text-slate-900 font-mono">
                         {quo.amount}
                       </span>
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md self-start sm:self-auto">
-                        ⏳ Awaiting Customer Approval
-                      </span>
-                      <Button
-                        size="sm"
-                        className="border-[#714B67]/30 text-[#714B67] hover:bg-[#714B67]/10 text-xs font-bold px-3 py-1.5 rounded-xl shadow-2xs"
-                        variant="outline"
-                        asChild
-                      >
-                        <Link href="/staff/quotations">Reply &amp; Negotiate</Link>
-                      </Button>
+                      {quo.proposedDiscount !== undefined && quo.proposedDiscount !== null ? (
+                        <Link href="/staff/quotations">
+                          <Button
+                            size="sm"
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-2xs active:scale-95"
+                          >
+                            Review Counter-Offer
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="bg-[#714B67] hover:bg-[#5C3C54] text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-2xs active:scale-95"
+                          onClick={() => handleConvertQuotation(quo.id, quo.customer)}
+                        >
+                          Convert (Offline PO)
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))

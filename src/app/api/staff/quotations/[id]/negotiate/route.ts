@@ -15,11 +15,7 @@ export async function POST(
 
   try {
     const body = await request.json();
-    const { message, approvedDiscount } = body;
-
-    if (!message || typeof message !== "string" || !message.trim()) {
-      return NextResponse.json({ success: false, error: "Response message is required" }, { status: 400 });
-    }
+    const { action = "REPLY", message, approvedDiscount, approvedDiscountPercent } = body;
 
     const quotation = await prisma.quotation.findUnique({
       where: { id },
@@ -30,23 +26,37 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Quotation not found" }, { status: 404 });
     }
 
-    // If an approved discount was granted, adjust quotation subtotal/tax/total
-    if (approvedDiscount !== undefined && Number(approvedDiscount) >= 0) {
-      const disc = Number(approvedDiscount);
+    let discountAmountToApply = 0;
+    if (approvedDiscountPercent !== undefined && Number(approvedDiscountPercent) > 0) {
+      discountAmountToApply = (Number(quotation.subtotal) * Number(approvedDiscountPercent)) / 100;
+    } else if (approvedDiscount !== undefined && Number(approvedDiscount) > 0) {
+      discountAmountToApply = Number(approvedDiscount);
+    }
+
+    let defaultMsg = message;
+    if (action === "APPROVE") {
       const subtotal = Number(quotation.subtotal);
       const taxRate = subtotal > 0 ? (Number(quotation.taxAmount) / subtotal) : 0.18;
-      const taxableAfterDiscount = Math.max(0, subtotal - disc);
+      const taxableAfterDiscount = Math.max(0, subtotal - discountAmountToApply);
       const taxAmount = taxableAfterDiscount * taxRate;
       const totalAmount = taxableAfterDiscount + taxAmount;
 
       await prisma.quotation.update({
         where: { id: quotation.id },
         data: {
-          discountAmount: disc,
+          discountAmount: discountAmountToApply,
           taxAmount,
           totalAmount,
         },
       });
+
+      defaultMsg = message || `Sales team approved ${approvedDiscountPercent || ""}% discount (Savings: ₹${discountAmountToApply.toLocaleString("en-IN")}). Revised payable total is ₹${totalAmount.toLocaleString("en-IN")}.`;
+    } else if (action === "REJECT") {
+      defaultMsg = message || "Sales team declined the counter-offer. The standard commercial pricing on file remains valid.";
+    }
+
+    if (!defaultMsg || !defaultMsg.trim()) {
+      return NextResponse.json({ success: false, error: "Response message or action is required" }, { status: 400 });
     }
 
     const sender = session.name || "Brightloop Account Executive";
@@ -55,10 +65,12 @@ export async function POST(
         entityType: "QUOTATION",
         entityId: quotation.id,
         userId: session.userId,
-        action: "STAFF_NEGOTIATION_RESPONSE",
+        action: action === "APPROVE" ? "STAFF_DISCOUNT_APPROVED" : action === "REJECT" ? "STAFF_DISCOUNT_REJECTED" : "STAFF_NEGOTIATION_RESPONSE",
         newValues: {
-          message: message.trim(),
-          approvedDiscount: approvedDiscount !== undefined ? Number(approvedDiscount) : undefined,
+          action,
+          message: defaultMsg.trim(),
+          approvedDiscount: discountAmountToApply > 0 ? discountAmountToApply : undefined,
+          approvedDiscountPercent: approvedDiscountPercent !== undefined ? Number(approvedDiscountPercent) : undefined,
           sender,
           role: "STAFF",
           timestamp: new Date().toISOString(),
@@ -68,14 +80,14 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Staff response sent to client.",
+      message: action === "APPROVE" ? "Counter-offer approved and proposal price updated!" : action === "REJECT" ? "Counter-offer declined." : "Response sent to client.",
       entry: {
         id: log.id,
         action: log.action,
         senderName: sender,
         senderRole: "STAFF",
-        message: message.trim(),
-        approvedDiscount: approvedDiscount !== undefined ? Number(approvedDiscount) : undefined,
+        message: defaultMsg.trim(),
+        approvedDiscount: discountAmountToApply > 0 ? discountAmountToApply : undefined,
         createdAt: log.createdAt.toISOString(),
       },
     });
@@ -87,4 +99,3 @@ export async function POST(
     );
   }
 }
-

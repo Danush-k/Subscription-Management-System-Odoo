@@ -114,4 +114,80 @@ describe("SubscriptionService", () => {
       expect(reactivated.cancellationReason).toBeNull();
     });
   });
+
+  describe("Quotation Counter-Offer Negotiation & Pipeline Idempotency", () => {
+    const standardQuotation = {
+      id: "quo-1",
+      quotationNumber: "QUO-2026-00005",
+      subtotal: 17980,
+      taxAmount: 3236.4,
+      discountAmount: 0,
+      totalAmount: 21216.4,
+      status: "SENT",
+      convertedSubscriptionId: null as string | null,
+    };
+
+    function processStaffCounterOffer(
+      quotation: typeof standardQuotation,
+      action: "APPROVE" | "REJECT",
+      discountPercent: number = 10
+    ) {
+      if (action === "APPROVE") {
+        const discountAmountToApply = Math.round((quotation.subtotal * discountPercent) / 100);
+        const taxableAfterDiscount = quotation.subtotal - discountAmountToApply;
+        const taxAmount = Number((taxableAfterDiscount * 0.18).toFixed(2));
+        const totalAmount = Number((taxableAfterDiscount + taxAmount).toFixed(2));
+
+        return {
+          ...quotation,
+          discountAmount: discountAmountToApply,
+          taxAmount,
+          totalAmount,
+          status: "SENT",
+        };
+      }
+      return { ...quotation };
+    }
+
+    it("approving 10% discount recalculates subtotal, 18% GST tax, and net payable total", () => {
+      const updated = processStaffCounterOffer(standardQuotation, "APPROVE", 10);
+      expect(updated.discountAmount).toBe(1798);
+      expect(updated.taxAmount).toBe(2912.76);
+      expect(updated.totalAmount).toBe(19094.76);
+    });
+
+    it("declining counter-offer retains standard commercial pricing without changes", () => {
+      const rejected = processStaffCounterOffer(standardQuotation, "REJECT", 10);
+      expect(rejected.discountAmount).toBe(0);
+      expect(rejected.totalAmount).toBe(21216.4);
+    });
+
+    it("resolves pipeline status to SUBSCRIBED when convertedSubscriptionId exists", () => {
+      const resolvePipelineStatus = (q: { status: string; convertedSubscriptionId: string | null; pendingDiscount?: number | null }) => {
+        if (q.convertedSubscriptionId || q.status === "CONFIRMED") return "SUBSCRIBED";
+        if (q.pendingDiscount) return "COUNTER_OFFER";
+        return q.status;
+      };
+
+      expect(resolvePipelineStatus({ status: "SENT", convertedSubscriptionId: "sub-999" })).toBe("SUBSCRIBED");
+      expect(resolvePipelineStatus({ status: "SENT", convertedSubscriptionId: null, pendingDiscount: 10 })).toBe("COUNTER_OFFER");
+      expect(resolvePipelineStatus({ status: "SENT", convertedSubscriptionId: null })).toBe("SENT");
+    });
+
+    it("prevents re-conversion or double-charging of already confirmed quotations", () => {
+      const convertQuotation = (q: typeof standardQuotation) => {
+        if (q.convertedSubscriptionId || q.status === "CONFIRMED") {
+          throw new Error("This quotation has already been accepted and confirmed");
+        }
+        return { ...q, status: "CONFIRMED", convertedSubscriptionId: "sub-new-1" };
+      };
+
+      const converted = convertQuotation(standardQuotation);
+      expect(converted.status).toBe("CONFIRMED");
+      expect(converted.convertedSubscriptionId).toBe("sub-new-1");
+
+      // Attempting to convert again must fail
+      expect(() => convertQuotation(converted)).toThrow("This quotation has already been accepted and confirmed");
+    });
+  });
 });

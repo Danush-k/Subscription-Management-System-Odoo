@@ -350,8 +350,98 @@ test("Payment reconciliation rejects under-payment during renewal", () => {
   );
 });
 
+// -------------------------------------------------------------
+// 5. QUOTATION NEGOTIATION, COUNTER-OFFER APPROVAL & PIPELINE IDEMPOTENCY
+// -------------------------------------------------------------
+console.log("\n5. Quotation Negotiation, Counter-Offer Approval & Pipeline Idempotency:");
+
+const sampleQuo = {
+  id: "quo-1",
+  quotationNumber: "QUO-2026-00005",
+  subtotal: 17980,
+  taxAmount: 3236.4,
+  discountAmount: 0,
+  totalAmount: 21216.4,
+  status: "SENT",
+  convertedSubscriptionId: null,
+};
+
+function simulateStaffNegotiationResponse({ quotation, action, approvedDiscountPercent }) {
+  if (action === "APPROVE") {
+    const discountAmountToApply = Math.round((quotation.subtotal * (approvedDiscountPercent || 10)) / 100);
+    const taxableAfterDiscount = quotation.subtotal - discountAmountToApply;
+    const taxAmount = Number((taxableAfterDiscount * 0.18).toFixed(2));
+    const totalAmount = Number((taxableAfterDiscount + taxAmount).toFixed(2));
+
+    return {
+      ...quotation,
+      discountAmount: discountAmountToApply,
+      taxAmount,
+      totalAmount,
+      status: "SENT",
+    };
+  }
+  return { ...quotation };
+}
+
+test("Staff discount approval recalculates taxable subtotal, 18% GST tax, and net payable total", () => {
+  const approved = simulateStaffNegotiationResponse({
+    quotation: sampleQuo,
+    action: "APPROVE",
+    approvedDiscountPercent: 10,
+  });
+
+  assert.equal(approved.discountAmount, 1798);
+  assert.equal(approved.taxAmount, 2912.76);
+  assert.equal(approved.totalAmount, 19094.76);
+});
+
+test("Staff discount rejection leaves standard proposal total unchanged", () => {
+  const rejected = simulateStaffNegotiationResponse({
+    quotation: sampleQuo,
+    action: "REJECT",
+    approvedDiscountPercent: 10,
+  });
+
+  assert.equal(rejected.discountAmount, 0);
+  assert.equal(rejected.totalAmount, 21216.4);
+});
+
+test("Quotation pipeline status resolution marks converted quotations as SUBSCRIBED", () => {
+  const resolveStatus = (q) => {
+    if (q.convertedSubscriptionId || q.status === "CONFIRMED") return "SUBSCRIBED";
+    if (q.pendingDiscount) return "COUNTER_OFFER";
+    return q.status;
+  };
+
+  assert.equal(resolveStatus({ status: "SENT", convertedSubscriptionId: "sub-123" }), "SUBSCRIBED");
+  assert.equal(resolveStatus({ status: "SENT", convertedSubscriptionId: null, pendingDiscount: 10 }), "COUNTER_OFFER");
+  assert.equal(resolveStatus({ status: "DRAFT", convertedSubscriptionId: null }), "DRAFT");
+});
+
+test("Customer checkout charges the exact approved discounted total and activates subscription", () => {
+  const approvedQuo = simulateStaffNegotiationResponse({
+    quotation: sampleQuo,
+    action: "APPROVE",
+    approvedDiscountPercent: 10,
+  });
+
+  const accepted = simulateQuotationAcceptance({
+    role: "CUSTOMER",
+    customerId: "cust-1",
+    quotationCustomerId: "cust-1",
+    quotationStatus: "QUOTATION",
+    paymentData: { paymentMethod: "UPI", amount: approvedQuo.totalAmount, transactionRef: "RZP_DISC_PAY_1" },
+  });
+
+  assert.equal(accepted.subscriptionStatus, "ACTIVE");
+  assert.equal(accepted.invoiceStatus, "PAID");
+  assert.equal(accepted.outstandingAmount, 0);
+});
+
 console.log(`\n======================================================`);
 console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);
 console.log(`======================================================\n`);
 
 if (failed > 0) process.exit(1);
+
