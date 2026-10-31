@@ -44,7 +44,7 @@ async function verifySessionRole(token: string): Promise<string | null> {
     const valid = await crypto.subtle.verify(
       "HMAC",
       key,
-      decodeBase64Url(encodedSignature),
+      decodeBase64Url(encodedSignature).buffer as ArrayBuffer,
       new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`)
     );
     if (!valid) {

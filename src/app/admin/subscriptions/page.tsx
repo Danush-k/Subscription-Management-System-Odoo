@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Calendar,
   Building,
+  Loader2,
 } from "lucide-react";
 
 interface SubscriptionItem {
@@ -116,9 +117,30 @@ const INITIAL_SUBSCRIPTIONS: SubscriptionItem[] = [
 
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(INITIAL_SUBSCRIPTIONS);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionAlert, setActionAlert] = useState<string | null>(null);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const res = await fetch("/api/admin/subscriptions", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.subscriptions && data.subscriptions.length > 0) {
+          setSubscriptions(data.subscriptions);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load subscriptions", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
 
   const handlePauseResume = (id: string) => {
     setSubscriptions((prev) =>
@@ -178,7 +200,7 @@ export default function SubscriptionsPage() {
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6 animate-fadeIn">
+      <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         {/* Sub-header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -315,24 +337,53 @@ export default function SubscriptionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredSubscriptions.map((sub) => {
-                  const isActive = sub.status === "ACTIVE";
-                  const isPaused = sub.status === "PAUSED";
-                  const isConfirmed = sub.status === "CONFIRMED";
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-28 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-36 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-24" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-32 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-24 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-14" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-6 bg-slate-200/80 rounded-full w-20" />
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <div className="h-7 bg-slate-200/80 rounded-lg w-20 ml-auto" />
+                      </td>
+                    </tr>
+                  ))
+                ) : filteredSubscriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                      No subscriptions found matching criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSubscriptions.map((sub) => {
+                    const isActive = sub.status === "ACTIVE";
+                    const isPaused = sub.status === "PAUSED";
+                    const isConfirmed = sub.status === "CONFIRMED";
 
-                  return (
-                    <tr
-                      key={sub.id}
-                      className={`hover:bg-[#F8FAFC] transition-colors relative ${
-                        isActive
-                          ? "border-l-4 border-l-emerald-500"
-                          : isPaused
-                          ? "border-l-4 border-l-amber-400"
-                          : isConfirmed
-                          ? "border-l-4 border-l-blue-400"
-                          : "border-l-4 border-l-slate-300"
-                      }`}
-                    >
+                    return (
+                      <tr
+                        key={sub.id}
+                        className="hover:bg-slate-50/80 transition-colors group"
+                      >
                       <td className="py-4 px-5 font-mono font-bold text-slate-900">
                         {sub.subscriptionNumber}
                         <div className="text-[10px] text-slate-400 font-normal">
@@ -424,7 +475,7 @@ export default function SubscriptionsPage() {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

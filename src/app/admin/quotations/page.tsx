@@ -100,7 +100,7 @@ export default function QuotationsPage() {
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
       <AdminNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <BrightLoopModuleIcon appId="quotations" className="w-12 h-12" />

@@ -166,8 +166,8 @@ export default function AdminDashboardPage() {
       <AdminNav />
 
       {/* Clean, Minimalist Executive Workspace Header */}
-      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-5">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border-b border-slate-200/80 py-5">
+        <div className="dashboard-container flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
@@ -208,7 +208,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6 animate-fadeIn">
+      <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         {/* Billing Success Notification */}
         {billingResult && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-xs animate-slideDown">

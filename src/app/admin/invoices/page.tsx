@@ -281,12 +281,38 @@ export default function InvoicesPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
-                      <p className="mt-2 text-xs">Loading tax invoices from database...</p>
-                    </td>
-                  </tr>
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-28 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-36 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-24" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-24 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-6 bg-slate-200/80 rounded-full w-20" />
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <div className="h-7 bg-slate-200/80 rounded-lg w-20 ml-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : filteredInvoices.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
@@ -302,13 +328,7 @@ export default function InvoicesPage() {
                   return (
                     <tr
                       key={inv.id}
-                      className={`hover:bg-[#F8FAFC] transition-colors relative ${
-                        isPaid
-                          ? "border-l-4 border-l-emerald-500"
-                          : isOverdue
-                          ? "border-l-4 border-l-rose-500"
-                          : "border-l-4 border-l-amber-400"
-                      }`}
+                      className="hover:bg-slate-50/80 transition-colors group"
                     >
                       <td className="py-4 px-5 font-mono font-bold text-slate-900">
                         {inv.invoiceNumber}

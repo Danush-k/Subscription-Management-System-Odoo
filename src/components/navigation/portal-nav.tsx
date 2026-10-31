@@ -4,9 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { BrightLoopBrandMark } from "@/components/ui/logo";
 import {
-  Shield,
-  Users,
-  Sparkles,
   LogOut,
   ChevronDown,
   Building,
@@ -15,7 +12,6 @@ import {
   CreditCard,
   FileText,
   RotateCcw,
-  Grid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -35,6 +31,15 @@ export function PortalNav({
   companyName = "Subscriber",
 }: PortalNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    window.location.href = "/login";
+  };
 
   const isCustomer = portalType === "customer";
 
@@ -75,18 +80,8 @@ export function PortalNav({
           </div>
         </div>
 
-        {/* Right: Actions, Persona Switcher, Sign Out */}
+        {/* Right: User Profile & Secure Sign Out */}
         <div className="flex items-center gap-3">
-          {/* Quick Hub link */}
-          <Link
-            href="/"
-            className="hidden md:flex items-center gap-1.5 text-slate-600 hover:text-[#714B67] transition-colors text-xs font-semibold px-2.5 py-1.5 rounded-xl hover:bg-slate-100"
-          >
-            <Grid className="w-3.5 h-3.5" />
-            <span>App Hub</span>
-          </Link>
-
-          {/* Quick Workspace Switcher for Pair-Programming & Demo Testing */}
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -129,71 +124,14 @@ export function PortalNav({
                   <p className="text-[11px] text-slate-500">{userName}</p>
                 </div>
 
-                <div className="py-1">
-                  <div className="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Switch Workspace Role
-                  </div>
-
-                  <Link
-                    href="/customer/dashboard"
-                    className={`flex items-center gap-2.5 px-4 py-2 text-xs font-semibold transition-colors ${
-                      isCustomer
-                        ? "bg-[#714B67]/10 text-[#714B67] font-bold"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div className="flex-1">
-                      <div>Customer Portal</div>
-                      <div className="text-[10px] text-slate-400 font-normal">
-                        Self-Service &amp; Invoices
-                      </div>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/staff/dashboard"
-                    className={`flex items-center gap-2.5 px-4 py-2 text-xs font-semibold transition-colors ${
-                      !isCustomer
-                        ? "bg-[#714B67]/10 text-[#714B67] font-bold"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Users className="w-4 h-4 text-blue-600 shrink-0" />
-                    <div className="flex-1">
-                      <div>Staff Operations</div>
-                      <div className="text-[10px] text-slate-400 font-normal">
-                        Quotations &amp; Manual Payments
-                      </div>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/admin/dashboard"
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#714B67] transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Shield className="w-4 h-4 text-[#714B67] shrink-0" />
-                    <div className="flex-1">
-                      <div>Administrator Workspace</div>
-                      <div className="text-[10px] text-slate-400 font-normal">
-                        Full Enterprise Control
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-
-                <div className="border-t border-slate-100 pt-1 mt-1">
-                  <Link
-                    href="/login"
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
-                    onClick={() => setMenuOpen(false)}
+                <div className="pt-1.5 px-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sign Out</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}

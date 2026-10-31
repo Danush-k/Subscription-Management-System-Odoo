@@ -84,10 +84,10 @@ export function BrightloopLogo({
         </svg>
       </div>
 
-      {/* Brand Wordmark: Capital 'B', Capital 'L', and ONLY 'oo' in Grey, all others in Purple/White */}
+      {/* Brand Wordmark: Capital 'B', Capital 'L', with 'oo' styled as an INFINITY loop in GREY, and 'p' in Purple */}
       {showText && (
         <div className="flex items-center gap-2">
-          <div className="flex items-baseline tracking-tight font-black">
+          <div className="flex items-baseline tracking-tight font-black" aria-label="BrightLoop">
             {/* 'BrightL' in Purple (or White on dark headers) */}
             <span
               className={`tracking-tight ${textSizes[size]} ${
@@ -97,13 +97,14 @@ export function BrightloopLogo({
               BrightL
             </span>
 
-            {/* ONLY 'oo' in GREY */}
+            {/* 'oo' rendered as stylized INFINITY symbol in GREY */}
             <span
-              className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-slate-400 font-extrabold" : "text-[#71717A]"
+              className={`tracking-tight inline-flex items-baseline ${textSizes[size]} ${
+                isLight ? "text-slate-300 font-extrabold" : "text-[#71717A]"
               }`}
+              title="BrightLoop"
             >
-              oo
+              <InfinityLoopGlyph />
             </span>
 
             {/* 'p' in Purple (or White on dark headers) */}
@@ -134,8 +135,36 @@ export function BrightloopLogo({
 }
 
 /**
+ * Stylized Infinity Loop Vector Glyph replacing 'oo' in the brand wordmark.
+ * Uses currentColor to inherit the signature grey (#71717A / text-slate-300).
+ */
+export function InfinityLoopGlyph({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center align-baseline mx-[0.05em] select-none ${className}`}
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 28 14"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-[1.18em] h-[0.58em] overflow-visible translate-y-[-0.04em]"
+      >
+        <path
+          d="M7 2.4C4.1 2.4 2 4.4 2 7C2 9.6 4.1 11.6 7 11.6C10.2 11.6 12.5 7 14 7C15.5 7 17.8 11.6 21 11.6C23.9 11.6 26 9.6 26 7C26 4.4 23.9 2.4 21 2.4C17.8 2.4 15.5 7 14 7C12.5 7 10.2 2.4 7 2.4Z"
+          stroke="currentColor"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
+/**
  * Pure Odoo-inspired Wordmark:
- * Capital 'B', Capital 'L', with the two 'oo's in GREY (#71717A), and the rest in PURPLE (#714B67)
+ * Capital 'B', Capital 'L', with 'oo' in GREY (#71717A) styled as an infinity loop, and the rest in PURPLE (#714B67)
  */
 export function BrightLoopBrandMark({
   size = "md",
@@ -158,10 +187,20 @@ export function BrightLoopBrandMark({
 
   return (
     <div className={`inline-flex items-center gap-1.5 select-none ${className}`}>
-      {/* 'BrightL' in PURPLE (or white), 'oo' in GREY, 'p' in PURPLE (or white) */}
-      <span className={`font-black ${fontSizes[size]} tracking-tight flex items-baseline`}>
+      {/* 'BrightL' in PURPLE, 'oo' as INFINITY in GREY, 'p' in PURPLE */}
+      <span
+        className={`font-black ${fontSizes[size]} tracking-tight flex items-baseline`}
+        aria-label="BrightLoop"
+      >
         <span className={isLight ? "text-white" : "text-[#714B67]"}>BrightL</span>
-        <span className={isLight ? "text-slate-300 font-extrabold" : "text-[#71717A]"}>oo</span>
+        <span
+          className={`inline-flex items-baseline ${
+            isLight ? "text-slate-300 font-extrabold" : "text-[#71717A]"
+          }`}
+          title="BrightLoop"
+        >
+          <InfinityLoopGlyph />
+        </span>
         <span className={isLight ? "text-white" : "text-[#714B67]"}>p</span>
       </span>
     </div>
@@ -170,3 +209,4 @@ export function BrightLoopBrandMark({
 
 // Backwards-compatible alias for existing imports
 export const OdooStyleBrandMark = BrightLoopBrandMark;
+
