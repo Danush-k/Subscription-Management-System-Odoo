@@ -33,6 +33,7 @@ export async function GET() {
         totalAmount: Number(q.totalAmount),
         validUntil: q.expiryDate.toISOString().split("T")[0],
         status: q.status === "QUOTATION" ? "SENT" : q.status,
+        convertedSubscriptionId: q.convertedSubscriptionId,
       };
     });
 

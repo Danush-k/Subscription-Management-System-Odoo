@@ -267,18 +267,24 @@ export default function QuotationsPage() {
                       </Button>
                     )}
 
-                    {quot.status === "CONFIRMED" && (
+                    {quot.status === "CONFIRMED" && !quot.convertedSubscriptionId && (
                       <Button
                         onClick={() => handleConvertToSubscription(quot)}
-                        disabled={isProcessing || Boolean(quot.convertedSubscriptionId)}
+                        disabled={isProcessing}
                         className="w-full bg-[#714B67] hover:bg-[#5C3C54] text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
-                        {isProcessing ? "Converting..." : quot.convertedSubscriptionId ? "Converted" : "Convert to Subscription"}
+                        {isProcessing ? "Converting..." : "Convert to Subscription"}
                       </Button>
                     )}
 
-                    {quot.status === "SENT" && (
+                    {quot.status === "CONFIRMED" && quot.convertedSubscriptionId && (
+                      <div className="w-full rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-center text-xs font-bold text-emerald-700">
+                        Already converted to subscription
+                      </div>
+                    )}
+
+                    {quot.status === "SENT" && !quot.convertedSubscriptionId && (
                       <Button
                         onClick={() => handleConvertToSubscription(quot)}
                         disabled={isProcessing}

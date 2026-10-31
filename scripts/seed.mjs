@@ -56,12 +56,12 @@ async function main() {
   console.log("3. Upserting B2B Customer Profiles...");
   const cust1 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0001" },
-    update: { userId: clientUser.id },
+    update: { userId: clientUser.id, email: "balakumaran2470050@ssn.edu.in" },
     create: {
       customerNumber: "CUST-2026-0001",
       userId: clientUser.id,
       name: "Danush Kalyan",
-      email: "billing@ssntechlabs.com",
+      email: "balakumaran2470050@ssn.edu.in",
       phone: "+91 98401 24700",
       companyName: "SSN Technology Labs Pvt. Ltd.",
       taxId: "GSTIN33SSN1234F1Z1",
@@ -78,11 +78,11 @@ async function main() {
 
   const cust2 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0002" },
-    update: {},
+    update: { email: "balas07alab@gmail.com" },
     create: {
       customerNumber: "CUST-2026-0002",
       name: "Rajesh Kalyan",
-      email: "finance@kalyanretail.in",
+      email: "balas07alab@gmail.com",
       phone: "+91 98840 55667",
       companyName: "Kalyan Retailers LLP",
       taxId: "GSTIN33KLY7788P1Z4",
@@ -99,11 +99,11 @@ async function main() {
 
   const cust3 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0003" },
-    update: {},
+    update: { email: "barath2470044@ssn.edu.in" },
     create: {
       customerNumber: "CUST-2026-0003",
       name: "Anand Sundaram",
-      email: "procure@aerodynamics.com",
+      email: "barath2470044@ssn.edu.in",
       phone: "+91 80234 99881",
       companyName: "AeroDynamics Corp",
       taxId: "GSTIN29AER5544K1Z3",
@@ -120,11 +120,11 @@ async function main() {
 
   const cust4 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0004" },
-    update: {},
+    update: { email: "idanusu.k2006@gmail.com" },
     create: {
       customerNumber: "CUST-2026-0004",
       name: "Siddharth Mehta",
-      email: "accounts@zenithfin.co",
+      email: "idanusu.k2006@gmail.com",
       phone: "+91 22409 11223",
       companyName: "Zenith Financials Ltd.",
       taxId: "GSTIN27ZEN9900J1Z5",
@@ -141,11 +141,11 @@ async function main() {
 
   const cust5 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0005" },
-    update: {},
+    update: { email: "jeeva2470041@ssn.edu.in" },
     create: {
       customerNumber: "CUST-2026-0005",
       name: "Vikramaditya Rao",
-      email: "procure@vertexmedia.in",
+      email: "jeeva2470041@ssn.edu.in",
       phone: "+91 40231 88776",
       companyName: "Vertex Media Works",
       taxId: "GSTIN36VTX1122D1Z8",
