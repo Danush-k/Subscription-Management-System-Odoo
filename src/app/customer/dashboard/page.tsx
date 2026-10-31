@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo, Suspense } from "reac
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  RotateCcw,
   FileText,
   CreditCard,
   Building2,
@@ -387,11 +386,15 @@ function CustomerDashboardContent() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
               {/* Left Column: Subscriptions Snapshot */}
               <div className="xl:col-span-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <RotateCcw className="w-4 h-4 text-[#714B67]" />
-                    Contracted SaaS Subscriptions ({data.subscriptions.length})
-                  </h3>
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                      Contracted SaaS Subscriptions
+                    </h3>
+                    <Badge variant="outline" className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 border-slate-200">
+                      {data.subscriptions.length}
+                    </Badge>
+                  </div>
                   <button
                     onClick={() => setActiveTab("subscriptions")}
                     className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1 cursor-pointer"
@@ -417,21 +420,27 @@ function CustomerDashboardContent() {
               </div>
 
               {/* Right Column: Recent Invoices & Organization Quick Summary */}
-              <div className="space-y-6">
-                {/* Recent Invoices Card */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-[#714B67]" />
+              <div className="space-y-4">
+                {/* Right Column Header (aligned with left subscriptions header) */}
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">
                       Recent Invoices
                     </h3>
-                    <button
-                      onClick={() => setActiveTab("invoices")}
-                      className="text-xs font-bold text-[#714B67] hover:underline cursor-pointer"
-                    >
-                      All ({data.invoices.length}) &rarr;
-                    </button>
+                    <Badge variant="outline" className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 border-slate-200">
+                      {data.invoices.length}
+                    </Badge>
                   </div>
+                  <button
+                    onClick={() => setActiveTab("invoices")}
+                    className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    View All &rarr;
+                  </button>
+                </div>
+
+                {/* Recent Invoices Card */}
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
 
                   <div className="divide-y divide-slate-100 text-xs">
                     {data.invoices.slice(0, 3).map((inv) => (
@@ -521,10 +530,10 @@ function CustomerDashboardContent() {
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
                 {(
                   [
-                    { id: "ALL", label: `All (${data.subscriptions.length})` },
-                    { id: "ACTIVE", label: `Active (${data.subscriptions.filter((s) => s.status === "ACTIVE").length})` },
-                    { id: "PAUSED", label: `Paused (${data.subscriptions.filter((s) => s.status === "PAUSED").length})` },
-                    { id: "CLOSED", label: `Cancelled (${data.subscriptions.filter((s) => s.status === "CLOSED").length})` },
+                    { id: "ALL", label: `🌐 All (${data.subscriptions.length})` },
+                    { id: "ACTIVE", label: `✅ Active (${data.subscriptions.filter((s) => s.status === "ACTIVE").length})` },
+                    { id: "PAUSED", label: `⏸️ Paused (${data.subscriptions.filter((s) => s.status === "PAUSED").length})` },
+                    { id: "CLOSED", label: `📁 Cancelled (${data.subscriptions.filter((s) => s.status === "CLOSED").length})` },
                   ] as const
                 ).map((tab) => (
                   <button
@@ -591,7 +600,7 @@ function CustomerDashboardContent() {
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5 text-[#714B67]" />
-                  <span>Invoices &amp; Receipts ({data.invoices.length})</span>
+                  <span>🧾 Invoices &amp; Receipts ({data.invoices.length})</span>
                 </button>
                 <button
                   onClick={() => setInvoiceSubView("payments")}
@@ -602,7 +611,7 @@ function CustomerDashboardContent() {
                   }`}
                 >
                   <CreditCard className="w-3.5 h-3.5 text-[#714B67]" />
-                  <span>Payment History ({data.payments.length})</span>
+                  <span>💳 Payment History ({data.payments.length})</span>
                 </button>
               </div>
             </div>
