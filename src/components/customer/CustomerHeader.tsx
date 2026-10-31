@@ -87,13 +87,6 @@ export function CustomerHeader({
       tabKey: "invoices",
     },
     {
-      id: "activity",
-      label: "Activity Timeline",
-      icon: Clock,
-      href: "/customer/dashboard?tab=activity",
-      tabKey: "activity",
-    },
-    {
       id: "profile",
       label: "Billing Profile & GSTIN",
       icon: User,

@@ -72,15 +72,15 @@ export function InvoiceDetailModal({
           handleClose(e);
         }
       }}
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-150 cursor-pointer"
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm overflow-y-auto p-4 sm:p-6 flex justify-center items-start animate-in fade-in duration-150 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden print:max-w-none print:shadow-none print:border-none print:rounded-none cursor-default relative"
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden print:max-w-none print:shadow-none print:border-none print:rounded-none cursor-default relative my-6 sm:my-10"
       >
-        {/* Modal Controls Bar (hidden during print) */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 print:hidden">
-          <div className="flex items-center gap-2">
+        {/* Sticky Header with prominent Exit / Close button */}
+        <div className="sticky top-0 z-30 p-4 sm:p-5 border-b border-slate-200/80 flex items-center justify-between bg-white/95 backdrop-blur-md print:hidden">
+          <div className="flex items-center gap-2.5">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Tax Invoice Document
             </span>
@@ -109,21 +109,25 @@ export function InvoiceDetailModal({
                   onPayInvoice(invoice);
                 }}
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 cursor-pointer shadow-2xs"
               >
                 <CreditCard className="w-3.5 h-3.5" />
                 Pay ₹{outstanding.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </Button>
             )}
 
-            <button
+            {/* High-visibility Close / Exit Button */}
+            <Button
               type="button"
               onClick={handleClose}
-              aria-label="Close invoice dialog"
-              className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-200/80 active:bg-slate-300 rounded-full transition-all cursor-pointer ml-1"
+              variant="outline"
+              size="sm"
+              className="text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200 gap-1.5 cursor-pointer px-3 py-1.5 shadow-2xs ml-1"
+              aria-label="Exit and close invoice modal"
             >
-              <X className="w-5 h-5" />
-            </button>
+              <X className="w-4 h-4 text-rose-600" />
+              <span>Exit</span>
+            </Button>
           </div>
         </div>
 
@@ -322,6 +326,41 @@ export function InvoiceDetailModal({
           {/* Footer note */}
           <div className="border-t border-slate-200 pt-6 text-center text-[10px] text-slate-400 leading-relaxed">
             This is a computer-generated invoice verified under the Information Technology Act. Questions? Contact billing@brightloopsoftware.com
+          </div>
+        </div>
+
+        {/* Sticky Bottom Exit Bar */}
+        <div className="sticky bottom-0 z-30 p-4 sm:p-5 bg-slate-50/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-between print:hidden">
+          <div className="text-xs text-slate-500 font-medium">
+            Viewing invoice <span className="font-mono font-bold text-slate-900">{invoice.invoiceNumber}</span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <Button
+              type="button"
+              onClick={handleClose}
+              variant="outline"
+              size="sm"
+              className="text-xs font-bold text-slate-700 hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200 gap-1.5 cursor-pointer px-4 shadow-2xs"
+            >
+              <X className="w-4 h-4 text-rose-500" />
+              Exit / Close Receipt
+            </Button>
+
+            {outstanding > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  onPayInvoice(invoice);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 cursor-pointer px-4 shadow-2xs"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                Pay ₹{outstanding.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </Button>
+            )}
           </div>
         </div>
       </div>

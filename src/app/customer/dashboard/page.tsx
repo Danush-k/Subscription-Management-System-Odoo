@@ -376,7 +376,7 @@ function CustomerDashboardContent() {
             />
 
             {/* 3. Overview Split Column: SaaS Subscriptions & Invoices Snapshot */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
               {/* Left Column: Subscriptions Snapshot */}
               <div className="xl:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
@@ -490,10 +490,7 @@ function CustomerDashboardContent() {
               </div>
             </div>
 
-            {/* Bottom Timeline Section in Overview */}
-            <div className="pt-2">
-              <ActivityTimeline timeline={data.timeline.slice(0, 5)} />
-            </div>
+            
           </div>
         )}
 
