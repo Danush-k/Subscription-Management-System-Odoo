@@ -346,9 +346,13 @@ export default function InvoicesPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-slate-400" />
             </div>
-            <p className="text-2xl font-black text-slate-900 font-mono mt-2">
-              ₹{totalInvoiced.toLocaleString("en-IN")}
-            </p>
+            {loading ? (
+              <div className="h-8 w-28 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                ₹{totalInvoiced.toLocaleString("en-IN")}
+              </p>
+            )}
             <p className="text-[11px] text-slate-400 font-medium mt-1">Accrual billing base</p>
           </div>
 
@@ -359,9 +363,13 @@ export default function InvoicesPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-2xl font-black text-emerald-700 font-mono mt-2">
-              ₹{totalCollected.toLocaleString("en-IN")}
-            </p>
+            {loading ? (
+              <div className="h-8 w-28 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-emerald-700 font-mono mt-2">
+                ₹{totalCollected.toLocaleString("en-IN")}
+              </p>
+            )}
             <p className="text-[11px] text-emerald-600 font-medium mt-1">Cash settlements received</p>
           </div>
 
@@ -372,9 +380,13 @@ export default function InvoicesPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-amber-500" />
             </div>
-            <p className="text-2xl font-black text-amber-600 font-mono mt-2">
-              ₹{totalOutstanding.toLocaleString("en-IN")}
-            </p>
+            {loading ? (
+              <div className="h-8 w-28 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-amber-600 font-mono mt-2">
+                ₹{totalOutstanding.toLocaleString("en-IN")}
+              </p>
+            )}
             <p className="text-[11px] text-amber-600 font-medium mt-1">Awaiting client payment</p>
           </div>
 
@@ -385,7 +397,11 @@ export default function InvoicesPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             </div>
-            <p className="text-2xl font-black text-rose-600 font-mono mt-2">{overdueCount}</p>
+            {loading ? (
+              <div className="h-8 w-16 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-rose-600 font-mono mt-2">{overdueCount}</p>
+            )}
             <p className="text-[11px] text-rose-600 font-medium mt-1">Past scheduled due date</p>
           </div>
         </div>
@@ -423,7 +439,7 @@ export default function InvoicesPage() {
                       isSelected ? "bg-white/20 text-white" : "bg-white text-slate-600"
                     }`}
                   >
-                    {count}
+                    {loading ? "..." : count}
                   </span>
                 </button>
               );

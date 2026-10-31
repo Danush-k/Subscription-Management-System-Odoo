@@ -124,12 +124,34 @@ export default function CustomersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
-                      <p className="mt-2 text-xs">Loading customer accounts from database...</p>
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-28" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-36 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-24" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-32 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-5 bg-slate-200/80 rounded-full w-14" />
+                      </td>
+                    </tr>
+                  ))
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
