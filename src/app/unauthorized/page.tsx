@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, LogOut, ArrowRight, UserCheck, Shield, Building, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function UnauthorizedPage() {
@@ -22,6 +21,10 @@ export default function UnauthorizedPage() {
   return (
     <main className="min-h-screen bg-[#F8F9FA] px-6 py-16 flex flex-col items-center justify-center text-slate-900 font-sans">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-6">
+        <div className="flex justify-center pb-2 border-b border-slate-100">
+          <BrightloopLogo size="md" />
+        </div>
+
         <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
           <ShieldAlert className="w-7 h-7" />
         </div>
