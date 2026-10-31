@@ -5,7 +5,8 @@ import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BRIGHTLOOP_APPS } from "@/components/home/odoo-app-icons";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { OdooAppGrid } from "@/components/dashboard/odoo-app-grid";
 import {
   RotateCcw,
   FileText,
@@ -15,20 +16,18 @@ import {
   BarChart3,
   Users,
   ShieldCheck,
+  Package,
+  Receipt,
+  UserCheck,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
+  Clock,
   Play,
   Plus,
   ArrowUpRight,
   Sparkles,
-  Calendar,
-  Building,
-  Download,
-  PauseCircle,
-  PlayCircle,
-  ChevronRight,
-  ShieldAlert,
+  ArrowRight,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -52,7 +51,7 @@ export default function AdminDashboardPage() {
     mrr: 248000.0,
   });
 
-  const [subscriptionsList, setSubscriptionsList] = useState([
+  const recentSubscriptions = [
     {
       id: "SUB-2026-0042",
       customer: "SSN Technology Labs",
@@ -61,7 +60,7 @@ export default function AdminDashboardPage() {
       amount: "₹1,20,000.00",
       cadence: "Annual",
       nextBilling: "15 Jan 2027",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
+      status: "ACTIVE" as const,
     },
     {
       id: "SUB-2026-0041",
@@ -71,7 +70,7 @@ export default function AdminDashboardPage() {
       amount: "₹18,500.00",
       cadence: "Monthly",
       nextBilling: "01 Nov 2026",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
+      status: "ACTIVE" as const,
     },
     {
       id: "SUB-2026-0040",
@@ -81,27 +80,28 @@ export default function AdminDashboardPage() {
       amount: "₹8,400.00",
       cadence: "Monthly",
       nextBilling: "10 Nov 2026",
-      status: "PAUSED" as "ACTIVE" | "PAUSED" | "CLOSED",
+      status: "PAUSED" as const,
     },
     {
       id: "SUB-2026-0039",
-      customer: "Zenith Financials Ltd",
+      customer: "Zenith Financials Ltd.",
       plan: "Standard Core License",
       variant: "Standard Cloud Tier",
       amount: "₹24,000.00",
       cadence: "Monthly",
-      nextBilling: "15 Nov 2026",
-      status: "ACTIVE" as "ACTIVE" | "PAUSED" | "CLOSED",
+      nextBilling: "—",
+      status: "CLOSED" as const,
     },
-  ]);
+  ];
 
-  const [invoicesList, setInvoicesList] = useState([
+  const recentInvoices = [
     {
       id: "INV-2026-0086",
-      customer: "SSN Technology Labs Pvt Ltd",
+      customer: "SSN Technology Labs Pvt. Ltd.",
       date: "31 Oct 2026",
       dueDate: "15 Nov 2026",
       amount: "₹1,20,000.00",
+      paid: "₹1,20,000.00",
       status: "PAID" as const,
     },
     {
@@ -110,6 +110,7 @@ export default function AdminDashboardPage() {
       date: "30 Oct 2026",
       dueDate: "14 Nov 2026",
       amount: "₹18,500.00",
+      paid: "₹0.00",
       status: "CONFIRMED" as const,
     },
     {
@@ -118,6 +119,7 @@ export default function AdminDashboardPage() {
       date: "15 Oct 2026",
       dueDate: "25 Oct 2026",
       amount: "₹35,500.00",
+      paid: "₹0.00",
       status: "OVERDUE" as const,
     },
     {
@@ -126,22 +128,10 @@ export default function AdminDashboardPage() {
       date: "28 Oct 2026",
       dueDate: "12 Nov 2026",
       amount: "₹14,200.00",
+      paid: "₹14,200.00",
       status: "PAID" as const,
     },
-  ]);
-
-  const handleToggleSubStatus = (subId: string) => {
-    setSubscriptionsList((prev) =>
-      prev.map((sub) => {
-        if (sub.id === subId) {
-          const next = sub.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
-          setBillingResult(`Subscription ${subId} state toggled to ${next}!`);
-          return { ...sub, status: next };
-        }
-        return sub;
-      })
-    );
-  };
+  ];
 
   const triggerBillingEngine = () => {
     setBillingRunning(true);
@@ -157,87 +147,86 @@ export default function AdminDashboardPage() {
         totalInvoices: prev.totalInvoices + 3,
         outstandingAmount: prev.outstandingAmount + 42000,
       }));
-    }, 1000);
+    }, 1100);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 pb-20 font-sans select-none">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       {/* Unified Enterprise Navigation */}
       <AdminNav />
 
-      {/* Clean, Minimalist Executive Workspace Header */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/70 px-4 sm:px-6 lg:px-8 py-5">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Page Title & Operational Action Header */}
+      <div className="bg-white border-b border-slate-200/80 py-4">
+        <div className="dashboard-container flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
-                Executive Workspace
+              <span className="text-xs font-bold text-[#714B67] bg-[#714B67]/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                Admin Console
               </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-xs text-slate-500 font-semibold">
-                Financial Operations &amp; Subscription Cadence
-              </span>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Executive Workspace &amp; Overview
+              </h1>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Executive Overview
-            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Real-time subscription lifecycles, recurring revenue cadence, and financial operations.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
               onClick={triggerBillingEngine}
               disabled={billingRunning}
-              variant="outline"
+              variant="secondary"
               size="sm"
-              className="gap-2 font-bold text-xs bg-white hover:bg-slate-50 text-slate-800 border-slate-300 rounded-xl transition-all active:scale-95 shadow-2xs"
+              className="gap-2 font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/80 rounded-xl transition-all active:scale-95 shadow-2xs"
             >
               <Play className="w-3.5 h-3.5 text-[#714B67] fill-[#714B67]" />
-              <span>{billingRunning ? "Processing..." : "Run Recurring Billing"}</span>
+              {billingRunning ? "Processing Recurrence..." : "Run Recurring Billing"}
             </Button>
 
             <Link href="/admin/subscriptions/new">
               <Button
                 size="sm"
-                className="gap-2 font-bold text-xs bg-[#714B67] hover:bg-[#5C3C54] text-white rounded-xl shadow-xs transition-all active:scale-95 px-4"
+                className="gap-2 font-bold text-xs bg-[#714B67] hover:bg-[#5C3C54] text-white rounded-xl shadow-xs transition-all active:scale-95"
               >
-                <Plus className="w-4 h-4" />
-                <span>New Subscription</span>
+                <Plus className="w-3.5 h-3.5" />
+                New Subscription
               </Button>
             </Link>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8 animate-fadeIn">
+      <main className="dashboard-container pt-8 space-y-8 animate-fadeIn">
         {/* Billing Success Notification */}
         {billingResult && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-xs animate-slideDown">
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-2xs animate-slideDown">
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>{billingResult}</span>
             </div>
             <button
               onClick={() => setBillingResult(null)}
-              className="text-emerald-700 hover:text-emerald-950 font-bold px-2 py-1 rounded"
+              className="text-emerald-700 hover:text-emerald-950 font-bold px-2 py-1 rounded hover:bg-emerald-100/60"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* Minimalist Attention Banner for Overdue Accounts */}
+        {/* Overdue Warning Alert */}
         {metrics.overdueInvoices > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4" />
+              <div className="p-2.5 bg-amber-100 rounded-xl text-amber-800 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-bold text-xs sm:text-sm text-amber-950">
+                <p className="font-bold text-sm text-amber-950">
                   {metrics.overdueInvoices} Invoices Require Payment Reconciliation
                 </p>
-                <p className="text-[11px] text-amber-800">
-                  Total outstanding overdue:{" "}
+                <p className="text-xs text-amber-800 mt-0.5">
+                  Total outstanding overdue balance:{" "}
                   <span className="font-mono font-bold">
                     ₹{metrics.overdueAmount.toLocaleString("en-IN")}.00
                   </span>
@@ -248,292 +237,286 @@ export default function AdminDashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100/80 text-xs font-bold rounded-xl shadow-2xs"
+                className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100/80 text-xs font-bold rounded-xl whitespace-nowrap shadow-2xs"
               >
-                Reconcile Overdue &rarr;
+                View Overdue Invoices &rarr;
               </Button>
             </Link>
           </div>
         )}
 
-        {/* 4 High-Impact Executive Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: MRR */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Monthly Recurring (MRR)
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3 text-3xl font-black text-[#714B67] font-mono tracking-tight">
-              ₹{metrics.mrr.toLocaleString("en-IN")}.00
-            </div>
-            <div className="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>+14.2% MoM growth rate</span>
-            </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-[#714B67]" />
+        {/* 12 Key Operational & Financial Metrics Grid */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-[#714B67]" />
+              Financial &amp; Operational Cadence
+            </h2>
+            <span className="text-xs text-slate-400 font-medium">Auto-updated live</span>
           </div>
 
-          {/* Card 2: Revenue Collected */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Net Collections
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                <CreditCard className="w-4 h-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Total Collected
+                </p>
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
               </div>
-            </div>
-            <div className="mt-3 text-3xl font-black text-emerald-700 font-mono tracking-tight">
-              ₹{metrics.revenueCollected.toLocaleString("en-IN")}
-            </div>
-            <div className="mt-2 text-xs text-slate-500 font-semibold">
-              {metrics.totalPayments} settled transactions
-            </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-          </div>
-
-          {/* Card 3: Outstanding Receivables */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Outstanding Balance
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                <FileText className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3 text-3xl font-black text-amber-600 font-mono tracking-tight">
-              ₹{metrics.outstandingAmount.toLocaleString("en-IN")}
-            </div>
-            <div className="mt-2 text-xs text-slate-500 font-semibold">
-              Across {metrics.totalInvoices} generated invoices
-            </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
-          </div>
-
-          {/* Card 4: Active Subscriptions */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Active Subscriptions
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#714B67] flex items-center justify-center">
-                <RotateCcw className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3 text-3xl font-black text-slate-900 font-mono tracking-tight">
-              {metrics.activeSubscriptions}
-            </div>
-            <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{metrics.activeSubscriptions} Active</span>
-              <span className="text-slate-300">•</span>
-              <span>{metrics.pausedSubscriptions} Paused</span>
-            </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
-          </div>
-        </div>
-
-        {/* Minimalist Odoo-Style Quick Launchpad: Clean, compact 12 vector glyph icons */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                Enterprise Module Launcher
-              </h2>
-              <p className="text-xs text-slate-400">
-                12 integrated subscription and billing modules
+              <p className="text-2xl font-black text-emerald-700 font-mono mt-2">
+                ₹{metrics.revenueCollected.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                {metrics.totalPayments} reconciled payments
               </p>
             </div>
-            <span className="text-xs font-semibold text-[#714B67]">
-              Unified Ecosystem
-            </span>
-          </div>
 
-          {/* Sleek, compact 12-icon grid with custom Odoo vector graphics from main page */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-3 sm:gap-4 pt-1">
-            {BRIGHTLOOP_APPS.map((app) => (
-              <Link
-                key={app.id}
-                href={app.href}
-                className="group flex flex-col items-center text-center p-2 rounded-2xl hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
-                title={app.description}
-              >
-                <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center p-2 shadow-2xs group-hover:shadow-md group-hover:border-[#714B67]/30 transition-all">
-                  {app.iconSvg}
-                </div>
-                <span className="mt-2 text-[11px] font-bold text-slate-700 group-hover:text-[#714B67] transition-colors truncate max-w-[80px]">
-                  {app.name}
-                </span>
-              </Link>
-            ))}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Outstanding Receivables
+                </p>
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+              </div>
+              <p className="text-2xl font-black text-amber-600 font-mono mt-2">
+                ₹{metrics.outstandingAmount.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                Across {metrics.totalInvoices} generated invoices
+              </p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold text-[#714B67] uppercase tracking-wider">
+                  Monthly RR (MRR)
+                </p>
+                <span className="w-2 h-2 rounded-full bg-[#714B67]" />
+              </div>
+              <p className="text-2xl font-black text-[#714B67] font-mono mt-2">
+                ₹{metrics.mrr.toLocaleString("en-IN")}
+              </p>
+              <p className="text-[11px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" /> +14.2% MoM growth
+              </p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Total Subscriptions
+                </p>
+                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                {metrics.totalSubscriptions}
+              </p>
+              <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-1 font-semibold">
+                <span className="text-emerald-700">{metrics.activeSubscriptions} Active</span>
+                <span>•</span>
+                <span className="text-amber-700">{metrics.pausedSubscriptions} Paused</span>
+                <span>•</span>
+                <span className="text-slate-400">{metrics.closedSubscriptions} Closed</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Active B2B Clients
+              </p>
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                {metrics.totalCustomers}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">Verified GSTIN profiles</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Products &amp; Tiers
+              </p>
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                {metrics.totalProducts}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">With multi-variant pricing</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Subscription Plans
+              </p>
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                {metrics.totalPlans}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">Monthly &amp; Yearly intervals</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <p className="text-[11px] font-bold text-rose-500 uppercase tracking-wider">
+                Overdue Invoices
+              </p>
+              <p className="text-2xl font-black text-rose-600 font-mono mt-2">
+                {metrics.overdueInvoices}
+              </p>
+              <p className="text-[11px] text-rose-600 font-medium mt-1">Requires reconciliation</p>
+            </div>
           </div>
         </div>
 
-        {/* Operational Queues: 2 Elevated Zoho Books Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Table 1: Recent Active Subscriptions */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col justify-between">
+        {/* Embedded Modular Odoo-style App Grid Launcher */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h2 className="text-base font-black text-slate-900 tracking-tight">
+                Enterprise Module Launcher
+              </h2>
+              <p className="text-xs text-slate-500">
+                Odoo-inspired integrated subscription and accounting applications
+              </p>
+            </div>
+          </div>
+          <OdooAppGrid />
+        </div>
+
+        {/* Data Tables: Active Subscriptions & Invoices in Zoho Books Style */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Subscriptions */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between">
+            <div>
+              <div className="p-5 pb-3 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">Active Subscription Agreements</h3>
-                  <p className="text-xs text-slate-400">Live agreement states and recurrence schedules</p>
+                  <p className="text-xs text-slate-500">Real-time state transitions and next renewal</p>
                 </div>
                 <Link
                   href="/admin/subscriptions"
-                  className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#714B67] hover:text-[#5C3C54] flex items-center gap-1 group"
                 >
-                  <span>View All ({metrics.totalSubscriptions})</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>Manage All</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
               </div>
 
               <div className="divide-y divide-slate-100 text-xs">
-                {subscriptionsList.map((sub) => {
-                  const isActive = sub.status === "ACTIVE";
-                  return (
-                    <div
-                      key={sub.id}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-900">{sub.id}</span>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-                              }`}
-                            />
-                            {sub.status}
-                          </span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">{sub.customer}</p>
-                        <p className="text-[11px] text-slate-500">
-                          {sub.plan} &bull; Next: {sub.nextBilling}
-                        </p>
-                      </div>
-
-                      <div className="text-right space-y-1.5">
-                        <span className="text-sm font-black text-slate-900 font-mono block">
-                          {sub.amount}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-[11px] font-bold text-slate-600 hover:text-[#714B67] gap-1 px-2"
-                          onClick={() => handleToggleSubStatus(sub.id)}
-                        >
-                          {isActive ? (
-                            <>
-                              <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Pause</span>
-                            </>
-                          ) : (
-                            <>
-                              <PlayCircle className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Resume</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-50/60 border-t border-slate-100 text-center">
-              <Link
-                href="/admin/subscriptions"
-                className="text-xs font-bold text-slate-600 hover:text-[#714B67] transition-colors"
-              >
-                Manage All Subscriptions &rarr;
-              </Link>
-            </div>
-          </div>
-
-          {/* Table 2: Recent Invoices & Reconciliation */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col justify-between">
-            <div>
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Recent Invoices &amp; Billing Cycles</h3>
-                  <p className="text-xs text-slate-400">Automated cycle runs and payment settlements</p>
-                </div>
-                <Link
-                  href="/admin/invoices"
-                  className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
-                >
-                  <span>View All ({metrics.totalInvoices})</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              <div className="divide-y divide-slate-100 text-xs">
-                {invoicesList.map((inv) => (
+                {recentSubscriptions.map((sub) => (
                   <div
-                    key={inv.id}
-                    className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
+                    key={sub.id}
+                    className="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900">{inv.id}</span>
-                        <Badge
-                          variant={
-                            inv.status === "PAID"
-                              ? "paid"
-                              : inv.status === "OVERDUE"
-                              ? "overdue"
-                              : "confirmed"
-                          }
+                        <span className="font-mono font-bold text-slate-900">{sub.id}</span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            sub.status === "ACTIVE"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : sub.status === "PAUSED"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
                         >
-                          {inv.status}
-                        </Badge>
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              sub.status === "ACTIVE"
+                                ? "bg-emerald-500 animate-pulse"
+                                : sub.status === "PAUSED"
+                                ? "bg-amber-500"
+                                : "bg-slate-400"
+                            }`}
+                          />
+                          {sub.status}
+                        </span>
                       </div>
-                      <p className="text-xs font-bold text-slate-800">{inv.customer}</p>
-                      <p className="text-[11px] text-slate-500">Due: {inv.dueDate}</p>
+                      <p className="text-slate-600 font-medium">
+                        {sub.customer} &bull; <span className="text-slate-400">{sub.plan}</span>
+                      </p>
                     </div>
 
-                    <div className="text-right space-y-1.5">
-                      <span className="text-sm font-black text-slate-900 font-mono block">
-                        {inv.amount}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-[11px] font-bold text-slate-600 hover:text-slate-900 gap-1 px-2"
-                        onClick={() =>
-                          setBillingResult(`Tax invoice receipt downloaded for ${inv.id}.`)
-                        }
-                      >
-                        <Download className="w-3 h-3" />
-                        <span>PDF</span>
-                      </Button>
+                    <div className="text-right">
+                      <p className="font-bold font-mono text-slate-900 text-sm">{sub.amount}</p>
+                      <p className="text-[10px] text-slate-400">Next: {sub.nextBilling}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50/60 border-t border-slate-100 text-center">
+            <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+              <Link
+                href="/admin/subscriptions"
+                className="text-xs font-bold text-[#714B67] hover:underline"
+              >
+                View all 38 active contracts &rarr;
+              </Link>
+            </div>
+          </div>
+
+          {/* Recent Invoices */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between">
+            <div>
+              <div className="p-5 pb-3 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Recent Billing Invoices</h3>
+                  <p className="text-xs text-slate-500">Automated recurring invoice snapshots</p>
+                </div>
+                <Link
+                  href="/admin/invoices"
+                  className="text-xs font-bold text-[#714B67] hover:text-[#5C3C54] flex items-center gap-1 group"
+                >
+                  <span>View All Invoices</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </div>
+
+              <div className="divide-y divide-slate-100 text-xs">
+                {recentInvoices.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-slate-900">{inv.id}</span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            inv.status === "PAID"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : inv.status === "CONFIRMED"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              inv.status === "PAID"
+                                ? "bg-emerald-500 animate-pulse"
+                                : inv.status === "CONFIRMED"
+                                ? "bg-amber-500"
+                                : "bg-rose-500 animate-ping"
+                            }`}
+                          />
+                          {inv.status}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 font-medium">
+                        {inv.customer} &bull; <span className="text-slate-400">{inv.date}</span>
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-bold font-mono text-slate-900 text-sm">{inv.amount}</p>
+                      <p className="text-[10px] text-slate-400">Paid: {inv.paid}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
               <Link
                 href="/admin/invoices"
-                className="text-xs font-bold text-slate-600 hover:text-[#714B67] transition-colors"
+                className="text-xs font-bold text-[#714B67] hover:underline"
               >
-                Open Full Invoicing Ledger &rarr;
+                Reconcile all 86 invoices &rarr;
               </Link>
             </div>
           </div>
@@ -542,3 +525,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
