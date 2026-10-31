@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function HomePage() {
   const portalCards = [
@@ -93,16 +94,8 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#714B67] text-[#F2C744] flex items-center justify-center font-black text-sm">
-                B
-              </div>
-              <span className="text-xl font-black tracking-tight text-[#714B67]">
-                Brightloop
-              </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                SaaS
-              </span>
+            <Link href="/" className="hover:opacity-95 transition-opacity">
+              <BrightloopLogo size="md" variant="colored" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">

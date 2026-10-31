@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function StaffDashboardPage() {
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
@@ -73,12 +74,12 @@ export default function StaffDashboardPage() {
       {/* Top Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="hover:text-odoo-700 font-bold text-odoo-700">
-              Brightloop
+          <div className="flex items-center gap-3">
+            <Link href="/" className="hover:opacity-95 transition-opacity">
+              <BrightloopLogo size="sm" variant="colored" />
             </Link>
-            <span>/</span>
-            <span className="text-slate-800 font-semibold">Staff Operations Dashboard</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-800 font-bold text-xs">Staff Operations Dashboard</span>
           </div>
 
           <div className="flex items-center gap-3">
