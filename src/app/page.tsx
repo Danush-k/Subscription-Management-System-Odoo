@@ -181,15 +181,6 @@ export default function HomePage() {
             <Link href="/register" className="hover:text-[#714B67]">
               Create Account
             </Link>
-            <Link href="/admin/dashboard" className="hover:text-[#714B67]">
-              Admin Workspace
-            </Link>
-            <Link href="/staff/dashboard" className="hover:text-[#714B67]">
-              Staff Operations
-            </Link>
-            <Link href="/customer/dashboard" className="hover:text-[#714B67]">
-              Customer Portal
-            </Link>
           </div>
         </div>
       </footer>
