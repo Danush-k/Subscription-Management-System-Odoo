@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   RotateCcw,
@@ -26,71 +26,126 @@ import { PortalNav } from "@/components/navigation/portal-nav";
 
 type StaffInvoice = {
   id: string;
+  invoiceNumber: string;
   customer: string;
   amount: string;
   dueDate: string;
+  status: "CONFIRMED" | "OVERDUE";
 };
+
+type StaffQuotation = {
+  id: string;
+  quotationNumber: string;
+  customer: string;
+  plan: string;
+  amount: string;
+  status: "DRAFT" | "QUOTATION";
+  validUntil: string;
+};
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
 export default function StaffDashboardPage() {
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [paymentModalInv, setPaymentModalInv] = useState<StaffInvoice | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("UPI / Instant Transfer");
+  const [transactionRef, setTransactionRef] = useState("UTR247003099881");
+  const [pendingQuotations, setPendingQuotations] = useState<StaffQuotation[]>([]);
+  const [pendingInvoices, setPendingInvoices] = useState<StaffInvoice[]>([]);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    customers: 0,
+    activeSubscriptions: 0,
+    pendingQuotations: 0,
+    pendingInvoices: 0,
+    recentPayments: 0,
+    overdueInvoices: 0,
+  });
+  const [currentUser, setCurrentUser] = useState({
+    name: "Staff User",
+    email: "",
+    role: "STAFF",
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch("/api/staff/dashboard", { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Unable to load staff dashboard");
+        }
+        if (active) {
+          setMetrics(payload.data.metrics);
+          setCurrentUser(payload.data.currentUser);
+          setPendingQuotations(payload.data.quotations);
+          setPendingInvoices(payload.data.invoices);
+        }
+      } catch (error) {
+        if (active) {
+          setDashboardError(error instanceof Error ? error.message : "Unable to load staff dashboard");
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    void loadDashboard();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const staffMetrics = [
-    { title: "Customers", value: "24", sub: "Active B2B Accounts", color: "text-slate-900", icon: Users },
-    { title: "Active Subscriptions", value: "29", sub: "Currently In Service", color: "text-emerald-700", icon: RotateCcw },
-    { title: "Pending Quotations", value: "7", sub: "Awaiting Client Acceptance", color: "text-blue-700", icon: Receipt },
-    { title: "Pending Invoices", value: "14", sub: "Unpaid Billing Cycles", color: "text-amber-600", icon: FileText },
-    { title: "Recent Payments", value: "18", sub: "Auto & Manual Reconciled", color: "text-purple-700", icon: CreditCard },
-    { title: "Overdue Invoices", value: "3", sub: "Requires Immediate Follow-up", color: "text-rose-600", icon: AlertTriangle },
+    { title: "Customers", value: String(metrics.customers), sub: "Active B2B Accounts", color: "text-slate-900", icon: Users },
+    { title: "Active Subscriptions", value: String(metrics.activeSubscriptions), sub: "Currently In Service", color: "text-emerald-700", icon: RotateCcw },
+    { title: "Pending Quotations", value: String(metrics.pendingQuotations), sub: "Awaiting Client Acceptance", color: "text-blue-700", icon: Receipt },
+    { title: "Pending Invoices", value: String(metrics.pendingInvoices), sub: "Unpaid Billing Cycles", color: "text-amber-600", icon: FileText },
+    { title: "Recent Payments", value: String(metrics.recentPayments), sub: "Auto & Manual Reconciled", color: "text-purple-700", icon: CreditCard },
+    { title: "Overdue Invoices", value: String(metrics.overdueInvoices), sub: "Requires Immediate Follow-up", color: "text-rose-600", icon: AlertTriangle },
   ];
 
-  const [pendingQuotations, setPendingQuotations] = useState([
-    {
-      id: "QUO-2026-0012",
-      customer: "CyberSol Software Systems",
-      plan: "Growth Monthly Tier",
-      amount: "₹8,400.00",
-      status: "QUOTATION" as const,
-      validUntil: "15 Nov 2026",
-    },
-    {
-      id: "QUO-2026-0011",
-      customer: "Kalyan Retailers LLP",
-      plan: "Odoo Business Suite",
-      amount: "₹18,500.00",
-      status: "DRAFT" as const,
-      validUntil: "10 Nov 2026",
-    },
-  ]);
-
-  const [pendingInvoices, setPendingInvoices] = useState([
-    {
-      id: "INV-2026-0085",
-      customer: "Kalyan Retailers LLP",
-      amount: "₹18,500.00",
-      dueDate: "10 Nov 2026",
-      status: "CONFIRMED" as const,
-    },
-    {
-      id: "INV-2026-0084",
-      customer: "Apex Logistics India",
-      amount: "₹35,500.00",
-      dueDate: "25 Oct 2026",
-      status: "OVERDUE" as const,
-    },
-  ]);
-
-  const handleConvertQuotation = (id: string, customer: string) => {
-    setPendingQuotations((prev) => prev.filter((q) => q.id !== id));
-    setSuccessNotice(`Quotation ${id} confirmed and converted to recurring Subscription agreement for ${customer}!`);
+  const handleConvertQuotation = async (id: string, customer: string) => {
+    try {
+      const response = await fetch(`/api/staff/quotations/${id}/convert`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error(payload.error ?? "Unable to convert quotation");
+      setPendingQuotations((prev) => prev.filter((q) => q.id !== id));
+      setSuccessNotice(`Quotation converted to a recurring subscription for ${customer}.`);
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : "Unable to convert quotation");
+    }
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = async () => {
     if (!paymentModalInv) return;
-    setPendingInvoices((prev) => prev.filter((inv) => inv.id !== paymentModalInv.id));
-    setSuccessNotice(`Payment of ${paymentModalInv.amount} successfully recorded against ${paymentModalInv.id} via ${paymentMethod}!`);
-    setPaymentModalInv(null);
+    try {
+      const response = await fetch(`/api/staff/invoices/${paymentModalInv.id}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Number(paymentModalInv.amount.replace(/[₹,]/g, "")),
+          paymentMethod,
+          transactionRef,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error(payload.error ?? "Unable to record payment");
+      setPendingInvoices((prev) => prev.filter((inv) => inv.id !== paymentModalInv.id));
+      setSuccessNotice(`Payment successfully recorded against ${paymentModalInv.invoiceNumber}.`);
+      setPaymentModalInv(null);
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : "Unable to record payment");
+    }
   };
 
   return (
@@ -99,8 +154,8 @@ export default function StaffDashboardPage() {
       <PortalNav
         portalType="staff"
         portalTitle="Staff Operations Portal"
-        userName="Danush Kalyan"
-        userRole="Billing Operations Officer"
+        userName={currentUser.name}
+        userRole={currentUser.email || "Staff Operations"}
         companyName="Brightloop Enterprise Ops"
       />
 
@@ -131,15 +186,6 @@ export default function StaffDashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/admin/dashboard">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs font-bold border-slate-300 text-slate-700 hover:text-[#714B67]"
-              >
-                Admin Suite
-              </Button>
-            </Link>
           </div>
         </div>
 
@@ -156,6 +202,18 @@ export default function StaffDashboardPage() {
             >
               Dismiss
             </button>
+          </div>
+        )}
+
+        {dashboardError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">
+            {dashboardError}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500">
+            Loading live operational data...
           </div>
         )}
 
@@ -226,14 +284,14 @@ export default function StaffDashboardPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-slate-900 font-mono">
-                          {quo.id}
+                          {quo.quotationNumber}
                         </span>
                         <Badge variant={quo.status === "QUOTATION" ? "quotation" : "draft"}>
                           {quo.status}
                         </Badge>
                       </div>
                       <p className="text-xs font-bold text-slate-700">{quo.customer}</p>
-                      <p className="text-[11px] text-slate-500">Plan: {quo.plan} &bull; Valid: {quo.validUntil}</p>
+                      <p className="text-[11px] text-slate-500">Plan: {quo.plan} &bull; Valid: {formatDate(quo.validUntil)}</p>
                     </div>
 
                     <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2 shrink-0">
@@ -284,14 +342,14 @@ export default function StaffDashboardPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-slate-900 font-mono">
-                          {inv.id}
+                          {inv.invoiceNumber}
                         </span>
                         <Badge variant={inv.status === "OVERDUE" ? "overdue" : "confirmed"}>
                           {inv.status}
                         </Badge>
                       </div>
                       <p className="text-xs font-bold text-slate-700">{inv.customer}</p>
-                      <p className="text-[11px] text-slate-500">Payment Due: {inv.dueDate}</p>
+                      <p className="text-[11px] text-slate-500">Payment Due: {formatDate(inv.dueDate)}</p>
                     </div>
 
                     <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2 shrink-0">
@@ -325,7 +383,7 @@ export default function StaffDashboardPage() {
                   Payment Entry
                 </span>
                 <h3 className="text-lg font-bold text-slate-900">
-                  Record Settlement for {paymentModalInv.id}
+                  Record Settlement for {paymentModalInv.invoiceNumber}
                 </h3>
               </div>
               <span className="text-base font-black text-emerald-700 font-mono">
@@ -366,7 +424,8 @@ export default function StaffDashboardPage() {
                 <input
                   type="text"
                   placeholder="e.g. UTR247003099881"
-                  defaultValue="UTR247003099881"
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-[#714B67] outline-none"
                 />
               </div>
