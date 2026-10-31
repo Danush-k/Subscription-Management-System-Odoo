@@ -11,6 +11,7 @@ import {
   Shield,
   Users,
   Building,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrightLoopBrandMark } from "@/components/ui/logo";
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [selectedRole, setSelectedRole] = useState<"ADMIN" | "STAFF" | "CUSTOMER">("ADMIN");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Pre-configured seeded personas for instant 1-click verification
   const personas = [
@@ -55,21 +57,46 @@ export default function LoginPage() {
     },
   ];
 
-  const handleSelectPersona = (p: typeof personas[0]) => {
-    setSelectedRole(p.id);
-    setEmail(p.email);
-    setPassword(p.password);
+  const submitLogin = async (loginEmail: string, loginPassword: string) => {
+    setIsLoading(true);
+    setErrorMsg(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        setErrorMsg(payload.error ?? "Unable to sign in");
+        return;
+      }
+
+      const roleRedirects = {
+        ADMIN: "/admin/dashboard",
+        STAFF: "/staff/dashboard",
+        CUSTOMER: "/customer/dashboard",
+      } as const;
+      router.push(roleRedirects[payload.data.user.role as keyof typeof roleRedirects]);
+    } catch {
+      setErrorMsg("Unable to reach the authentication service");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectPersona = (persona: typeof personas[0]) => {
+    setSelectedRole(persona.id);
+    setEmail(persona.email);
+    setPassword(persona.password);
+    void submitLogin(persona.email, persona.password);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      const target = personas.find((p) => p.id === selectedRole);
-      router.push(target?.redirect || "/admin/dashboard");
-    }, 350);
+    void submitLogin(email, password);
   };
 
   return (
@@ -159,8 +186,14 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Sign In Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-3.5">
+          {/* Sign In Form matching Image 1 with uppercase labels and red asterisks */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {errorMsg}
+              </div>
+            )}
             <div>
               <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
                 LOGIN ID / EMAIL <span className="text-rose-500">*</span>

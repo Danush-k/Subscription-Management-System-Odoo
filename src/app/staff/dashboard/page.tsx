@@ -24,9 +24,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PortalNav } from "@/components/navigation/portal-nav";
 
+type StaffInvoice = {
+  id: string;
+  customer: string;
+  amount: string;
+  dueDate: string;
+};
+
 export default function StaffDashboardPage() {
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
-  const [paymentModalInv, setPaymentModalInv] = useState<any | null>(null);
+  const [paymentModalInv, setPaymentModalInv] = useState<StaffInvoice | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("UPI / Instant Transfer");
 
   const staffMetrics = [

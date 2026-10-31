@@ -138,7 +138,7 @@ export default function ProductsPage() {
                     <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                       {prod.productCode}
                     </span>
-                    <Badge variant="success">{prod.status}</Badge>
+                    <Badge variant="active">{prod.status}</Badge>
                     <span className="text-xs text-slate-400 uppercase font-semibold">
                       {prod.type}
                     </span>

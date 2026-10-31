@@ -29,19 +29,42 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg(null);
 
-    // Simulate account setup and auto-login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName,
+          companyName,
+          email,
+          phone,
+          taxId,
+          city,
+          password,
+          confirmPassword,
+        }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        setErrorMsg(payload.error ?? "Unable to create the account");
+        return;
+      }
+
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/customer/dashboard");
-      }, 700);
-    }, 500);
+      router.push("/customer/dashboard");
+    } catch {
+      setErrorMsg("Unable to reach the registration service");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,6 +132,11 @@ export default function RegisterPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errorMsg && (
+                <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+                  <span>{errorMsg}</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
