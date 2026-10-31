@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrightloopLogo } from "@/components/ui/logo";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 import {
   LayoutDashboard,
   RotateCcw,
@@ -57,21 +57,21 @@ export function AdminNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs select-none">
-        {/* Top Enterprise Deep Plum Bar */}
-        <div className="bg-[#714B67] text-white px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-2xs select-none">
+        {/* Top Professional Executive Bar */}
+        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs border-b border-slate-100 bg-[#FDFBF7]">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/admin/dashboard"
-              className="flex items-center hover:opacity-95 transition-opacity"
+              className="flex items-center hover:opacity-90 transition-opacity"
             >
-              <BrightloopLogo size="sm" variant="light" showBadge={false} />
+              <BrightLoopBrandMark size="sm" />
             </Link>
 
-            <span className="text-white/30 hidden sm:inline">|</span>
+            <span className="text-slate-300 hidden sm:inline">|</span>
 
-            <div className="hidden sm:flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-full text-white/90 text-[11px] font-semibold border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="hidden sm:flex items-center gap-2 bg-[#714B67]/10 px-2.5 py-0.5 rounded-full text-[#714B67] text-[11px] font-bold border border-[#714B67]/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Enterprise Suite</span>
             </div>
           </div>
@@ -81,34 +81,34 @@ export function AdminNav() {
             <button
               onClick={handleQuickBilling}
               disabled={billingRunning}
-              className="hidden md:flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-3 py-1 rounded-lg text-xs shadow-xs transition-all active:scale-95 disabled:opacity-70"
+              className="hidden md:flex items-center gap-1.5 bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs transition-all active:scale-95 disabled:opacity-70"
             >
-              <Play className="w-3 h-3 fill-slate-900" />
+              <Play className="w-3 h-3 fill-white text-white" />
               <span>{billingRunning ? "Processing..." : "Run Billing"}</span>
             </button>
 
             <Link
               href="/"
-              className="flex items-center gap-1 text-white/80 hover:text-white transition-colors text-xs font-semibold px-2 py-1 rounded-md hover:bg-white/10"
+              className="flex items-center gap-1 text-slate-600 hover:text-[#714B67] transition-colors text-xs font-semibold px-2.5 py-1 rounded-lg hover:bg-slate-100"
               title="Launchpad Hub"
             >
               <Grid className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">App Hub</span>
             </Link>
 
-            <span className="text-white/30 hidden sm:inline">•</span>
+            <span className="text-slate-200 hidden sm:inline">•</span>
 
             {/* Admin Profile Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all border border-white/10"
+                className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl text-slate-800 text-xs font-bold transition-all border border-slate-200/80 shadow-2xs"
               >
-                <div className="w-5 h-5 rounded-md bg-[#FBBF24] text-[#714B67] flex items-center justify-center font-black text-[10px]">
+                <div className="w-5 h-5 rounded-md bg-[#714B67] text-white flex items-center justify-center font-black text-[10px]">
                   DK
                 </div>
                 <span>Danush Kalyan</span>
-                <ChevronDown className="w-3 h-3 text-white/70" />
+                <ChevronDown className="w-3 h-3 text-slate-400" />
               </button>
 
               {roleMenuOpen && (

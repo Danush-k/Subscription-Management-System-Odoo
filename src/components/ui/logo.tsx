@@ -36,7 +36,7 @@ export function BrightloopLogo({
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Precision Vector Emblem - Interlocking Subscription Loops */}
+      {/* Precision Vector Emblem - Interlocking Subscription Recurrence Loops */}
       <div className={`relative ${iconSizes[size]} shrink-0 transition-transform hover:scale-105 duration-200`}>
         <svg
           viewBox="0 0 44 44"
@@ -100,7 +100,7 @@ export function BrightloopLogo({
             {/* ONLY 'oo' in GREY */}
             <span
               className={`tracking-tight ${textSizes[size]} ${
-                isLight ? "text-slate-300" : "text-[#71717A]"
+                isLight ? "text-slate-400 font-extrabold" : "text-[#71717A]"
               }`}
             >
               oo
@@ -135,29 +135,34 @@ export function BrightloopLogo({
 
 /**
  * Pure Odoo-inspired Wordmark:
- * Capital 'B', Capital 'L', with the two 'oo's in GREY, and the rest in PURPLE (#714B67)
+ * Capital 'B', Capital 'L', with the two 'oo's in GREY (#71717A), and the rest in PURPLE (#714B67)
  */
 export function BrightLoopBrandMark({
   size = "md",
+  variant = "dark",
   className = "",
 }: {
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  variant?: "dark" | "light";
   className?: string;
 }) {
   const fontSizes = {
+    xs: "text-lg",
     sm: "text-xl",
     md: "text-2xl sm:text-3xl",
     lg: "text-3xl sm:text-4xl",
     xl: "text-4xl sm:text-5xl",
   };
 
+  const isLight = variant === "light";
+
   return (
     <div className={`inline-flex items-center gap-1.5 select-none ${className}`}>
-      {/* 'BrightL' in PURPLE, 'oo' in GREY, 'p' in PURPLE */}
+      {/* 'BrightL' in PURPLE (or white), 'oo' in GREY, 'p' in PURPLE (or white) */}
       <span className={`font-black ${fontSizes[size]} tracking-tight flex items-baseline`}>
-        <span className="text-[#714B67]">BrightL</span>
-        <span className="text-[#71717A]">oo</span>
-        <span className="text-[#714B67]">p</span>
+        <span className={isLight ? "text-white" : "text-[#714B67]"}>BrightL</span>
+        <span className={isLight ? "text-slate-300 font-extrabold" : "text-[#71717A]"}>oo</span>
+        <span className={isLight ? "text-white" : "text-[#714B67]"}>p</span>
       </span>
     </div>
   );
