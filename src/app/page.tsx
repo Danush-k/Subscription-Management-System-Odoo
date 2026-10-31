@@ -1,365 +1,310 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
+  Shield,
+  Users,
+  Building,
   RotateCcw,
   FileText,
   CreditCard,
   Percent,
   Layers,
   BarChart3,
-  Users,
-  ShieldCheck,
-  Package,
-  Receipt,
-  UserCheck,
   ArrowRight,
   Sparkles,
   CheckCircle2,
-  TrendingUp,
-  Clock,
-  ExternalLink,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export default function HomePage() {
-  const [selectedRole, setSelectedRole] = useState<"ADMIN" | "STAFF" | "CUSTOMER">("ADMIN");
+  const portalCards = [
+    {
+      title: "Administrator Console",
+      role: "Danush Kalyan (Admin)",
+      desc: "Full business operations, automated recurring billing engine, revenue analytics (MRR/ARR), plan policies, and financial audit logs.",
+      icon: Shield,
+      href: "/login",
+      color: "bg-[#714B67] text-white",
+      badge: "Full Access",
+      features: ["Recurring Billing Engine", "12 Real-Time KPI Cards", "Tax Engine & Discounts"],
+    },
+    {
+      title: "Operations & Staff Workspace",
+      role: "Operations Staff",
+      desc: "Quotation pipeline, client proposal dispatching, overdue payment collection queues, and customer subscription conversions.",
+      icon: Users,
+      href: "/login",
+      color: "bg-blue-600 text-white",
+      badge: "Operations",
+      features: ["Quotation Proposals", "Overdue Account Followups", "1-Click Subscription Setup"],
+    },
+    {
+      title: "Customer Self-Service Portal",
+      role: "SSN Technology Labs",
+      desc: "Dedicated client workspace to review active subscription plans, pause/resume billing agreements, and download official GST tax invoices.",
+      icon: Building,
+      href: "/login",
+      color: "bg-emerald-600 text-white",
+      badge: "Client Portal",
+      features: ["Pause / Resume Subscriptions", "GST Tax Invoices & Receipts", "B2B Profile Management"],
+    },
+  ];
 
-  const apps = [
+  const features = [
     {
-      id: "subscriptions",
-      name: "Subscriptions",
-      href: "/admin/subscriptions",
-      gradient: "from-amber-500 to-orange-500",
-      icon: <RotateCcw className="w-8 h-8 text-white" />,
-      tag: "Automated",
-      desc: "Daily, Monthly, Yearly Recurrence",
+      title: "Automated Recurring Billing",
+      desc: "Daily, monthly, quarterly, and annual billing runs with DB-level idempotency preventing duplicate charges.",
+      icon: RotateCcw,
     },
     {
-      id: "invoices",
-      name: "Invoices",
-      href: "/admin/invoices",
-      gradient: "from-blue-600 to-cyan-500",
-      icon: <FileText className="w-8 h-8 text-white" />,
-      tag: "Idempotent",
-      desc: "Instant Billing & Tax Auditing",
+      title: "Decimal Precision & GST Audits",
+      desc: "Full 18% GST (inclusive & exclusive) engine using decimal.js to eliminate rounding discrepancies.",
+      icon: Percent,
     },
     {
-      id: "quotations",
-      name: "Quotations",
-      href: "/admin/quotations",
-      gradient: "from-teal-500 to-emerald-400",
-      icon: <Receipt className="w-8 h-8 text-white" />,
-      tag: "Proposals",
-      desc: "Draft to Confirmed Conversion",
+      title: "Multi-Tier Product Variants",
+      desc: "Base software catalogs with add-on editions (Standard Cloud, Odoo Enterprise, SAP Migration).",
+      icon: Layers,
     },
     {
-      id: "payments",
-      name: "Payments",
-      href: "/admin/payments",
-      gradient: "from-purple-600 to-pink-500",
-      icon: <CreditCard className="w-8 h-8 text-white" />,
-      tag: "Partial Reconcile",
-      desc: "UPI, Cards, Bank Transfers",
+      title: "Atomic Payment Settlement",
+      desc: "Multi-channel settlement across UPI, Cards, and Bank Transfers with partial payment reconciliation.",
+      icon: CreditCard,
     },
     {
-      id: "products",
-      name: "Products & Tiers",
-      href: "/admin/products",
-      gradient: "from-indigo-600 to-blue-500",
-      icon: <Package className="w-8 h-8 text-white" />,
-      tag: "Variants",
-      desc: "Odoo, SAP, Standard Editions",
+      title: "Proposal-to-Subscription Pipeline",
+      desc: "Draft client quotes with custom discounts and convert to active agreements in a single click.",
+      icon: FileText,
     },
     {
-      id: "plans",
-      name: "Subscription Plans",
-      href: "/admin/plans",
-      gradient: "from-cyan-600 to-blue-600",
-      icon: <Layers className="w-8 h-8 text-white" />,
-      tag: "Rules",
-      desc: "Month-End Billing & Auto-close",
-    },
-    {
-      id: "taxes",
-      name: "Tax Engine",
-      href: "/admin/taxes",
-      gradient: "from-amber-600 to-yellow-500",
-      icon: <Percent className="w-8 h-8 text-white" />,
-      tag: "GST/VAT",
-      desc: "Inclusive/Exclusive Precision",
-    },
-    {
-      id: "discounts",
-      name: "Discount Rules",
-      href: "/admin/discounts",
-      gradient: "from-rose-500 to-red-400",
-      icon: <Percent className="w-8 h-8 text-white" />,
-      tag: "Auto-apply",
-      desc: "Capped Redemptions & Tiers",
-    },
-    {
-      id: "customers",
-      name: "Customer CRM",
-      href: "/admin/customers",
-      gradient: "from-emerald-600 to-teal-500",
-      icon: <Users className="w-8 h-8 text-white" />,
-      tag: "Directory",
-      desc: "Accounts, History & Profiles",
-    },
-    {
-      id: "analytics",
-      name: "Revenue Analytics",
-      href: "/admin/analytics",
-      gradient: "from-violet-600 to-purple-400",
-      icon: <BarChart3 className="w-8 h-8 text-white" />,
-      tag: "MRR / ARR",
-      desc: "Invoiced vs Collected Trends",
-    },
-    {
-      id: "portal",
-      name: "Customer Portal",
-      href: "/customer/dashboard",
-      gradient: "from-sky-600 to-blue-500",
-      icon: <UserCheck className="w-8 h-8 text-white" />,
-      tag: "Self-Service",
-      desc: "Invoices, Renewal, Pause",
-    },
-    {
-      id: "staff",
-      name: "Team & RBAC",
-      href: "/admin/users",
-      gradient: "from-slate-700 to-slate-500",
-      icon: <ShieldCheck className="w-8 h-8 text-white" />,
-      tag: "Security",
-      desc: "Admin & Staff Permissions",
+      title: "Revenue Intelligence (MRR/ARR)",
+      desc: "Clear segregation between Invoiced Revenue (Accrual), Collected Cash, and Receivables.",
+      icon: BarChart3,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col font-sans">
-      {/* Top Odoo-style Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/70">
+    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-black tracking-tight text-odoo-700">brightloop</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-odoo-100 text-odoo-900 border border-odoo-200">
+              <div className="w-8 h-8 rounded-lg bg-[#714B67] text-[#F2C744] flex items-center justify-center font-black text-sm">
+                B
+              </div>
+              <span className="text-xl font-black tracking-tight text-[#714B67]">
+                Brightloop
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
                 SaaS
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-              <Link href="/admin/dashboard" className="hover:text-odoo-700 transition-colors">
-                Apps
-              </Link>
-              <Link href="/admin/subscriptions" className="hover:text-odoo-700 transition-colors">
-                Subscriptions
-              </Link>
-              <Link href="/admin/invoices" className="hover:text-odoo-700 transition-colors">
-                Invoicing
-              </Link>
-              <Link href="/admin/analytics" className="hover:text-odoo-700 transition-colors">
-                Analytics
-              </Link>
-              <Link href="/docs/architecture" className="hover:text-odoo-700 transition-colors">
-                Documentation
+            <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
+              <a href="#portals" className="hover:text-[#714B67] transition-colors">
+                Workspaces
+              </a>
+              <a href="#features" className="hover:text-[#714B67] transition-colors">
+                Engine Features
+              </a>
+              <Link href="/docs/architecture" className="hover:text-[#714B67] transition-colors">
+                Architecture & RBAC
               </Link>
             </nav>
           </div>
 
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="font-semibold text-slate-700">
-                Sign in
+              <Button
+                variant="ghost"
+                size="sm"
+                className="font-bold text-slate-700 hover:text-[#714B67]"
+              >
+                Sign In
               </Button>
             </Link>
             <Link href="/register">
-              <Button variant="pill" size="sm" className="font-semibold">
-                Try it free
+              <Button
+                size="sm"
+                className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold rounded-xl shadow-xs"
+              >
+                Create Account
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section inspired by attached Odoo visual */}
+      {/* Hero Section */}
       <main className="flex-1">
-        <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold mb-6 animate-pulse">
-            <Sparkles className="w-3.5 h-3.5" />
-            Next-Gen Subscription Engine &bull; Zero Spreadsheets
+        <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#F2C744]" />
+            Enterprise Subscription & Invoicing Engine &bull; Zero Spreadsheets
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-[1.15]">
-            All your business on{" "}
-            <span className="relative inline-block">
-              <span className="relative z-10 font-black">one platform</span>
-              <span className="absolute left-0 right-0 bottom-1.5 h-4 bg-amber-300/80 -rotate-1 rounded-sm -z-0"></span>
-            </span>
-            .<br />
-            Simple, efficient, yet{" "}
-            <span className="relative inline-block text-slate-900 underline decoration-sky-400 decoration-[4px] underline-offset-8">
-              affordable!
+          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            Simplify Subscription Billing.
+            <br />
+            <span className="text-[#714B67] underline decoration-[#F2C744] decoration-[6px] underline-offset-8">
+              One Unified SaaS Engine.
             </span>
           </h1>
 
-          <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-            Automate recurring billing, lifecycle state machines, quotation conversions, and financial reconciliation with PostgreSQL decimal precision.
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Brightloop automates recurring billing cycles, financial ledger snapshots, multi-tier product variants, and customer self-service with PostgreSQL precision.
           </p>
 
-          {/* Action Buttons & Handwritten Style Annotation */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 relative">
-            <Link href="/admin/dashboard">
-              <Button variant="pill" size="lg" className="w-full sm:w-auto text-base">
-                Start now - It's free
-              </Button>
-            </Link>
-            <Link href="/customer/dashboard">
-              <Button variant="pillOutline" size="lg" className="w-full sm:w-auto text-base">
-                Customer Portal Demo
-              </Button>
-            </Link>
-
-            {/* Odoo price doodle callout */}
-            <div className="mt-4 sm:mt-0 sm:absolute sm:left-[72%] sm:top-[-10px] flex items-center gap-2 text-odoo-800 font-serif italic text-sm">
-              <span className="text-2xl text-odoo-700">&ldca;</span>
-              <span className="bg-odoo-50 px-3 py-1 rounded-xl border border-odoo-200/80 shadow-xs font-semibold text-odoo-900">
-                580.00 Rs / month <span className="not-italic font-normal text-xs text-slate-500">for ALL apps</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Role Mode Quick Selector */}
-          <div className="mt-12 max-w-md mx-auto p-1.5 bg-slate-200/60 rounded-full flex items-center justify-between text-xs font-bold text-slate-600">
-            <button
-              onClick={() => setSelectedRole("ADMIN")}
-              className={`flex-1 py-1.5 rounded-full transition-all ${
-                selectedRole === "ADMIN" ? "bg-white text-odoo-800 shadow-xs font-extrabold" : "hover:text-slate-900"
-              }`}
-            >
-              ADMIN WORKSPACE
-            </button>
-            <button
-              onClick={() => setSelectedRole("STAFF")}
-              className={`flex-1 py-1.5 rounded-full transition-all ${
-                selectedRole === "STAFF" ? "bg-white text-odoo-800 shadow-xs font-extrabold" : "hover:text-slate-900"
-              }`}
-            >
-              STAFF OPERATIONS
-            </button>
-            <button
-              onClick={() => setSelectedRole("CUSTOMER")}
-              className={`flex-1 py-1.5 rounded-full transition-all ${
-                selectedRole === "CUSTOMER" ? "bg-white text-odoo-800 shadow-xs font-extrabold" : "hover:text-slate-900"
-              }`}
-            >
-              CUSTOMER PORTAL
-            </button>
-          </div>
-        </section>
-
-        {/* The Signature Odoo Apps Grid Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-200/60 pb-3">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Brightloop Applications</h2>
-              <p className="text-xs text-slate-500">Integrated suite for end-to-end subscription lifecycle operations</p>
-            </div>
-            <Link href="/admin/dashboard" className="text-xs font-bold text-odoo-700 hover:text-odoo-800 flex items-center gap-1">
-              Launch Dashboard <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-            {apps.map((app) => (
-              <Link
-                key={app.id}
-                href={
-                  selectedRole === "CUSTOMER"
-                    ? "/customer/dashboard"
-                    : selectedRole === "STAFF"
-                    ? app.href.replace("/admin/", "/staff/")
-                    : app.href
-                }
-                className="group relative flex flex-col items-center p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-odoo-300 hover:-translate-y-1 transition-all duration-200"
+          {/* Primary CTA Row */}
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/login" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[#714B67] hover:bg-[#5C3C54] text-white font-black text-sm rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                <div
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-tr ${app.gradient} shadow-md group-hover:scale-105 transition-transform duration-200`}
-                >
-                  {app.icon}
-                </div>
-                <span className="mt-3 text-sm font-bold text-slate-800 group-hover:text-odoo-700 text-center line-clamp-1">
-                  {app.name}
-                </span>
-                <span className="mt-1 text-[11px] text-slate-500 text-center line-clamp-2">
-                  {app.desc}
-                </span>
-                <span className="mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-odoo-50 group-hover:text-odoo-800">
-                  {app.tag}
-                </span>
-              </Link>
-            ))}
+                <Lock className="w-4 h-4 text-[#F2C744]" />
+                <span>Sign In to Workspace</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto px-8 py-3.5 border-slate-300 hover:bg-slate-100/80 text-slate-800 font-bold text-sm rounded-xl"
+              >
+                Register Customer Account
+              </Button>
+            </Link>
+          </div>
+
+          <p className="text-xs text-slate-400 font-medium">
+            Demo preloaded with Admin, Staff, and Customer accounts. 1-click quick login available.
+          </p>
+        </section>
+
+        {/* 3 Workspaces Selection Grid */}
+        <section id="portals" className="py-12 bg-white border-y border-slate-200/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div className="text-center max-w-xl mx-auto space-y-1.5">
+              <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
+                Role-Based Access
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Select Your Dedicated Workspace
+              </h2>
+              <p className="text-xs text-slate-500">
+                Sign in to experience tailored dashboards designed for each business stakeholder.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {portalCards.map((portal) => {
+                const Icon = portal.icon;
+                return (
+                  <div
+                    key={portal.title}
+                    className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#714B67]/40 hover:shadow-xl transition-all flex flex-col justify-between space-y-6"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className={`p-2.5 rounded-2xl ${portal.color}`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                          {portal.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">{portal.title}</h3>
+                        <p className="text-xs font-semibold text-[#714B67] mt-0.5">{portal.role}</p>
+                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                          {portal.desc}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        {portal.features.map((f) => (
+                          <div key={f} className="flex items-center gap-2 text-xs text-slate-700">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{f}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Link href="/login" className="block w-full">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full text-xs font-bold justify-between group"
+                      >
+                        <span>Sign In to Access</span>
+                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </Button>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {/* Live Operational Metrics Preview */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <span className="text-xs font-bold text-odoo-700 uppercase tracking-wider">Enterprise Financial Health</span>
-                <h3 className="text-2xl font-black text-slate-900 mt-1">Real-Time Invoiced &amp; Recurring Metrics</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-medium text-slate-500">PostgreSQL Live Sync</span>
-              </div>
-            </div>
+        {/* Architectural Features Grid */}
+        <section id="features" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center max-w-xl mx-auto space-y-1.5">
+            <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
+              System Capabilities
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Enterprise Billing Engine
+            </h2>
+            <p className="text-xs text-slate-500">
+              Built on PostgreSQL decimal precision, atomic transactions, and automated schedulers.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-500">Monthly Recurring Revenue (MRR)</span>
-                <div className="text-2xl font-black text-slate-900 mt-1">₹4,28,500.00</div>
-                <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5" /> +14.2% from last month
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <div
+                  key={feat.title}
+                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-base">{feat.title}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{feat.desc}</p>
                 </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-500">Total Invoiced (YTD)</span>
-                <div className="text-2xl font-black text-slate-900 mt-1">₹51,42,000.00</div>
-                <div className="text-xs text-slate-500 font-medium mt-1">
-                  100% Decimal precision
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-500">Revenue Collected</span>
-                <div className="text-2xl font-black text-emerald-700 mt-1">₹48,90,500.00</div>
-                <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> 95.1% collection rate
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-500">Outstanding Receivables</span>
-                <div className="text-2xl font-black text-amber-600 mt-1">₹2,51,500.00</div>
-                <div className="text-xs text-amber-700 font-semibold mt-1 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> Overdue tracking active
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-8 px-4 text-center text-xs text-slate-500">
-        <p>&copy; {new Date().getFullYear()} Brightloop Software Technologies Pvt. Ltd. All rights reserved.</p>
-        <p className="mt-1">Built with Next.js App Router, PostgreSQL, Prisma, Redis, and BullMQ.</p>
+      <footer className="bg-white border-t border-slate-200 py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
+        <div className="flex items-center justify-center gap-6 font-semibold">
+          <Link href="/login" className="hover:text-[#714B67]">
+            Sign In
+          </Link>
+          <Link href="/register" className="hover:text-[#714B67]">
+            Register Account
+          </Link>
+          <Link href="/docs/architecture" className="hover:text-[#714B67]">
+            Documentation
+          </Link>
+        </div>
+        <p>&copy; 2026 Brightloop Software. Engineered for scalable subscription enterprises.</p>
       </footer>
     </div>
   );

@@ -124,6 +124,11 @@ export default function CustomerDashboardPage() {
           <div className="flex items-center gap-3 text-xs text-slate-600">
             <span className="font-semibold text-slate-800">SSN Technology Labs</span>
             <Badge variant="active">Active Customer</Badge>
+            <Link href="/login">
+              <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 hover:text-rose-600">
+                Sign Out
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

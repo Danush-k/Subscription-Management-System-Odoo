@@ -88,6 +88,12 @@ export default function StaffDashboardPage() {
                 Create Quotation
               </Button>
             </Link>
+
+            <Link href="/login">
+              <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 hover:text-rose-600">
+                Switch User / Sign Out
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
