@@ -20,7 +20,6 @@ import {
   Loader2,
   X,
   CreditCard,
-  Plus,
   ArrowRight,
   User,
 } from "lucide-react";
@@ -92,13 +91,6 @@ export default function CustomersPage() {
               </p>
             </div>
           </div>
-
-          <Link href="/admin/subscriptions/new">
-            <Button className="bg-[#714B67] hover:bg-[#5C3C54] text-white gap-2 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95">
-              <Plus className="w-4 h-4" />
-              <span>Create Subscription</span>
-            </Button>
-          </Link>
         </div>
 
         {/* Search Bar */}
