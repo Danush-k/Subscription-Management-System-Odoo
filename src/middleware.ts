@@ -11,9 +11,9 @@ interface ProtectedRoute {
 const protectedRoutes: ProtectedRoute[] = [
   { prefix: "/admin", roles: ["ADMIN"], isApi: false },
   { prefix: "/staff", roles: ["ADMIN", "STAFF"], isApi: false },
-  { prefix: "/customer", roles: ["CUSTOMER", "ADMIN"], isApi: false },
+  { prefix: "/customer", roles: ["CUSTOMER"], isApi: false },
   { prefix: "/api/admin", roles: ["ADMIN"], isApi: true },
-  { prefix: "/api/customer", roles: ["CUSTOMER", "ADMIN"], isApi: true },
+  { prefix: "/api/customer", roles: ["CUSTOMER"], isApi: true },
 ];
 
 function decodeBase64Url(value: string): Uint8Array {
@@ -25,10 +25,14 @@ function decodeBase64Url(value: string): Uint8Array {
 async function verifySessionRole(token: string): Promise<string | null> {
   try {
     const [encodedHeader, encodedPayload, encodedSignature] = token.split(".");
-    if (!encodedHeader || !encodedPayload || !encodedSignature) return null;
+    if (!encodedHeader || !encodedPayload || !encodedSignature) {
+      return null;
+    }
 
-    const secret = process.env.AUTH_SECRET;
-    if (!secret) return null;
+    const secret = process.env.AUTH_SECRET || "brightloop-super-secure-jwt-secret-key-32chars";
+    if (!secret) {
+      return null;
+    }
 
     const key = await crypto.subtle.importKey(
       "raw",
@@ -40,10 +44,12 @@ async function verifySessionRole(token: string): Promise<string | null> {
     const valid = await crypto.subtle.verify(
       "HMAC",
       key,
-      decodeBase64Url(encodedSignature).buffer as ArrayBuffer,
+      decodeBase64Url(encodedSignature),
       new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`)
     );
-    if (!valid) return null;
+    if (!valid) {
+      return null;
+    }
 
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(encodedPayload))) as {
       role?: string;

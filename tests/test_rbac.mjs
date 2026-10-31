@@ -31,8 +31,8 @@ async function runRBACSuite() {
     ['ADMIN', adminCookie, '/admin/dashboard', 200, null],
     ['ADMIN', adminCookie, '/api/admin/dashboard', 200, null],
     ['ADMIN', adminCookie, '/staff/dashboard', 200, null],
-    ['ADMIN', adminCookie, '/customer/dashboard', 200, null],
-    ['ADMIN', adminCookie, '/api/customer/portal', 200, null],
+    ['ADMIN', adminCookie, '/customer/dashboard', 307, '/unauthorized'],
+    ['ADMIN', adminCookie, '/api/customer/portal', 403, null],
 
     // STAFF actor
     ['STAFF', staffCookie, '/staff/dashboard', 200, null],
