@@ -117,6 +117,14 @@ export function AdminNav({ currentTab }: AdminNavProps) {
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   <span>Customer Self-Service</span>
                 </Link>
+                <div className="border-t border-slate-100 my-1" />
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"
+                  onClick={() => setRoleMenuOpen(false)}
+                >
+                  <span>Sign Out / Switch User</span>
+                </Link>
               </div>
             )}
           </div>
