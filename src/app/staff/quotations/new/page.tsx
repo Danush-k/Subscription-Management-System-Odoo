@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,23 +17,59 @@ import {
 
 export default function StaffNewQuotationPage() {
   const router = useRouter();
-  const [customer, setCustomer] = useState("SSN Technology Labs");
-  const [plan, setPlan] = useState("Enterprise Cloud Suite");
-  const [variant, setVariant] = useState("Odoo Enterprise Edition");
+  const [customer, setCustomer] = useState("");
+  const [plan, setPlan] = useState("");
+  const [productId, setProductId] = useState("");
   const [validDays, setValidDays] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [options, setOptions] = useState<{
+    customers: { id: string; name: string; companyName: string | null; email: string }[];
+    plans: { id: string; name: string; subscriptionPrice: string; billingFrequency: string }[];
+    products: { id: string; name: string; salesPrice: string }[];
+  }>({ customers: [], plans: [], products: [] });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    void fetch("/api/staff/quotations/options", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok || !payload.success) throw new Error(payload.error ?? "Unable to load quotation options");
+        setOptions(payload.data);
+        setCustomer(payload.data.customers[0]?.id ?? "");
+        setPlan(payload.data.plans[0]?.id ?? "");
+        setProductId(payload.data.products[0]?.id ?? "");
+      })
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load quotation options"));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setError(null);
+    try {
+      const selectedPlan = options.plans.find((item) => item.id === plan);
+      const response = await fetch("/api/staff/quotations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: customer,
+          planId: plan,
+          expiryDate: new Date(Date.now() + validDays * 86400000).toISOString(),
+          lines: [{ productId, quantity: 1, unitPrice: Number(selectedPlan?.subscriptionPrice ?? 0), taxRate: 0, discountAmount: 0 }],
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error(payload.error ?? "Unable to create quotation");
+      setEmailSent(payload.data.emailSent);
       setSubmitted(true);
-      setTimeout(() => {
-        router.push("/staff/dashboard");
-      }, 700);
-    }, 400);
+      setTimeout(() => router.push("/staff/dashboard"), 700);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to create quotation");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,12 +113,13 @@ export default function StaffNewQuotationPage() {
             </div>
           </div>
 
+          {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">{error}</div>}
           {submitted ? (
             <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2 animate-fadeIn">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <h3 className="font-bold text-emerald-900 text-sm">Quotation Dispatched</h3>
+              <h3 className="font-bold text-emerald-900 text-sm">Quotation Created</h3>
               <p className="text-xs text-emerald-700">
-                Quotation dispatched to {customer} and added to the Operations Queue.
+                Added to the Operations Queue. {emailSent ? "The customer email was sent." : "Email was not sent; configure Brevo to enable dispatch."}
               </p>
             </div>
           ) : (
@@ -98,10 +135,7 @@ export default function StaffNewQuotationPage() {
                     onChange={(e) => setCustomer(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] outline-none font-semibold text-slate-800"
                   >
-                    <option value="SSN Technology Labs">SSN Technology Labs Pvt Ltd (GST: 33AABCS1429B1Z2)</option>
-                    <option value="Kalyan Retailers LLP">Kalyan Retailers LLP (GST: 29AABCK9901M1Z1)</option>
-                    <option value="CyberSol Software Systems">CyberSol Software Systems</option>
-                    <option value="Apex Logistics India">Apex Logistics India</option>
+                    {options.customers.map((item) => <option key={item.id} value={item.id}>{item.companyName ?? item.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -116,10 +150,7 @@ export default function StaffNewQuotationPage() {
                     onChange={(e) => setPlan(e.target.value)}
                     className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] outline-none font-semibold text-slate-800"
                   >
-                    <option value="Enterprise Cloud Suite">Enterprise Cloud Suite (₹1,20,000 / yr)</option>
-                    <option value="Odoo Business Suite">Odoo Business Suite (₹18,500 / mo)</option>
-                    <option value="Growth Monthly Tier">Growth Monthly Tier (₹8,400 / mo)</option>
-                    <option value="Starter Cloud Tier">Starter Cloud Tier (₹2,500 / mo)</option>
+                    {options.plans.map((item) => <option key={item.id} value={item.id}>{item.name} (₹{Number(item.subscriptionPrice).toLocaleString("en-IN")} / {item.billingFrequency.toLowerCase()})</option>)}
                   </select>
                 </div>
 
@@ -128,13 +159,11 @@ export default function StaffNewQuotationPage() {
                     Product Tier Edition
                   </label>
                   <select
-                    value={variant}
-                    onChange={(e) => setVariant(e.target.value)}
+                    value={productId}
+                    onChange={(e) => setProductId(e.target.value)}
                     className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] outline-none font-semibold text-slate-800"
                   >
-                    <option value="Odoo Enterprise Edition">Odoo Enterprise Edition</option>
-                    <option value="SAP Migration Edition">SAP Migration Edition</option>
-                    <option value="Standard Cloud Tier">Standard Cloud Tier</option>
+                    {options.products.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                   </select>
                 </div>
               </div>
