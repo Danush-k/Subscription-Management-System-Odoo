@@ -47,7 +47,7 @@ Brightloop is a full-featured, automated Subscription Management System built fo
 - PostgreSQL >= 15
 - Redis >= 7
 
-### Installation
+### Installation & Database Setup
 ```bash
 # Clone the repository
 git clone https://github.com/Danush-k/Subscription-Management-System-Odoo.git
@@ -59,12 +59,25 @@ npm install
 # Configure environment variables
 cp .env.example .env
 
-# Run Prisma migrations
-npx prisma migrate dev
+# Push Prisma schema to PostgreSQL & seed complete enterprise dataset
+npm run db:setup
 
-# Start development server
+# Or run the seeder independently
+npm run prisma:seed
+
+# Start Next.js development server
 npm run dev
 ```
+
+### Pre-Configured Demo Credentials
+
+The database seeder initializes 3 enterprise roles with sample data:
+
+| Persona | Role | Work Email | Default Password | Workspace Route |
+| :--- | :--- | :--- | :--- | :--- |
+| **Danush Kalyan** | Administrator | `admin@brightloopsoftware.com` | `BrightloopAdmin#2026` | `/admin/dashboard` |
+| **Operations Staff** | Operations / Billing | `staff@brightloopsoftware.com` | `BrightloopStaff#2026` | `/staff/dashboard` |
+| **SSN Technology Labs** | B2B Customer | `billing@ssntechlabs.com` | `BrightloopClient#2026` | `/customer/dashboard` |
 
 ---
 

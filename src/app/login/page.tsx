@@ -4,28 +4,29 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
   Shield,
   Users,
   Building,
-  ArrowRight,
-  Lock,
-  Mail,
-  CheckCircle2,
   AlertCircle,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BrightloopLogo } from "@/components/ui/logo";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [selectedPersona, setSelectedPersona] = useState<"ADMIN" | "STAFF" | "CUSTOMER">("ADMIN");
+  const [email, setEmail] = useState("admin@brightloopsoftware.com");
+  const [password, setPassword] = useState("BrightloopAdmin#2026");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [selectedRole, setSelectedRole] = useState<"ADMIN" | "STAFF" | "CUSTOMER">("ADMIN");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Pre-configured seeded personas for 1-click instant login
+  // Pre-configured seeded personas for instant 1-click verification
   const personas = [
     {
       id: "ADMIN" as const,
@@ -34,125 +35,150 @@ export default function LoginPage() {
       email: "admin@brightloopsoftware.com",
       password: "BrightloopAdmin#2026",
       redirect: "/admin/dashboard",
-      badge: "Full Control",
       icon: Shield,
-      color: "bg-[#714B67] text-white",
-      borderColor: "border-[#714B67]",
     },
     {
       id: "STAFF" as const,
       name: "Operations Staff",
-      role: "Support & Billing",
+      role: "Staff Operations",
       email: "staff@brightloopsoftware.com",
       password: "BrightloopStaff#2026",
       redirect: "/staff/dashboard",
-      badge: "Operations",
       icon: Users,
-      color: "bg-blue-600 text-white",
-      borderColor: "border-blue-600",
     },
     {
       id: "CUSTOMER" as const,
       name: "SSN Technology Labs",
-      role: "B2B Customer",
+      role: "Customer Portal",
       email: "billing@ssntechlabs.com",
       password: "BrightloopClient#2026",
       redirect: "/customer/dashboard",
-      badge: "Self-Service",
       icon: Building,
-      color: "bg-emerald-600 text-white",
-      borderColor: "border-emerald-600",
     },
   ];
 
-  const handleQuickLogin = (persona: typeof personas[0]) => {
-    setEmail(persona.email);
-    setPassword(persona.password);
-    setSelectedPersona(persona.id);
+  const submitLogin = async (loginEmail: string, loginPassword: string) => {
     setIsLoading(true);
     setErrorMsg(null);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        setErrorMsg(payload.error ?? "Unable to sign in");
+        return;
+      }
+
+      const roleRedirects = {
+        ADMIN: "/admin/dashboard",
+        STAFF: "/staff/dashboard",
+        CUSTOMER: "/customer/dashboard",
+      } as const;
+      router.push(roleRedirects[payload.data.user.role as keyof typeof roleRedirects]);
+    } catch {
+      setErrorMsg("Unable to reach the authentication service");
+    } finally {
       setIsLoading(false);
-      router.push(persona.redirect);
-    }, 400);
+    }
+  };
+
+  const handleSelectPersona = (persona: typeof personas[0]) => {
+    setSelectedRole(persona.id);
+    setEmail(persona.email);
+    setPassword(persona.password);
+    void submitLogin(persona.email, persona.password);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg(null);
-
-    // Simple role router based on credentials
-    setTimeout(() => {
-      setIsLoading(false);
-      if (email.includes("admin")) {
-        router.push("/admin/dashboard");
-      } else if (email.includes("staff")) {
-        router.push("/staff/dashboard");
-      } else {
-        router.push("/customer/dashboard");
-      }
-    }, 400);
+    void submitLogin(email, password);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between text-slate-900 font-sans">
-      {/* Top Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xs">
-        <Link href="/" className="hover:opacity-95 transition-opacity">
-          <BrightloopLogo size="md" variant="colored" />
+    <div className="min-h-screen bg-[#EFEAF4] flex flex-col justify-between text-slate-900 font-sans select-none relative overflow-x-hidden">
+      {/* Upper Shaded Canvas: Soft lavender with clear, vibrant color contrast */}
+      <div className="absolute top-0 left-0 right-0 h-[52vh] bg-[#ECE5F2] -z-0" />
+
+      {/* Middle Curvy Wave Separator: Positioned at middle screen height */}
+      <div className="absolute top-[44vh] left-0 right-0 w-full overflow-hidden leading-none -z-0">
+        <svg
+          viewBox="0 0 1440 160"
+          fill="none"
+          preserveAspectRatio="none"
+          className="w-full h-36 sm:h-44 text-white block"
+        >
+          <path
+            d="M0,80 C360,160 1080,0 1440,80 L1440,160 L0,160 Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+
+      {/* Lower Canvas: Pure Crisp White */}
+      <div className="absolute top-[56vh] bottom-0 left-0 right-0 bg-white -z-0" />
+
+      {/* Top Brand Header */}
+      <header className="pt-8 sm:pt-10 pb-4 text-center px-4 relative z-10">
+        <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
+          {/* BrightLoop: Capital 'B', Capital 'L', 'oo' in GREY, others in PURPLE */}
+          <BrightLoopBrandMark size="xl" />
         </Link>
 
-        <div className="text-xs text-slate-500">
-          Need an account?{" "}
-          <Link href="/register" className="font-bold text-[#714B67] hover:underline">
-            Register here
-          </Link>
+        {/* Subscription Slogans (NO HR references) */}
+        <div className="mt-3 text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+          <span>Subscriptions </span>
+          <span className="relative inline-block mx-1">
+            <span className="relative z-10 px-2.5 py-0.5 text-[#714B67] font-black text-sm sm:text-base">
+              made simple
+            </span>
+            <span className="absolute inset-0 bg-[#E9D5FF] rounded-md -rotate-1 shadow-2xs -z-0 transform scale-105" />
+          </span>
+          <span> for modern businesses.</span>
+          <br />
+          <span className="font-handwriting text-xl text-[#714B67] font-bold">
+            ONE PLATFORM &bull; ALL SUBSCRIPTIONS
+          </span>
         </div>
       </header>
 
-      {/* Main Login Card */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Sign In to Brightloop
-            </h1>
-            <p className="text-xs text-slate-500">
-              Select your role to access your dedicated enterprise workspace.
+      {/* Main Centered Floating Card positioned right over the middle curve */}
+      <main className="flex-1 flex items-center justify-center px-4 py-4 relative z-10">
+        <div className="max-w-[420px] w-full bg-white rounded-3xl p-7 sm:p-9 shadow-2xl border border-slate-200/90 space-y-5 relative">
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome back
+            </h2>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+              Sign in with your enterprise credentials to access your subscription workspace.
             </p>
           </div>
 
-          {/* 1-Click Fast Persona Switcher */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
-              Quick Demo Access (1-Click Login)
-            </p>
+          {/* 1-Click Demo Persona Chips */}
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
+              1-Click Demo Persona
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {personas.map((p) => {
-                const Icon = p.icon;
-                const isSelected = selectedPersona === p.id;
+                const isSelected = selectedRole === p.id;
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => handleQuickLogin(p)}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${
+                    onClick={() => handleSelectPersona(p)}
+                    className={`p-2 rounded-xl border text-center transition-all ${
                       isSelected
-                        ? "border-[#714B67] bg-[#714B67]/5 ring-2 ring-[#714B67]/20"
-                        : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
+                        ? "border-[#714B67] bg-[#714B67]/5 ring-2 ring-[#714B67]/20 font-bold"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/70 text-slate-600"
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`p-1.5 rounded-lg ${p.color}`}>
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase">{p.badge}</span>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 leading-tight">{p.role}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{p.name}</div>
+                    <div className="text-[11px] font-bold text-slate-900 truncate">
+                      {p.role}
                     </div>
                   </button>
                 );
@@ -160,74 +186,119 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider absolute">
-              Or sign in with email
-            </span>
-          </div>
-
-          {/* Traditional Form */}
+          {/* Sign In Form matching Image 1 with uppercase labels and red asterisks */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {errorMsg}
+              </div>
+            )}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Work Email
+              <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                LOGIN ID / EMAIL <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all"
+                  placeholder="Enter your enterprise email"
+                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Password
+              <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                PASSWORD <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all font-mono"
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none transition-all font-mono"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-slate-600 pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded text-[#714B67] focus:ring-[#714B67]"
+                />
+                <span>Remember me</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => alert("Password reset link dispatched to " + email)}
+                className="text-xs font-semibold text-slate-700 hover:text-[#714B67] hover:underline"
+              >
+                Forgot password?
+              </button>
             </div>
 
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-sm rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mt-2"
             >
-              {isLoading ? (
-                <span>Authenticating...</span>
-              ) : (
-                <>
-                  <span>Sign In to Workspace</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              {isLoading ? <span>Signing In...</span> : <span>Sign In</span>}
             </Button>
+
+            <div className="pt-2 text-center text-xs text-slate-600">
+              Registering an enterprise?{" "}
+              <Link href="/register" className="font-bold text-slate-900 hover:underline">
+                Create an account
+              </Link>
+            </div>
           </form>
 
-          <div className="pt-2 text-center text-xs text-slate-400">
-            Protected by Brightloop Enterprise Role-Based Access Control (RBAC).
+          {/* Bottom Right Handwritten Annotation with Curved Arrow: ONE PLATFORM ALL SUBSCRIPTIONS */}
+          <div className="hidden sm:flex items-center gap-1.5 absolute -right-28 -bottom-9 whitespace-nowrap">
+            <svg
+              width="45"
+              height="35"
+              viewBox="0 0 45 35"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-[#714B67] transform rotate-12 shrink-0"
+            >
+              <path
+                d="M5 25C15 28 30 25 35 10M35 10L27 12M35 10L36 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="font-handwriting text-xl font-bold text-[#714B67]">
+              ONE PLATFORM, ALL SUBSCRIPTIONS!
+            </span>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-slate-400 border-t border-slate-200/50">
-        &copy; 2026 Brightloop Software. All rights reserved.
+      <footer className="py-4 text-center text-xs text-slate-400 relative z-10">
+        &copy; 2026 BrightLoop Software. Enterprise Subscription Management Platform.
       </footer>
     </div>
   );

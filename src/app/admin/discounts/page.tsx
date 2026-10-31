@@ -120,7 +120,7 @@ export default function DiscountsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <Badge variant="success">{d.status}</Badge>
+                      <Badge variant="active">{d.status}</Badge>
                     </td>
                   </tr>
                 ))}

@@ -182,7 +182,7 @@ export default function CustomersPage() {
                       ₹{c.totalSpent.toLocaleString("en-IN")}
                     </td>
                     <td className="py-4 px-6">
-                      <Badge variant={c.status === "ACTIVE" ? "success" : "outline"}>
+                      <Badge variant={c.status === "ACTIVE" ? "active" : "outline"}>
                         {c.status}
                       </Badge>
                     </td>

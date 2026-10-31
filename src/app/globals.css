@@ -54,6 +54,11 @@
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-variant-numeric: tabular-nums;
   }
+
+  /* Handwritten font for Odoo/DayFlow style annotations & arrows */
+  .font-handwriting {
+    font-family: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  }
 }
 
 /* Dashboard Enterprise Wide-Viewport Container */
@@ -185,4 +190,8 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.no1-scroll{
+  overflow-y: scroll;
 }
