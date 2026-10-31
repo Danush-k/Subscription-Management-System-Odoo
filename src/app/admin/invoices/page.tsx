@@ -26,18 +26,66 @@ interface InvoiceItem {
   id: string;
   invoiceNumber: string;
   subscriptionNumber: string;
+  planName?: string;
   customerName: string;
   customerGstin: string;
   date: string;
   dueDate: string;
+  billingPeriodStart?: string | null;
+  billingPeriodEnd?: string | null;
   subtotal: number;
   taxAmount: number;
+  discountAmount?: number;
   totalAmount: number;
   paidAmount: number;
+  outstandingAmount?: number;
   status: "DRAFT" | "CONFIRMED" | "PAID" | "OVERDUE" | "CANCELLED";
+  customer?: {
+    id: string;
+    name: string;
+    companyName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    taxId?: string | null;
+    billingAddress?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+    } | null;
+  };
+  lines?: Array<{
+    id: string;
+    description: string;
+    productName: string;
+    variantName?: string | null;
+    hsnSac?: string;
+    quantity: number;
+    unitPrice: number;
+    taxRate: number;
+    taxAmount: number;
+    discountAmount?: number;
+    subtotal: number;
+    total: number;
+  }>;
+  payments?: Array<{
+    id: string;
+    paymentNumber: string;
+    paymentMethod: string;
+    amount: number;
+    paymentDate: string;
+    transactionRef?: string | null;
+    status: string;
+  }>;
 }
 
 import { Loader2 } from "lucide-react";
+import {
+  downloadInvoicePdf,
+  printInvoiceDocument,
+  InvoicePdfData,
+} from "@/lib/invoice/generateInvoicePdf";
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
@@ -64,6 +112,126 @@ export default function InvoicesPage() {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  const handleDownloadAdminPdf = (inv: InvoiceItem) => {
+    const pdfData: InvoicePdfData = {
+      invoiceNumber: inv.invoiceNumber,
+      invoiceDate: inv.date,
+      dueDate: inv.dueDate,
+      billingPeriodStart: inv.billingPeriodStart,
+      billingPeriodEnd: inv.billingPeriodEnd,
+      subscriptionNumber: inv.subscriptionNumber,
+      planName: inv.planName || "Brightloop SaaS Subscription",
+      status: inv.status,
+      customer: {
+        name: inv.customer?.name || inv.customerName,
+        companyName: inv.customer?.companyName || inv.customerName,
+        email: inv.customer?.email,
+        phone: inv.customer?.phone,
+        taxId: inv.customer?.taxId || inv.customerGstin,
+        billingAddress: inv.customer?.billingAddress,
+      },
+      lines: (inv.lines && inv.lines.length > 0 ? inv.lines : [
+        {
+          id: "1",
+          description: inv.planName || "Brightloop ERP SaaS Subscription",
+          productName: "Brightloop ERP SaaS Subscription",
+          hsnSac: "998314",
+          quantity: 1,
+          unitPrice: inv.subtotal,
+          taxRate: 18,
+          taxAmount: inv.taxAmount,
+          discountAmount: inv.discountAmount || 0,
+          subtotal: inv.subtotal,
+          total: inv.totalAmount,
+        }
+      ]).map((l) => ({
+        description: l.description || l.productName,
+        hsnSac: l.hsnSac || "998314",
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        taxRate: l.taxRate,
+        taxAmount: l.taxAmount,
+        discountAmount: l.discountAmount,
+        subtotal: l.subtotal,
+        total: l.total,
+      })),
+      subtotal: inv.subtotal,
+      taxAmount: inv.taxAmount,
+      discountAmount: inv.discountAmount || 0,
+      totalAmount: inv.totalAmount,
+      paidAmount: inv.paidAmount,
+      outstandingAmount: inv.outstandingAmount ?? (inv.totalAmount - inv.paidAmount),
+      payments: inv.payments?.map((p) => ({
+        paymentNumber: p.paymentNumber,
+        paymentMethod: p.paymentMethod,
+        amount: p.amount,
+        paymentDate: p.paymentDate,
+        transactionRef: p.transactionRef,
+      })),
+    };
+    downloadInvoicePdf(pdfData);
+  };
+
+  const handlePrintAdminInvoice = (inv: InvoiceItem) => {
+    const pdfData: InvoicePdfData = {
+      invoiceNumber: inv.invoiceNumber,
+      invoiceDate: inv.date,
+      dueDate: inv.dueDate,
+      billingPeriodStart: inv.billingPeriodStart,
+      billingPeriodEnd: inv.billingPeriodEnd,
+      subscriptionNumber: inv.subscriptionNumber,
+      planName: inv.planName || "Brightloop SaaS Subscription",
+      status: inv.status,
+      customer: {
+        name: inv.customer?.name || inv.customerName,
+        companyName: inv.customer?.companyName || inv.customerName,
+        email: inv.customer?.email,
+        phone: inv.customer?.phone,
+        taxId: inv.customer?.taxId || inv.customerGstin,
+        billingAddress: inv.customer?.billingAddress,
+      },
+      lines: (inv.lines && inv.lines.length > 0 ? inv.lines : [
+        {
+          id: "1",
+          description: inv.planName || "Brightloop ERP SaaS Subscription",
+          productName: "Brightloop ERP SaaS Subscription",
+          hsnSac: "998314",
+          quantity: 1,
+          unitPrice: inv.subtotal,
+          taxRate: 18,
+          taxAmount: inv.taxAmount,
+          discountAmount: inv.discountAmount || 0,
+          subtotal: inv.subtotal,
+          total: inv.totalAmount,
+        }
+      ]).map((l) => ({
+        description: l.description || l.productName,
+        hsnSac: l.hsnSac || "998314",
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        taxRate: l.taxRate,
+        taxAmount: l.taxAmount,
+        discountAmount: l.discountAmount,
+        subtotal: l.subtotal,
+        total: l.total,
+      })),
+      subtotal: inv.subtotal,
+      taxAmount: inv.taxAmount,
+      discountAmount: inv.discountAmount || 0,
+      totalAmount: inv.totalAmount,
+      paidAmount: inv.paidAmount,
+      outstandingAmount: inv.outstandingAmount ?? (inv.totalAmount - inv.paidAmount),
+      payments: inv.payments?.map((p) => ({
+        paymentNumber: p.paymentNumber,
+        paymentMethod: p.paymentMethod,
+        amount: p.amount,
+        paymentDate: p.paymentDate,
+        transactionRef: p.transactionRef,
+      })),
+    };
+    printInvoiceDocument(pdfData);
+  };
 
   const handleRegisterPayment = async (inv: InvoiceItem) => {
     const outstanding = inv.totalAmount - inv.paidAmount;
@@ -466,24 +634,53 @@ export default function InvoicesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  <tr>
-                    <td className="py-3">
-                      <div className="font-bold text-slate-900">
-                        Brightloop ERP SaaS Subscription
-                      </div>
-                      <div className="text-slate-400 text-[11px]">
-                        Ref: {selectedInvoice.subscriptionNumber}
-                      </div>
-                    </td>
-                    <td className="py-3 text-center font-mono">998314</td>
-                    <td className="py-3 text-right font-mono">
-                      ₹{selectedInvoice.subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3 text-right font-bold text-slate-700">18%</td>
-                    <td className="py-3 text-right font-bold text-slate-900 font-mono">
-                      ₹{selectedInvoice.totalAmount.toLocaleString("en-IN")}
-                    </td>
-                  </tr>
+                  {selectedInvoice.lines && selectedInvoice.lines.length > 0 ? (
+                    selectedInvoice.lines.map((l) => (
+                      <tr key={l.id}>
+                        <td className="py-3">
+                          <div className="font-bold text-slate-900">
+                            {l.productName}
+                          </div>
+                          {l.variantName ? (
+                            <div className="text-slate-400 text-[11px]">
+                              Edition: {l.variantName}
+                            </div>
+                          ) : (
+                            <div className="text-slate-400 text-[11px]">
+                              Ref: {selectedInvoice.subscriptionNumber}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 text-center font-mono">{l.hsnSac || "998314"}</td>
+                        <td className="py-3 text-right font-mono">
+                          ₹{l.subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 text-right font-bold text-slate-700">{l.taxRate}%</td>
+                        <td className="py-3 text-right font-bold text-slate-900 font-mono">
+                          ₹{l.total.toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="py-3">
+                        <div className="font-bold text-slate-900">
+                          {selectedInvoice.planName || "Brightloop ERP SaaS Subscription"}
+                        </div>
+                        <div className="text-slate-400 text-[11px]">
+                          Ref: {selectedInvoice.subscriptionNumber}
+                        </div>
+                      </td>
+                      <td className="py-3 text-center font-mono">998314</td>
+                      <td className="py-3 text-right font-mono">
+                        ₹{selectedInvoice.subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 text-right font-bold text-slate-700">18%</td>
+                      <td className="py-3 text-right font-bold text-slate-900 font-mono">
+                        ₹{selectedInvoice.totalAmount.toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
 
@@ -521,17 +718,28 @@ export default function InvoicesPage() {
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Actions: Download PDF and Print */}
               <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.print()}
-                  className="gap-2 text-xs font-bold"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  Print Tax Invoice
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleDownloadAdminPdf(selectedInvoice)}
+                    className="gap-1.5 text-xs font-bold bg-[#714B67] hover:bg-[#5a3a52] text-white cursor-pointer shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download PDF
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePrintAdminInvoice(selectedInvoice)}
+                    className="gap-1.5 text-xs font-bold text-slate-700 hover:text-[#714B67] cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    Print Tax Invoice
+                  </Button>
+                </div>
 
                 {selectedInvoice.totalAmount > selectedInvoice.paidAmount && (
                   <Button

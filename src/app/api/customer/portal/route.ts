@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
       where: customerWhere,
       include: {
         subscriptions: {
+          where: {
+            status: { in: ["ACTIVE", "PAUSED", "CLOSED", "EXPIRED", "CONFIRMED"] },
+          },
           include: {
             plan: true,
             lines: {

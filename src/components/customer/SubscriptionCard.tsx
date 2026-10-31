@@ -81,7 +81,7 @@ export function SubscriptionCard({
           : "border-slate-200/60 opacity-90"
       }`}
     >
-      <div className="p-6 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+      <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-start justify-between gap-5 sm:gap-6">
         {/* Left Column: Product & Plan Meta */}
         <div className="space-y-3 flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +112,7 @@ export function SubscriptionCard({
           </div>
 
           <div>
-            <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
               {productName}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
@@ -131,7 +131,7 @@ export function SubscriptionCard({
           </div>
 
           {/* Grid of Key Lifecycle Dates */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs text-slate-600">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1 text-xs text-slate-600">
             <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                 Started On
@@ -159,12 +159,12 @@ export function SubscriptionCard({
           </div>
         </div>
 
-        {/* Right Column: Pricing & Quick Actions */}
-        <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end justify-between gap-4 shrink-0 border-t xl:border-t-0 pt-4 xl:pt-0">
-          <div className="text-left xl:text-right">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
+        {/* Right Column: Pricing & Quick Actions (Refined Digits Size & Clean Alignment) */}
+        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between lg:self-stretch gap-4 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
+          <div className="text-left lg:text-right">
+            <div className="text-lg font-bold text-slate-900 font-mono tracking-tight">
               ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              <span className="text-xs font-semibold text-slate-400 ml-1">
+              <span className="text-xs font-normal text-slate-400 ml-1">
                 /{subscription.billingFrequency.toLowerCase()}
               </span>
             </div>
@@ -174,12 +174,12 @@ export function SubscriptionCard({
           </div>
 
           {/* Action Button Row */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2">
             <Button
               onClick={() => onViewDetails(subscription)}
               variant="outline"
               size="sm"
-              className="text-xs font-bold text-slate-700 hover:text-[#714B67] hover:border-[#714B67]/40 gap-1"
+              className="text-xs font-bold text-slate-700 hover:text-[#714B67] hover:border-[#714B67]/40 gap-1.5"
             >
               <Sliders className="w-3.5 h-3.5 text-[#714B67]" />
               View Details
@@ -217,8 +217,9 @@ export function SubscriptionCard({
                 disabled={isActionLoading}
                 variant="ghost"
                 size="sm"
-                className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-1"
               >
+                <XCircle className="w-3.5 h-3.5" />
                 Cancel
               </Button>
             )}
