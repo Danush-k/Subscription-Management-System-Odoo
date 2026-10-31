@@ -56,12 +56,12 @@ async function main() {
   console.log("3. Upserting B2B Customer Profiles...");
   const cust1 = await prisma.customer.upsert({
     where: { customerNumber: "CUST-2026-0001" },
-    update: { userId: clientUser.id, email: "balakumaran2470050@ssn.edu.in" },
+    update: { userId: clientUser.id, email: "danusu2470030@ssn.edu.in" },
     create: {
       customerNumber: "CUST-2026-0001",
       userId: clientUser.id,
       name: "Danush Kalyan",
-      email: "balakumaran2470050@ssn.edu.in",
+      email: "danusu2470030@ssn.edu.in",
       phone: "+91 98401 24700",
       companyName: "SSN Technology Labs Pvt. Ltd.",
       taxId: "GSTIN33SSN1234F1Z1",
