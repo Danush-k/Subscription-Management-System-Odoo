@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   RotateCcw,
   FileText,
+  FileCheck,
   Building2,
   ChevronDown,
   Bell,
@@ -27,6 +28,7 @@ import { CustomerProfile, NotificationItem } from "./types";
 interface CustomerHeaderProps {
   customer: CustomerProfile;
   notifications?: NotificationItem[];
+  pendingQuotationsCount?: number;
   activeTab?: string;
   onSelectTab?: (tab: string) => void;
 }
@@ -34,6 +36,7 @@ interface CustomerHeaderProps {
 export function CustomerHeader({
   customer,
   notifications = [],
+  pendingQuotationsCount = 0,
   activeTab,
   onSelectTab,
 }: CustomerHeaderProps) {
@@ -68,6 +71,14 @@ export function CustomerHeader({
       icon: LayoutDashboard,
       href: "/customer/dashboard?tab=overview",
       tabKey: "overview",
+    },
+    {
+      id: "quotations",
+      label: "Quotations & Proposals",
+      icon: FileCheck,
+      href: "/customer/dashboard?tab=quotations",
+      tabKey: "quotations",
+      badge: pendingQuotationsCount,
     },
     {
       id: "subscriptions",
@@ -191,7 +202,7 @@ export function CustomerHeader({
               <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    🔔 System Notifications
+                    System Notifications
                   </span>
                   <Badge variant="outline" className="text-[10px]">
                     {notifications.length} alerts
@@ -263,7 +274,7 @@ export function CustomerHeader({
               >
                 <div className="px-4 py-2 border-b border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    👤 Signed in as Subscriber
+                    Signed in as Subscriber
                   </p>
                   <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
                     {customer?.name || "Danush Kalyan"}
@@ -280,7 +291,7 @@ export function CustomerHeader({
                     onClick={() => setRoleMenuOpen(false)}
                   >
                     <Building2 className="w-4 h-4 text-[#714B67]" />
-                    <span>🏢 Company Profile &amp; GSTIN</span>
+                    <span>Company Profile &amp; GSTIN</span>
                   </Link>
                 </div>
 
@@ -324,6 +335,17 @@ export function CustomerHeader({
                   }`}
                 />
                 <span>{item.label}</span>
+                {Boolean(item.badge && item.badge > 0) && (
+                  <span
+                    className={`ml-1 px-1.5 py-0.5 text-[10px] font-black rounded-full ${
+                      active
+                        ? "bg-amber-400 text-slate-900"
+                        : "bg-amber-100 text-amber-800 border border-amber-300"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

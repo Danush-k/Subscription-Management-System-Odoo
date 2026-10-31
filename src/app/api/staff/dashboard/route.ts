@@ -46,6 +46,17 @@ export async function GET() {
 
   const overdueInvoices = openInvoices.filter((invoice) => invoice.dueDate < now);
 
+  const quotationIds = pendingQuotations.map((q) => q.id);
+  const negotiationLogs = quotationIds.length > 0
+    ? await prisma.auditLog.findMany({
+        where: {
+          entityType: "QUOTATION",
+          entityId: { in: quotationIds },
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
   return NextResponse.json({
     success: true,
     data: {
@@ -62,15 +73,25 @@ export async function GET() {
         email: session.email,
         role: session.role,
       },
-      quotations: pendingQuotations.map((quotation) => ({
-        id: quotation.id,
-        quotationNumber: quotation.quotationNumber,
-        customer: quotation.customer.companyName ?? quotation.customer.name,
-        plan: quotation.plan.name,
-        amount: formatAmount(quotation.totalAmount),
-        status: quotation.status,
-        validUntil: quotation.expiryDate.toISOString(),
-      })),
+      quotations: pendingQuotations.map((quotation) => {
+        const lastLog = negotiationLogs.find((l) => l.entityId === quotation.id);
+        const lastMsg = lastLog ? (lastLog.newValues as any)?.message : null;
+        const lastSender = lastLog ? (lastLog.newValues as any)?.sender : null;
+        const proposedDiscount = lastLog ? (lastLog.newValues as any)?.proposedDiscount : null;
+
+        return {
+          id: quotation.id,
+          quotationNumber: quotation.quotationNumber,
+          customer: quotation.customer.companyName ?? quotation.customer.name,
+          plan: quotation.plan.name,
+          amount: formatAmount(quotation.totalAmount),
+          status: quotation.status,
+          validUntil: quotation.expiryDate.toISOString(),
+          lastMessage: lastMsg,
+          lastSender: lastSender,
+          proposedDiscount: proposedDiscount,
+        };
+      }),
       invoices: openInvoices.map((invoice) => ({
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,

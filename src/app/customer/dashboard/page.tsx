@@ -35,7 +35,8 @@ import { PayInvoiceModal } from "@/components/customer/PayInvoiceModal";
 import { PaymentHistoryTable } from "@/components/customer/PaymentHistoryTable";
 import { BillingProfileSection } from "@/components/customer/BillingProfileSection";
 import { ActivityTimeline } from "@/components/customer/ActivityTimeline";
-type CustomerTab = "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity";
+import { QuotationsSection } from "@/components/customer/QuotationsSection";
+type CustomerTab = "overview" | "quotations" | "subscriptions" | "invoices" | "payments" | "billing" | "activity";
 
 // Types
 import {
@@ -48,7 +49,7 @@ function CustomerDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const initialTab: CustomerTab = ["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(requestedTab ?? "")
+  const initialTab: CustomerTab = ["overview", "quotations", "subscriptions", "invoices", "payments", "billing", "activity"].includes(requestedTab ?? "")
     ? requestedTab as CustomerTab
     : "overview";
 
@@ -61,11 +62,11 @@ function CustomerDashboardContent() {
     initialTab === "payments" ? "payments" : "invoices"
   );
   const [activeTab, setActiveTabState] = useState<
-    "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity"
+    "overview" | "quotations" | "subscriptions" | "invoices" | "payments" | "billing" | "activity"
   >(initialTab);
 
   const setActiveTab = (tab: string) => {
-    if (!["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tab)) return;
+    if (!["overview", "quotations", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tab)) return;
     const selectedTab = tab as CustomerTab;
     setActiveTabState(selectedTab);
     const url = new URL(window.location.href);
@@ -78,7 +79,7 @@ function CustomerDashboardContent() {
     if (tabParam === "payments") { setInvoiceSubView("payments"); }
     if (tabParam === "invoices") { setInvoiceSubView("invoices"); }
     if (tabParam && tabParam !== activeTab) {
-      if (["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tabParam)) {
+      if (["overview", "quotations", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tabParam)) {
         setActiveTabState(tabParam as CustomerTab);
       }
     }
@@ -95,6 +96,55 @@ function CustomerDashboardContent() {
   const [cancellingSubscription, setCancellingSubscription] = useState<SubscriptionItem | null>(null);
   const [selectedInvId, setSelectedInvId] = useState<string | null>(null);
   const [payingInvoice, setPayingInvoice] = useState<InvoiceItem | null>(null);
+  const [isAcceptingQuotation, setIsAcceptingQuotation] = useState(false);
+
+  const handleAcceptQuotation = async (quotationId: string) => {
+    if (!window.confirm("Are you sure you want to accept this proposal and activate your subscription?")) {
+      return;
+    }
+    setIsAcceptingQuotation(true);
+    try {
+      const res = await fetch(`/api/customer/quotations/${quotationId}/accept`, {
+        method: "POST",
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to accept quotation");
+      setActionMessage({
+        type: "success",
+        text: `Proposal accepted! Subscription ${result.subscription?.subscriptionNumber || ""} has been activated.`,
+      });
+      await fetchPortalData();
+    } catch (err: any) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Failed to accept proposal",
+      });
+    } finally {
+      setIsAcceptingQuotation(false);
+    }
+  };
+
+  const handleSendNegotiation = async (
+    quotationId: string,
+    message: string,
+    proposedDiscount?: number
+  ) => {
+    const res = await fetch(`/api/customer/quotations/${quotationId}/negotiate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        proposedDiscount,
+      }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Failed to submit negotiation feedback");
+    setActionMessage({
+      type: "success",
+      text: "Your counter-offer & negotiation notes have been dispatched to the sales team in real time!",
+    });
+    await fetchPortalData();
+  };
 
   // Derive current open items from loaded data
   const selectedSubscription = useMemo(() => {
@@ -330,6 +380,7 @@ function CustomerDashboardContent() {
       <CustomerHeader
         customer={data.customer}
         notifications={data.notifications}
+        pendingQuotationsCount={data.quotations?.filter((q) => q.status === "QUOTATION").length || 0}
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
       />
@@ -514,6 +565,20 @@ function CustomerDashboardContent() {
         {/* ========================================================================= */}
         {/* TAB 2: MY SUBSCRIPTIONS (Subscriptions Only + Status Filters)             */}
         {/* ========================================================================= */}
+        {/* Quotations & Real-time Proposals */}
+        {activeTab === "quotations" && (
+          <QuotationsSection
+            quotations={data.quotations || []}
+            onAcceptQuotation={handleAcceptQuotation}
+            onSendNegotiation={handleSendNegotiation}
+            onViewSubscription={(subId) => {
+              setActiveTab("subscriptions");
+              setSelectedSubId(subId);
+            }}
+            isAccepting={isAcceptingQuotation}
+          />
+        )}
+
         {activeTab === "subscriptions" && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
@@ -530,10 +595,10 @@ function CustomerDashboardContent() {
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
                 {(
                   [
-                    { id: "ALL", label: `🌐 All (${data.subscriptions.length})` },
-                    { id: "ACTIVE", label: `✅ Active (${data.subscriptions.filter((s) => s.status === "ACTIVE").length})` },
-                    { id: "PAUSED", label: `⏸️ Paused (${data.subscriptions.filter((s) => s.status === "PAUSED").length})` },
-                    { id: "CLOSED", label: `📁 Cancelled (${data.subscriptions.filter((s) => s.status === "CLOSED").length})` },
+                    { id: "ALL", label: `All (${data.subscriptions.length})` },
+                    { id: "ACTIVE", label: `Active (${data.subscriptions.filter((s) => s.status === "ACTIVE").length})` },
+                    { id: "PAUSED", label: `Paused (${data.subscriptions.filter((s) => s.status === "PAUSED").length})` },
+                    { id: "CLOSED", label: `Cancelled (${data.subscriptions.filter((s) => s.status === "CLOSED").length})` },
                   ] as const
                 ).map((tab) => (
                   <button
@@ -600,7 +665,7 @@ function CustomerDashboardContent() {
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5 text-[#714B67]" />
-                  <span>🧾 Invoices &amp; Receipts ({data.invoices.length})</span>
+                  <span>Invoices &amp; Receipts ({data.invoices.length})</span>
                 </button>
                 <button
                   onClick={() => setInvoiceSubView("payments")}
@@ -611,7 +676,7 @@ function CustomerDashboardContent() {
                   }`}
                 >
                   <CreditCard className="w-3.5 h-3.5 text-[#714B67]" />
-                  <span>💳 Payment History ({data.payments.length})</span>
+                  <span>Payment History ({data.payments.length})</span>
                 </button>
               </div>
             </div>

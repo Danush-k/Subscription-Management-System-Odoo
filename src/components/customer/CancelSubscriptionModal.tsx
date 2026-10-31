@@ -97,7 +97,7 @@ export function CancelSubscriptionModal({
           <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-xs text-amber-800 space-y-1">
             <p className="font-bold">Important Notice:</p>
             <p>
-              Per terms of service, cancellation will terminate recurring billing and revoke access to this module upon the end of the current billing cycle ({new Date(subscription.nextBillingDate).toLocaleDateString("en-IN")}).
+              Per terms of service, cancellation will terminate recurring billing and revoke access to this module upon the end of the current billing cycle ({subscription.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString("en-IN") : "end of billing cycle"}).
             </p>
           </div>
 
