@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { BrightloopLogo } from "@/components/ui/logo";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 import {
   Shield,
   Users,
@@ -39,35 +39,35 @@ export function PortalNav({
   const isCustomer = portalType === "customer";
 
   return (
-    <header className="sticky top-0 z-50 bg-[#714B67] text-white select-none shadow-md">
+    <header className="sticky top-0 z-50 bg-[#FDFBF7] text-slate-900 select-none border-b border-slate-200/80 shadow-2xs">
       {/* Top Professional Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Left: Brand + Breadcrumbs */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href="/"
-            className="flex items-center hover:opacity-95 transition-opacity"
+            className="flex items-center hover:opacity-90 transition-opacity"
             title="Return to Launchpad"
           >
-            <BrightloopLogo size="sm" variant="light" showBadge={false} />
+            <BrightLoopBrandMark size="sm" />
           </Link>
 
-          <span className="text-white/30 hidden sm:inline">/</span>
+          <span className="text-slate-300 hidden sm:inline">/</span>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-white tracking-wide">
+            <span className="text-xs font-bold text-slate-800 tracking-wide">
               {portalTitle}
             </span>
             <span
               className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                 isCustomer
-                  ? "bg-emerald-500/20 text-emerald-200 border-emerald-400/30"
-                  : "bg-blue-500/20 text-blue-200 border-blue-400/30"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-blue-50 text-blue-700 border-blue-200"
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                  isCustomer ? "bg-emerald-400" : "bg-blue-400"
+                  isCustomer ? "bg-emerald-500" : "bg-blue-500"
                 }`}
               />
               {isCustomer ? "Active Subscriber" : "Operations Agent"}
@@ -80,7 +80,7 @@ export function PortalNav({
           {/* Quick Hub link */}
           <Link
             href="/"
-            className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-white transition-colors text-xs font-semibold px-2.5 py-1 rounded-lg hover:bg-white/10"
+            className="hidden md:flex items-center gap-1.5 text-slate-600 hover:text-[#714B67] transition-colors text-xs font-semibold px-2.5 py-1.5 rounded-xl hover:bg-slate-100"
           >
             <Grid className="w-3.5 h-3.5" />
             <span>App Hub</span>
@@ -90,11 +90,11 @@ export function PortalNav({
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all border border-white/15 active:scale-95"
+              className="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl text-slate-800 text-xs font-semibold transition-all border border-slate-200/80 shadow-2xs active:scale-95"
             >
               <div
-                className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] text-slate-900 shadow-xs ${
-                  isCustomer ? "bg-emerald-300" : "bg-[#FBBF24]"
+                className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] text-white shadow-xs ${
+                  isCustomer ? "bg-emerald-600" : "bg-[#714B67]"
                 }`}
               >
                 {userName
@@ -104,14 +104,14 @@ export function PortalNav({
                   .slice(0, 2)}
               </div>
               <div className="text-left hidden sm:block">
-                <div className="text-[11px] font-bold leading-none text-white">
+                <div className="text-[11px] font-bold leading-none text-slate-900">
                   {companyName}
                 </div>
-                <div className="text-[9px] text-white/70 leading-none mt-1">
+                <div className="text-[9px] text-slate-500 leading-none mt-1">
                   {userRole}
                 </div>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-white/70 ml-0.5" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
             </button>
 
             {menuOpen && (
