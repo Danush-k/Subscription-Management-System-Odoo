@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIE_NAME } from "./lib/auth";
 
-const protectedRoutes = [
-  { prefix: "/admin", roles: ["ADMIN"] },
-  { prefix: "/staff", roles: ["ADMIN", "STAFF"] },
-  { prefix: "/customer", roles: ["CUSTOMER"] },
+export const AUTH_COOKIE_NAME = "brightloop_session";
+
+interface ProtectedRoute {
+  prefix: string;
+  roles: string[];
+  isApi?: boolean;
+}
+
+const protectedRoutes: ProtectedRoute[] = [
+  { prefix: "/admin", roles: ["ADMIN"], isApi: false },
+  { prefix: "/staff", roles: ["ADMIN", "STAFF"], isApi: false },
+  { prefix: "/customer", roles: ["CUSTOMER", "ADMIN"], isApi: false },
+  { prefix: "/api/admin", roles: ["ADMIN"], isApi: true },
+  { prefix: "/api/customer", roles: ["CUSTOMER", "ADMIN"], isApi: true },
 ];
 
 function decodeBase64Url(value: string): Uint8Array {
@@ -60,6 +69,12 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   if (!token) {
+    if (protectedRoute.isApi) {
+      return NextResponse.json(
+        { error: "Unauthorized: Authentication required" },
+        { status: 401 }
+      );
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("returnTo", pathname);
     return NextResponse.redirect(loginUrl);
@@ -67,6 +82,12 @@ export async function middleware(request: NextRequest) {
 
   const role = await verifySessionRole(token);
   if (!role || !protectedRoute.roles.includes(role)) {
+    if (protectedRoute.isApi) {
+      return NextResponse.json(
+        { error: "Forbidden: Insufficient role permissions" },
+        { status: 403 }
+      );
+    }
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
@@ -74,5 +95,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/customer/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/staff/:path*",
+    "/customer/:path*",
+    "/api/admin/:path*",
+    "/api/customer/:path*",
+  ],
 };
