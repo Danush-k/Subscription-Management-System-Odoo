@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email") || "billing@ssntechlabs.com";
+    const session = await getServerSession();
+    const queryEmail = searchParams.get("email");
+    const queryCustomerId = searchParams.get("customerId");
+
+    let customerWhere: any = undefined;
+    if (session?.customerId) {
+      customerWhere = { id: session.customerId };
+    } else if (session?.email && session.role === "CUSTOMER") {
+      customerWhere = { email: session.email };
+    } else if (queryCustomerId) {
+      customerWhere = { id: queryCustomerId };
+    } else if (queryEmail) {
+      customerWhere = { email: queryEmail };
+    }
 
     const customer = await prisma.customer.findFirst({
-      where: { email },
+      where: customerWhere,
       include: {
         user: {
           select: {
@@ -36,12 +50,22 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, companyName, phone, taxId, billingAddress } = body;
+    const { name, email, companyName, phone, taxId, billingAddress, customerId } = body;
+    const session = await getServerSession();
 
-    const targetEmail = email || "billing@ssntechlabs.com";
+    let targetWhere: any = undefined;
+    if (customerId) {
+      targetWhere = { id: customerId };
+    } else if (session?.customerId) {
+      targetWhere = { id: session.customerId };
+    } else if (email) {
+      targetWhere = { email };
+    } else if (session?.email) {
+      targetWhere = { email: session.email };
+    }
 
     const customer = await prisma.customer.findFirst({
-      where: { email: targetEmail },
+      where: targetWhere,
     });
 
     if (!customer) {

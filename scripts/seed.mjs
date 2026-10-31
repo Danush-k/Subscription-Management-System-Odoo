@@ -622,6 +622,70 @@ async function main() {
     },
   });
 
+  const sub6 = await prisma.subscription.upsert({
+    where: { subscriptionNumber: "SUB-2026-0046" },
+    update: {},
+    create: {
+      subscriptionNumber: "SUB-2026-0046",
+      customerId: cust1.id,
+      planId: starterPlan.id,
+      status: "PAUSED",
+      billingFrequency: "MONTHLY",
+      paymentTerms: "NET_15",
+      startDate: new Date("2026-04-01"),
+      nextBillingDate: new Date("2026-11-15"),
+      lastBilledDate: new Date("2026-09-15"),
+      pausedAt: new Date("2026-10-10"),
+      autoRenew: false,
+    },
+  });
+
+  await prisma.subscriptionLine.deleteMany({ where: { subscriptionId: sub6.id } });
+  await prisma.subscriptionLine.create({
+    data: {
+      subscriptionId: sub6.id,
+      productId: erpProduct.id,
+      variantId: stdVariant.id,
+      quantity: 1,
+      unitPrice: 3500.0,
+      taxRate: 18.0,
+      discountAmount: 0.0,
+      subtotal: 2966.10,
+      total: 3500.0,
+    },
+  });
+
+  // Ensure lifecycle histories for cust1 subscriptions
+  await prisma.subscriptionHistory.deleteMany({ where: { subscriptionId: { in: [sub1.id, sub6.id] } } });
+  await prisma.subscriptionHistory.createMany({
+    data: [
+      {
+        subscriptionId: sub1.id,
+        previousStatus: "DRAFT",
+        newStatus: "CONFIRMED",
+        action: "Contract Approved",
+        note: "Enterprise Master Service Agreement signed",
+        createdAt: new Date("2026-01-10T10:00:00.000Z"),
+      },
+      {
+        subscriptionId: sub1.id,
+        previousStatus: "CONFIRMED",
+        newStatus: "ACTIVE",
+        action: "Provisioned and Activated",
+        note: "Dedicated SaaS cluster deployed with SSL certificate",
+        createdAt: new Date("2026-01-15T09:00:00.000Z"),
+      },
+      {
+        subscriptionId: sub6.id,
+        previousStatus: "ACTIVE",
+        newStatus: "PAUSED",
+        action: "Paused by Customer",
+        note: "Customer self-service requested pause for Q4 budgeting",
+        createdAt: new Date("2026-10-10T14:30:00.000Z"),
+      },
+    ],
+  });
+
   // 9. Quotations & Quotation Lines
   console.log("9. Upserting Quotations & Lifecycle Lines...");
   const q1 = await prisma.quotation.upsert({
@@ -888,6 +952,88 @@ async function main() {
     },
   });
 
+  const inv7 = await prisma.invoice.upsert({
+    where: { invoiceNumber: "INV-2026-0128" },
+    update: {},
+    create: {
+      invoiceNumber: "INV-2026-0128",
+      customerId: cust1.id,
+      subscriptionId: sub1.id,
+      billingPeriodStart: new Date("2026-10-01"),
+      billingPeriodEnd: new Date("2026-10-31"),
+      invoiceDate: new Date("2026-10-15"),
+      dueDate: new Date("2026-11-10"),
+      subtotal: 15600.0,
+      taxAmount: 2808.0,
+      totalAmount: 18408.0,
+      paidAmount: 10000.0,
+      outstandingAmount: 8408.0,
+      status: "CONFIRMED",
+      customerSnapshot: {
+        companyName: cust1.companyName,
+        taxId: cust1.taxId,
+        billingAddress: cust1.billingAddress,
+      },
+    },
+  });
+
+  const inv8 = await prisma.invoice.upsert({
+    where: { invoiceNumber: "INV-2026-0072" },
+    update: {},
+    create: {
+      invoiceNumber: "INV-2026-0072",
+      customerId: cust1.id,
+      subscriptionId: sub6.id,
+      billingPeriodStart: new Date("2026-07-01"),
+      billingPeriodEnd: new Date("2026-07-31"),
+      invoiceDate: new Date("2026-08-01"),
+      dueDate: new Date("2026-08-20"),
+      subtotal: 2966.10,
+      taxAmount: 533.90,
+      totalAmount: 3500.0,
+      paidAmount: 0.0,
+      outstandingAmount: 3500.0,
+      status: "OVERDUE",
+      customerSnapshot: {
+        companyName: cust1.companyName,
+        taxId: cust1.taxId,
+        billingAddress: cust1.billingAddress,
+      },
+    },
+  });
+
+  // Ensure itemized InvoiceLine records exist for all invoices
+  const allInvoices = [
+    { inv: inv1, prod: erpProduct, var: odooVariant, name: "Enterprise Cloud ERP Core (Odoo Edition)", qty: 1, unit: 101694.92, tax: 18305.08, total: 120000.0 },
+    { inv: inv2, prod: erpProduct, var: stdVariant, name: "Odoo Business Suite - Multi-Tier Edition", qty: 1, unit: 15677.97, tax: 2822.03, total: 18500.0 },
+    { inv: inv3, prod: erpProduct, var: sapVariant, name: "Growth SaaS Startup Cluster Edition", qty: 1, unit: 30084.75, tax: 5415.25, total: 35500.0 },
+    { inv: inv4, prod: erpProduct, var: odooVariant, name: "Odoo Multi-App Addon & Synchronization", qty: 1, unit: 12033.90, tax: 2166.10, total: 14200.0 },
+    { inv: inv5, prod: erpProduct, var: stdVariant, name: "Enterprise Cloud Support & SLA Package", qty: 1, unit: 21186.44, tax: 3813.56, total: 25000.0 },
+    { inv: inv6, prod: erpProduct, var: odooVariant, name: "Dedicated VPS & SSL Security Pipeline", qty: 1, unit: 15677.97, tax: 2822.03, total: 18500.0 },
+    { inv: inv7, prod: erpProduct, var: odooVariant, name: "Monthly Odoo ERP Recurring Cycle (October)", qty: 1, unit: 15600.0, tax: 2808.0, total: 18408.0 },
+    { inv: inv8, prod: erpProduct, var: stdVariant, name: "Automated Recurring Invoicing Engine Add-on", qty: 1, unit: 2966.10, tax: 533.90, total: 3500.0 },
+  ];
+
+  for (const item of allInvoices) {
+    await prisma.invoiceLine.deleteMany({ where: { invoiceId: item.inv.id } });
+    await prisma.invoiceLine.create({
+      data: {
+        invoiceId: item.inv.id,
+        productId: item.prod.id,
+        variantId: item.var?.id || null,
+        productName: item.name,
+        variantName: item.var?.variantName || "Standard Tier",
+        quantity: item.qty,
+        unitPrice: item.unit,
+        taxRate: 18.0,
+        taxAmount: item.tax,
+        discountAmount: 0.0,
+        subtotal: item.unit,
+        total: item.total,
+      },
+    });
+  }
+
   // 11. Payments & Settlements
   console.log("11. Upserting Settlement Payment Transactions...");
   await prisma.payment.upsert({
@@ -946,6 +1092,21 @@ async function main() {
       paymentMethod: "BANK_TRANSFER",
       transactionRef: "TXN-2026-9898",
       notes: "NEFT transaction settlement",
+      status: "SUCCESS",
+    },
+  });
+
+  await prisma.payment.upsert({
+    where: { paymentNumber: "PAY-2026-0005" },
+    update: {},
+    create: {
+      paymentNumber: "PAY-2026-0005",
+      invoiceId: inv7.id,
+      customerId: cust1.id,
+      amount: 10000.0,
+      paymentMethod: "CREDIT_CARD",
+      transactionRef: "TXN_CC_982144",
+      notes: "Corporate Visa Card partial tranche payment",
       status: "SUCCESS",
     },
   });
