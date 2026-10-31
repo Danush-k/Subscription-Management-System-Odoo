@@ -53,7 +53,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customerId, planId, variantId, billingFrequency = "MONTHLY", paymentTerms = "NET_30", status = "ACTIVE" } = body;
+    const { customerId, planId, variantId, taxId, billingFrequency = "MONTHLY", paymentTerms = "NET_30", status = "ACTIVE" } = body;
 
     const [customer, plan] = await Promise.all([
       prisma.customer.findFirst({
@@ -66,6 +66,18 @@ export async function POST(request: Request) {
 
     if (!customer) return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+
+    let taxRate = 18.0;
+    let taxType = "EXCLUSIVE";
+    if (taxId) {
+      const taxObj = await prisma.tax.findFirst({
+        where: { OR: [{ id: taxId }, { taxCode: taxId }] },
+      });
+      if (taxObj) {
+        taxRate = Number(taxObj.percentage);
+        taxType = taxObj.taxType;
+      }
+    }
 
     const subCount = await prisma.subscription.count();
     const subNumber = `SUB-${new Date().getFullYear()}-${String(subCount + 1).padStart(4, "0")}`;
@@ -94,6 +106,15 @@ export async function POST(request: Request) {
       // Find product for line
       const product = await tx.product.findFirst();
       if (product) {
+        const unitPrice = Number(plan.subscriptionPrice);
+        let lineTax = 0;
+        let lineTotal = unitPrice;
+
+        if (taxType === "EXCLUSIVE") {
+          lineTax = Math.round(((unitPrice * taxRate) / 100) * 100) / 100;
+          lineTotal = unitPrice + lineTax;
+        }
+
         await tx.subscriptionLine.create({
           data: {
             subscriptionId: newSub.id,
@@ -101,9 +122,9 @@ export async function POST(request: Request) {
             variantId: variantId || null,
             quantity: 1,
             unitPrice: plan.subscriptionPrice,
-            taxRate: 18.0,
+            taxRate: taxRate,
             subtotal: plan.subscriptionPrice,
-            total: plan.subscriptionPrice,
+            total: lineTotal,
           },
         });
       }
