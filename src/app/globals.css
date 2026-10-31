@@ -54,6 +54,11 @@
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-variant-numeric: tabular-nums;
   }
+
+  /* Handwritten font for Odoo/DayFlow style annotations & arrows */
+  .font-handwriting {
+    font-family: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  }
 }
 
 /* Animations & Transitions */
