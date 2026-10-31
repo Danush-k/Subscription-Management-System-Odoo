@@ -434,7 +434,7 @@ export function SubscriptionDetailModal({
               </Button>
             )}
 
-            {subscription.status === "ACTIVE" && subscription.plan.renewalAllowed && (
+            {subscription.status === "ACTIVE" && Boolean((subscription.plan as any)?.renewalAllowed) && (
               <Button
                 type="button"
                 onClick={() => onRenew(subscription)}

@@ -67,18 +67,17 @@ export interface SubscriptionPlanItem {
   name: string;
   description: string | null;
   subscriptionPrice: string | number;
-  billingFrequency: string;
+  billingFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
   pauseAllowed: boolean;
   earlyClosureAllowed: boolean;
-  renewalAllowed: boolean;
   autoCloseEnabled: boolean;
 }
 
 export interface SubscriptionHistoryItem {
   id: string;
+  action: string;
   previousStatus: string;
   newStatus: string;
-  action: string;
   note: string | null;
   createdAt: string;
 }
@@ -90,13 +89,9 @@ export interface SubscriptionItem {
   billingFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
   paymentTerms: string;
   startDate: string;
-  nextBillingDate: string;
   expiryDate: string | null;
-  lastBilledDate: string | null;
+  nextBillingDate: string | null;
   autoRenew: boolean;
-  pausedAt: string | null;
-  closedAt: string | null;
-  cancellationReason: string | null;
   createdAt: string;
   plan: SubscriptionPlanItem;
   lines: SubscriptionLineItem[];
@@ -197,7 +192,56 @@ export interface NotificationItem {
   title: string;
   message: string;
   actionLabel: string;
-  actionTab: "subscriptions" | "invoices" | "payments" | "billing" | "activity";
+  actionTab: "subscriptions" | "invoices" | "payments" | "billing" | "activity" | "quotations";
+}
+
+export interface NegotiationMessage {
+  id: string;
+  action: string;
+  senderName: string;
+  senderRole: string;
+  message: string;
+  proposedDiscount?: number;
+  requestedPaymentTerms?: string;
+  createdAt: string;
+}
+
+export interface QuotationLineItem {
+  id: string;
+  productId: string;
+  variantId?: string | null;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  taxAmount: number;
+  discountAmount: number;
+  subtotal: number;
+  total: number;
+  product?: SubscriptionProduct | null;
+  variant?: SubscriptionVariant | null;
+}
+
+export interface QuotationItem {
+  id: string;
+  quotationNumber: string;
+  status: "DRAFT" | "QUOTATION" | "CONFIRMED" | "EXPIRED" | "CANCELLED";
+  subtotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  paymentTerms: string;
+  expiryDate: string;
+  confirmedAt?: string | null;
+  convertedSubscriptionId?: string | null;
+  createdAt: string;
+  plan?: SubscriptionPlanItem;
+  lines: QuotationLineItem[];
+  convertedSubscription?: {
+    id: string;
+    subscriptionNumber: string;
+    status: string;
+  } | null;
+  negotiations?: NegotiationMessage[];
 }
 
 export interface PortalData {
@@ -208,5 +252,5 @@ export interface PortalData {
   payments: PaymentRecord[];
   timeline: ActivityItem[];
   notifications: NotificationItem[];
+  quotations: QuotationItem[];
 }
-

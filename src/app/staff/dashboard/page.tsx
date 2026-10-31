@@ -41,6 +41,9 @@ type StaffQuotation = {
   amount: string;
   status: "DRAFT" | "QUOTATION";
   validUntil: string;
+  lastMessage?: string | null;
+  lastSender?: string | null;
+  proposedDiscount?: number | null;
 };
 
 function formatDate(value: string): string {
@@ -314,6 +317,17 @@ export default function StaffDashboardPage() {
                       </div>
                       <p className="text-xs font-bold text-slate-700">{quo.customer}</p>
                       <p className="text-[11px] text-slate-500">Plan: {quo.plan} &bull; Valid: {formatDate(quo.validUntil)}</p>
+                      {quo.lastMessage && (
+                        <div className="mt-1.5 p-2 rounded-lg bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-950">
+                          <span className="font-bold">{quo.lastSender || "Customer"}: </span>
+                          <span>&quot;{quo.lastMessage}&quot;</span>
+                          {quo.proposedDiscount !== undefined && quo.proposedDiscount !== null && (
+                            <span className="ml-1.5 font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">
+                              Req. Discount: {quo.proposedDiscount}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2 shrink-0">

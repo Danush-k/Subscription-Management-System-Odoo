@@ -77,6 +77,25 @@ export async function GET(req: NextRequest) {
           },
           orderBy: { paymentDate: "desc" },
         },
+        quotations: {
+          include: {
+            plan: true,
+            lines: {
+              include: {
+                product: true,
+                variant: true,
+              },
+            },
+            convertedSubscription: {
+              select: {
+                id: true,
+                subscriptionNumber: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
@@ -235,6 +254,86 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // 4b. Quotations & Live Negotiation Thread
+    const quotationIds = ((customer as any).quotations || []).map((q: any) => q.id);
+    const negotiationLogs = quotationIds.length > 0
+      ? await prisma.auditLog.findMany({
+          where: {
+            entityType: "QUOTATION",
+            entityId: { in: quotationIds },
+          },
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        })
+      : [];
+
+    const formattedQuotations = (((customer as any).quotations) || []).map((q: any) => {
+      const logs = negotiationLogs
+        .filter((l) => l.entityId === q.id)
+        .map((l) => ({
+          id: l.id,
+          action: l.action,
+          senderName: (l.newValues as any)?.sender || l.user?.name || "Customer",
+          senderRole: (l.newValues as any)?.role || l.user?.role || "CUSTOMER",
+          message: (l.newValues as any)?.message || l.action,
+          proposedDiscount: (l.newValues as any)?.proposedDiscount,
+          requestedPaymentTerms: (l.newValues as any)?.requestedPaymentTerms,
+          createdAt: l.createdAt.toISOString(),
+        }));
+
+      return {
+        id: q.id,
+        quotationNumber: q.quotationNumber,
+        status: q.status,
+        subtotal: Number(q.subtotal),
+        taxAmount: Number(q.taxAmount),
+        discountAmount: Number(q.discountAmount),
+        totalAmount: Number(q.totalAmount),
+        paymentTerms: q.paymentTerms,
+        expiryDate: q.expiryDate ? q.expiryDate.toISOString() : null,
+        confirmedAt: q.confirmedAt ? q.confirmedAt.toISOString() : null,
+        convertedSubscriptionId: q.convertedSubscriptionId,
+        createdAt: q.createdAt.toISOString(),
+        plan: q.plan,
+        convertedSubscription: q.convertedSubscription,
+        lines: q.lines.map((l: any) => ({
+          id: l.id,
+          productId: l.productId,
+          variantId: l.variantId,
+          quantity: l.quantity,
+          unitPrice: Number(l.unitPrice),
+          taxRate: Number(l.taxRate),
+          taxAmount: Number(l.taxAmount),
+          discountAmount: Number(l.discountAmount),
+          subtotal: Number(l.subtotal),
+          total: Number(l.total),
+          product: l.product,
+          variant: l.variant,
+        })),
+        negotiations: logs,
+      };
+    });
+
+    const pendingQuots = formattedQuotations.filter((q: any) => q.status === "QUOTATION");
+    if (pendingQuots.length > 0) {
+      notifications.unshift({
+        id: "notif-quotation",
+        level: "info",
+        title: "New Quotation Proposal Received",
+        message: `Proposal ${pendingQuots[0].quotationNumber} is ready for review and negotiation.`,
+        actionLabel: "Review Proposal",
+        actionTab: "quotations",
+      });
+    }
+
     return NextResponse.json({
       customer: {
         id: customer.id,
@@ -269,6 +368,7 @@ export async function GET(req: NextRequest) {
       subscriptions: customer.subscriptions,
       invoices: customer.invoices,
       payments: customer.payments,
+      quotations: formattedQuotations,
       timeline,
       notifications,
     });
