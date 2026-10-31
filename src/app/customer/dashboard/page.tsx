@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function CustomerDashboardPage() {
   const [activeTab, setActiveTab] = useState<"subscriptions" | "invoices" | "payments">("subscriptions");
@@ -114,8 +115,8 @@ export default function CustomerDashboardPage() {
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-black text-xl text-odoo-700">
-              brightloop
+            <Link href="/" className="hover:opacity-95 transition-opacity">
+              <BrightloopLogo size="sm" variant="colored" />
             </Link>
             <span className="text-slate-300">/</span>
             <span className="text-sm font-bold text-slate-800">Customer Self-Service Portal</span>

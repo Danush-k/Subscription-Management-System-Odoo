@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -99,14 +100,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between text-slate-900 font-sans">
       {/* Top Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-xs">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#714B67] text-[#F2C744] flex items-center justify-center font-black text-sm">
-            B
-          </div>
-          <span className="text-xl font-black text-[#714B67] tracking-tight">Brightloop</span>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
-            SaaS
-          </span>
+        <Link href="/" className="hover:opacity-95 transition-opacity">
+          <BrightloopLogo size="md" variant="colored" />
         </Link>
 
         <div className="text-xs text-slate-500">
