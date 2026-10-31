@@ -39,7 +39,7 @@ export function PortalNav({
   const isCustomer = portalType === "customer";
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FDFBF7] text-slate-900 select-none border-b border-slate-200/80 shadow-2xs">
+    <header className="sticky top-0 z-50 bg-white text-slate-900 select-none border-b border-slate-200/80 shadow-2xs">
       {/* Top Professional Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Left: Brand + Breadcrumbs */}

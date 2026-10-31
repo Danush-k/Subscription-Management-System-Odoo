@@ -4,6 +4,7 @@ import React, { useState,useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
+import { BrightLoopModuleIcon } from "@/components/home/odoo-app-icons";
 import {
   FileText,
   Search,
@@ -127,19 +128,17 @@ export default function InvoicesPage() {
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         {/* Page Sub-header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#714B67]/10 rounded-xl text-[#714B67]">
-                <FileText className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <BrightLoopModuleIcon appId="invoices" className="w-12 h-12" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                  Invoices &amp; Billing Cycles
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Immutable financial billing snapshots, GST breakdowns, and payment settlements.
+                </p>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                Invoices &amp; Tax Audits
-              </h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Immutable financial billing snapshots, GST breakdowns, and payment settlements.
-            </p>
-          </div>
 
           <div className="flex items-center gap-2">
             <Button
