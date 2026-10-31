@@ -95,6 +95,7 @@ function CustomerDashboardContent() {
   // Modal ID states (prevents object reference churn and infinite fetch loops)
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [cancellingSubscription, setCancellingSubscription] = useState<SubscriptionItem | null>(null);
+  const [renewingSubscription, setRenewingSubscription] = useState<SubscriptionItem | null>(null);
   const [selectedInvId, setSelectedInvId] = useState<string | null>(null);
   const [payingInvoice, setPayingInvoice] = useState<InvoiceItem | null>(null);
   const [isAcceptingQuotation, setIsAcceptingQuotation] = useState(false);
@@ -266,38 +267,9 @@ function CustomerDashboardContent() {
     }
   };
 
-  // Subscription Actions: Early Renewal
-  const handleRenew = async (sub: SubscriptionItem) => {
-    setLoadingActionId(sub.id);
-    setIsSubmittingAction(true);
-
-    try {
-      const res = await fetch(`/api/customer/subscriptions/${sub.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "renew" }),
-      });
-
-      const resJson = await res.json();
-      if (!res.ok) {
-        throw new Error(resJson.error || "Failed to renew subscription");
-      }
-
-      setActionMessage({
-        type: "success",
-        text: `Subscription ${sub.subscriptionNumber} has been renewed early for the next billing cycle.`,
-      });
-
-      await fetchPortalData();
-    } catch (err) {
-      setActionMessage({
-        type: "error",
-        text: err.message || "Renewal failed",
-      });
-    } finally {
-      setLoadingActionId(null);
-      setIsSubmittingAction(false);
-    }
+  // Subscription Actions: Early / Ended Renewal (Triggers simulated Razorpay Checkout)
+  const handleRenew = (sub: SubscriptionItem) => {
+    setRenewingSubscription(sub);
   };
 
   // Toggle Auto-Renew
@@ -635,6 +607,7 @@ function CustomerDashboardContent() {
                     onPauseResume={handlePauseResume}
                     onCancel={(s) => setCancellingSubscription(s)}
                     onRenew={handleRenew}
+                    onPayAndRenew={(s) => setRenewingSubscription(s)}
                     onToggleAutoRenew={handleToggleAutoRenew}
                     loadingActionId={loadingActionId}
                   />
@@ -696,7 +669,9 @@ function CustomerDashboardContent() {
               <PaymentHistoryTable
                 payments={data.payments}
                 invoices={data.invoices}
+                subscriptions={data.subscriptions}
                 onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+                onPayAndRenew={(s) => setRenewingSubscription(s)}
               />
             )}
           </div>
@@ -783,6 +758,49 @@ function CustomerDashboardContent() {
             await fetchPortalData();
           }}
           successButtonText="Done & Return to Invoices"
+        />
+      )}
+
+      {/* 5. Subscription Renewal Settlement Modal with Razorpay Checkout */}
+      {renewingSubscription && (
+        <RazorpayCheckoutModal
+          isOpen={Boolean(renewingSubscription)}
+          onClose={() => setRenewingSubscription(null)}
+          title={`Renew Subscription: ${renewingSubscription.subscriptionNumber}`}
+          subtitle={`Renewal payment for ${
+            renewingSubscription.lines[0]?.product?.name ||
+            renewingSubscription.plan?.name ||
+            "Brightloop SaaS Subscription"
+          }`}
+          amount={Number(
+            renewingSubscription.lines.reduce((s, l) => s + Number(l.total || l.subtotal || 0), 0) ||
+            renewingSubscription.plan?.subscriptionPrice ||
+            0
+          )}
+          customerName={data.customer?.name}
+          customerEmail={data.customer?.email}
+          onPaymentSuccess={async (details) => {
+            const res = await fetch(`/api/customer/subscriptions/${renewingSubscription.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "renew",
+                paymentMethod: details.paymentMethod,
+                amount: details.amount,
+                transactionRef: details.transactionRef,
+                notes: details.notes,
+              }),
+            });
+            const resJson = await res.json();
+            if (!res.ok) throw new Error(resJson.error || "Renewal payment failed");
+            setActionMessage({
+              type: "success",
+              text: `Payment of ₹${Number(details.amount).toLocaleString("en-IN")} settled! Subscription ${renewingSubscription.subscriptionNumber} is reactivated and active for the next cycle.`,
+            });
+            setRenewingSubscription(null);
+            await fetchPortalData();
+          }}
+          successButtonText="Done & Return to Subscriptions"
         />
       )}
     </div>

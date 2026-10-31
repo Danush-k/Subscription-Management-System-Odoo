@@ -17,7 +17,7 @@ export async function POST(
     const subscription = await prisma.$transaction(async (tx) => {
       const quotation = await tx.quotation.findUnique({
         where: { id },
-        include: { plan: true, lines: true },
+        include: { plan: true, lines: true, customer: true },
       });
 
       if (!quotation) throw new Error("Quotation not found");
@@ -44,6 +44,50 @@ export async function POST(
               quantity: line.quantity,
               unitPrice: line.unitPrice,
               taxRate: line.taxRate,
+              discountAmount: line.discountAmount,
+              subtotal: line.subtotal,
+              total: line.total,
+            })),
+          },
+        },
+      });
+
+      // Generate invoice for subscription
+      const invCount = await tx.invoice.count();
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, "0")}`;
+      const customerSnapshot = {
+        name: quotation.customer.name,
+        companyName: quotation.customer.companyName,
+        email: quotation.customer.email,
+        taxId: quotation.customer.taxId,
+        billingAddress: quotation.customer.billingAddress,
+      };
+
+      await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          customerId: quotation.customerId,
+          subscriptionId: created.id,
+          billingPeriodStart: new Date(),
+          billingPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          dueDate: new Date(Date.now() + (quotation.paymentTerms === "NET_15" ? 15 : quotation.paymentTerms === "NET_30" ? 30 : 0) * 24 * 60 * 60 * 1000),
+          subtotal: quotation.subtotal,
+          taxAmount: quotation.taxAmount,
+          discountAmount: quotation.discountAmount,
+          totalAmount: quotation.totalAmount,
+          paidAmount: 0,
+          outstandingAmount: quotation.totalAmount,
+          status: "CONFIRMED",
+          customerSnapshot: customerSnapshot as any,
+          lines: {
+            create: quotation.lines.map((line) => ({
+              productId: line.productId,
+              variantId: line.variantId,
+              productName: quotation.plan.name,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              taxRate: line.taxRate,
+              taxAmount: Number(line.total) - Number(line.subtotal),
               discountAmount: line.discountAmount,
               subtotal: line.subtotal,
               total: line.total,

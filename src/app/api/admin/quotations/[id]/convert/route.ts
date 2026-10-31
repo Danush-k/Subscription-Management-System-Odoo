@@ -67,6 +67,58 @@ export async function POST(
         },
       });
 
+      // Create initial billing invoice for the subscription
+      const invCount = await tx.invoice.count();
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, "0")}`;
+      
+      let dueDays = 0;
+      if (quotation.paymentTerms === "NET_15") dueDays = 15;
+      else if (quotation.paymentTerms === "NET_30") dueDays = 30;
+      else if (quotation.paymentTerms === "NET_60") dueDays = 60;
+      const dueDate = new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000);
+
+      const customerSnapshot = {
+        name: quotation.customer.name,
+        companyName: quotation.customer.companyName,
+        email: quotation.customer.email,
+        taxId: quotation.customer.taxId,
+        billingAddress: quotation.customer.billingAddress,
+      };
+
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNumber,
+          customerId: quotation.customerId,
+          subscriptionId: created.id,
+          billingPeriodStart: new Date(),
+          billingPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          dueDate,
+          subtotal: quotation.subtotal,
+          taxAmount: quotation.taxAmount,
+          discountAmount: quotation.discountAmount,
+          totalAmount: quotation.totalAmount,
+          paidAmount: 0,
+          outstandingAmount: quotation.totalAmount,
+          status: "CONFIRMED",
+          customerSnapshot: customerSnapshot as any,
+          lines: {
+            create: quotation.lines.map((line) => ({
+              productId: line.productId,
+              variantId: line.variantId,
+              productName: line.product?.name || quotation.plan.name,
+              variantName: line.variant?.variantName || null,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              taxRate: line.taxRate,
+              taxAmount: line.taxAmount,
+              discountAmount: line.discountAmount,
+              subtotal: line.subtotal,
+              total: line.total,
+            })),
+          },
+        },
+      });
+
       await tx.quotation.update({
         where: { id: quotation.id },
         data: {
@@ -83,11 +135,11 @@ export async function POST(
           newStatus: "ACTIVE",
           action: "CONVERTED_FROM_QUOTATION",
           performedByUserId: session.userId,
-          note: `Converted by Administrator from ${quotation.quotationNumber}.`,
+          note: `Converted by Administrator from ${quotation.quotationNumber}. Generated initial invoice ${invoiceNumber}.`,
         },
       });
 
-      return { quotation, subscription: created };
+      return { quotation, subscription: created, invoice };
     });
 
     return NextResponse.json({

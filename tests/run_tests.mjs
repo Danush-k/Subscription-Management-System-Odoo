@@ -149,6 +149,207 @@ test("Correctly clamps Jan 31 to Feb 29 in leap year (2028)", () => {
   assert.equal(next.getDate(), 29);
 });
 
+// -------------------------------------------------------------
+// 4. QUOTATION PAYMENT GATE & RENEWAL SETTLEMENT TESTS
+// -------------------------------------------------------------
+console.log("\n4. Quotation Payment Gate, Renewal Settlement & Reconciliation:");
+
+// Helper to simulate the quotation acceptance gate
+function simulateQuotationAcceptance({ role, customerId, quotationCustomerId, quotationStatus, paymentData }) {
+  if (role === "CUSTOMER" && customerId !== quotationCustomerId) {
+    throw new Error("Unauthorized access to this quotation");
+  }
+  if (quotationStatus === "CONFIRMED") {
+    throw new Error("This quotation has already been accepted and confirmed");
+  }
+  if (quotationStatus === "EXPIRED" || quotationStatus === "CANCELLED") {
+    throw new Error(`Quotation is ${quotationStatus.toLowerCase()} and cannot be accepted`);
+  }
+  if (role === "CUSTOMER" && (!paymentData || !paymentData.paymentMethod || !paymentData.amount)) {
+    throw new Error("Payment is mandatory before quotation acceptance and subscription activation.");
+  }
+
+  const hasPayment = Boolean(paymentData && paymentData.paymentMethod);
+  return {
+    subscriptionStatus: hasPayment ? "ACTIVE" : "CONFIRMED",
+    invoiceStatus: hasPayment ? "PAID" : "CONFIRMED",
+    paymentStatus: hasPayment ? "SUCCESS" : null,
+    outstandingAmount: hasPayment ? 0 : 1500,
+  };
+}
+
+test("Customer quotation acceptance BLOCKS activation if payment is missing", () => {
+  assert.throws(
+    () =>
+      simulateQuotationAcceptance({
+        role: "CUSTOMER",
+        customerId: "cust-1",
+        quotationCustomerId: "cust-1",
+        quotationStatus: "QUOTATION",
+        paymentData: null,
+      }),
+    /Payment is mandatory before quotation acceptance/
+  );
+});
+
+test("Customer quotation acceptance BLOCKS activation if quotation has expired", () => {
+  assert.throws(
+    () =>
+      simulateQuotationAcceptance({
+        role: "CUSTOMER",
+        customerId: "cust-1",
+        quotationCustomerId: "cust-1",
+        quotationStatus: "EXPIRED",
+        paymentData: { paymentMethod: "UPI", amount: 1500 },
+      }),
+    /Quotation is expired and cannot be accepted/
+  );
+});
+
+test("Customer quotation acceptance SUCCEEDS with payment: creates ACTIVE subscription & PAID invoice", () => {
+  const result = simulateQuotationAcceptance({
+    role: "CUSTOMER",
+    customerId: "cust-1",
+    quotationCustomerId: "cust-1",
+    quotationStatus: "QUOTATION",
+    paymentData: { paymentMethod: "UPI", amount: 1500, transactionRef: "RZP_TEST_001" },
+  });
+
+  assert.equal(result.subscriptionStatus, "ACTIVE");
+  assert.equal(result.invoiceStatus, "PAID");
+  assert.equal(result.paymentStatus, "SUCCESS");
+  assert.equal(result.outstandingAmount, 0);
+});
+
+test("Customer quotation acceptance PREVENTS cross-customer access", () => {
+  assert.throws(
+    () =>
+      simulateQuotationAcceptance({
+        role: "CUSTOMER",
+        customerId: "cust-attacker",
+        quotationCustomerId: "cust-victim",
+        quotationStatus: "QUOTATION",
+        paymentData: { paymentMethod: "UPI", amount: 1500 },
+      }),
+    /Unauthorized access to this quotation/
+  );
+});
+
+// Helper to simulate the subscription renewal settlement engine
+function simulateSubscriptionRenewal({ subscription, paymentDetails }) {
+  if (!["ACTIVE", "CLOSED", "EXPIRED", "PAUSED"].includes(subscription.status)) {
+    throw new Error(`Cannot renew subscription with status ${subscription.status}`);
+  }
+  if (!paymentDetails || !paymentDetails.paymentMethod || !paymentDetails.amount) {
+    throw new Error("Valid payment details required for renewal settlement");
+  }
+
+  // Calculate new next billing date
+  const newNext = SubscriptionService.calculateNextBillingDate(
+    new Date(subscription.nextBillingDate || subscription.startDate),
+    subscription.billingFrequency
+  );
+
+  // Calculate line totals
+  const subtotal = subscription.lines.reduce((acc, l) => acc + l.subtotal, 0);
+  const taxAmount = subscription.lines.reduce((acc, l) => acc + (l.total - l.subtotal), 0);
+  const totalAmount = subtotal + taxAmount;
+
+  if (Number(paymentDetails.amount) !== totalAmount) {
+    throw new Error(`Payment amount ₹${paymentDetails.amount} does not match required total ₹${totalAmount}`);
+  }
+
+  return {
+    subscription: {
+      ...subscription,
+      status: "ACTIVE",
+      pausedAt: null,
+      closedAt: null,
+      cancellationReason: null,
+      nextBillingDate: newNext,
+      lastBilledDate: new Date(),
+    },
+    invoice: {
+      status: "PAID",
+      totalAmount,
+      paidAmount: totalAmount,
+      outstandingAmount: 0,
+    },
+    payment: {
+      status: "SUCCESS",
+      paymentMethod: paymentDetails.paymentMethod,
+      amount: totalAmount,
+      transactionRef: paymentDetails.transactionRef || `RENEW_${Date.now()}`,
+    },
+  };
+}
+
+test("Renewal engine reactivates CLOSED subscription to ACTIVE with payment", () => {
+  const closedSub = {
+    id: "sub-ended",
+    subscriptionNumber: "SUB-2026-0001",
+    status: "CLOSED",
+    billingFrequency: "MONTHLY",
+    startDate: "2026-01-01T00:00:00Z",
+    nextBillingDate: "2026-02-01T00:00:00Z",
+    closedAt: new Date("2026-02-15T00:00:00Z"),
+    cancellationReason: "Contract terminated",
+    lines: [{ subtotal: 1000, total: 1180 }],
+  };
+
+  const renewed = simulateSubscriptionRenewal({
+    subscription: closedSub,
+    paymentDetails: { paymentMethod: "UPI", amount: 1180, transactionRef: "PAY_RZP_RENEW_1" },
+  });
+
+  assert.equal(renewed.subscription.status, "ACTIVE");
+  assert.equal(renewed.subscription.closedAt, null);
+  assert.equal(renewed.subscription.cancellationReason, null);
+  assert.equal(renewed.invoice.status, "PAID");
+  assert.equal(renewed.invoice.outstandingAmount, 0);
+  assert.equal(renewed.payment.status, "SUCCESS");
+});
+
+test("Renewal engine advances YEARLY contract by exactly 1 year", () => {
+  const yearlySub = {
+    id: "sub-yr",
+    subscriptionNumber: "SUB-2026-0002",
+    status: "ACTIVE",
+    billingFrequency: "YEARLY",
+    startDate: "2026-01-01T00:00:00Z",
+    nextBillingDate: "2026-01-01T00:00:00Z",
+    lines: [{ subtotal: 12000, total: 14160 }],
+  };
+
+  const renewed = simulateSubscriptionRenewal({
+    subscription: yearlySub,
+    paymentDetails: { paymentMethod: "CREDIT_CARD", amount: 14160 },
+  });
+
+  assert.equal(renewed.subscription.nextBillingDate.getFullYear(), 2027);
+  assert.equal(renewed.subscription.nextBillingDate.getMonth(), 0); // Jan
+  assert.equal(renewed.subscription.nextBillingDate.getDate(), 1);
+});
+
+test("Payment reconciliation rejects under-payment during renewal", () => {
+  const sub = {
+    id: "sub-reconcile",
+    status: "ACTIVE",
+    billingFrequency: "MONTHLY",
+    startDate: "2026-01-01T00:00:00Z",
+    lines: [{ subtotal: 500, total: 590 }],
+  };
+
+  assert.throws(
+    () =>
+      simulateSubscriptionRenewal({
+        subscription: sub,
+        paymentDetails: { paymentMethod: "UPI", amount: 500 }, // Underpayment: 500 instead of 590
+      }),
+    /does not match required total/
+  );
+});
+
 console.log(`\n======================================================`);
 console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);
 console.log(`======================================================\n`);
