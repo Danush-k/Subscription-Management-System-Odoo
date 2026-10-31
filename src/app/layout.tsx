@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased scroll-smooth">
+    <html lang="en" className="h-full antialiased scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -25,7 +25,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-[#F8F9FA] text-slate-900 selection:bg-[#714B67] selection:text-white">
+      <body className="min-h-full flex flex-col font-sans bg-[#F8F9FA] text-slate-900 selection:bg-[#714B67] selection:text-white" suppressHydrationWarning>
         {children}
       </body>
     </html>

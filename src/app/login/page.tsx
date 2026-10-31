@@ -149,7 +149,7 @@ export default function LoginPage() {
 
       {/* Main Centered Floating Card positioned right over the middle curve */}
       <main className="flex-1 flex items-center justify-center px-4 py-4 relative z-10">
-        <div className="max-w-[420px] w-full bg-white rounded-3xl p-7 sm:p-9 shadow-2xl border border-slate-200/90 space-y-5 relative">
+        <div className="max-w-[420px] w-full bg-white rounded-3xl p-7 sm:p-9 shadow-2xl border border-slate-200/90 space-y-5 relative" suppressHydrationWarning>
           <div className="text-center space-y-1">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
               Welcome back
@@ -164,7 +164,7 @@ export default function LoginPage() {
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
               1-Click Demo Persona
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2" suppressHydrationWarning>
               {personas.map((p) => {
                 const isSelected = selectedRole === p.id;
                 return (
@@ -188,7 +188,7 @@ export default function LoginPage() {
           </div>
 
           {/* Sign In Form matching Image 1 with uppercase labels and red asterisks */}
-          <form onSubmit={handleFormSubmit} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4" suppressHydrationWarning>
             {errorMsg && (
               <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
                 <AlertCircle className="h-4 w-4 shrink-0" />
