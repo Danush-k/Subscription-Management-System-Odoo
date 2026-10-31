@@ -716,6 +716,23 @@ export default function AdminDashboardPage() {
                   <span className="text-slate-500">Paid Amount:</span>
                   <span className="font-mono font-semibold text-emerald-600">{selectedInv.paid}</span>
                 </div>
+                {selectedInv.status !== "PAID" ? (
+                  <div className="flex justify-between font-bold text-amber-800 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 mt-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Pending Balance:
+                    </span>
+                    <span className="font-mono text-amber-900">{selectedInv.amount}</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 mt-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Status:
+                    </span>
+                    <span className="font-mono">Settled</span>
+                  </div>
+                )}
               </div>
             </div>
 

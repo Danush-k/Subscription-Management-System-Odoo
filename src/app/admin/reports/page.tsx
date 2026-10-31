@@ -161,10 +161,32 @@ export default function ReportsPage() {
                   key={m.month}
                   onMouseEnter={() => setHoveredMonthIndex(idx)}
                   onMouseLeave={() => setHoveredMonthIndex(null)}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-xl transition-colors ${
-                    isHovered ? "bg-slate-50" : "hover:bg-slate-50/60"
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-xl transition-all relative ${
+                    isHovered
+                      ? "bg-purple-50/50 ring-1 ring-[#714B67]/20 shadow-xs"
+                      : "hover:bg-slate-50/70"
                   }`}
                 >
+                  {/* Floating Rich Hover Tooltip with Pending Info */}
+                  {isHovered && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 bg-slate-900 text-white text-[11px] px-3.5 py-1.5 rounded-xl shadow-xl flex items-center gap-3 whitespace-nowrap pointer-events-none border border-slate-700 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#714B67]" />
+                        <span>
+                          Collected: <strong className="font-mono text-slate-100">₹{m.collected.toLocaleString("en-IN")}</strong> ({rate}%)
+                        </span>
+                      </div>
+                      <span className="text-slate-600">|</span>
+                      <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span>
+                          Pending: <strong className="font-mono text-amber-200">₹{pending.toLocaleString("en-IN")}</strong> ({pendingPct.toFixed(1)}%)
+                        </span>
+                      </div>
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 border-r border-b border-slate-700" />
+                    </div>
+                  )}
+
                   {/* Month Label */}
                   <div className="w-20 shrink-0 text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <span>{m.month}</span>
@@ -172,8 +194,7 @@ export default function ReportsPage() {
 
                   {/* Horizontal Bar Track */}
                   <div
-                    className="flex-1 mx-0 sm:mx-3 h-2.5 bg-slate-100 rounded-full overflow-hidden flex relative"
-                    title={`Invoiced: ₹${m.invoiced.toLocaleString("en-IN")}`}
+                    className="flex-1 mx-0 sm:mx-3 h-2.5 bg-slate-100 rounded-full overflow-hidden flex relative cursor-pointer"
                   >
                     <div
                       className="h-full rounded-full overflow-hidden flex transition-all duration-300"
@@ -181,21 +202,29 @@ export default function ReportsPage() {
                     >
                       {/* Collected Segment */}
                       <div
-                        className="h-full bg-[#714B67] transition-all"
+                        className="h-full bg-[#714B67] hover:brightness-110 transition-all"
                         style={{ width: `${collectedPct}%` }}
                         title={`Collected: ₹${m.collected.toLocaleString("en-IN")} (${rate}%)`}
                       />
                       {/* Pending Segment */}
                       <div
-                        className="h-full bg-amber-400 transition-all"
+                        className="h-full bg-amber-400 hover:brightness-110 transition-all"
                         style={{ width: `${pendingPct}%` }}
-                        title={`Pending: ₹${pending.toLocaleString("en-IN")}`}
+                        title={`Pending: ₹${pending.toLocaleString("en-IN")} (${pendingPct.toFixed(1)}%)`}
                       />
                     </div>
                   </div>
 
-                  {/* Tabular Amounts & Realized Pill */}
-                  <div className="flex items-center gap-3 shrink-0 text-xs font-mono">
+                  {/* Tabular Amounts, Pending Highlight on Hover & Realized Pill */}
+                  <div className="flex items-center gap-2.5 shrink-0 text-xs font-mono">
+                    {/* Inline Pending Badge on Hover */}
+                    {isHovered && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-in fade-in duration-150 font-sans shadow-2xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Pending: ₹{pending.toLocaleString("en-IN")} ({pendingPct.toFixed(1)}%)
+                      </span>
+                    )}
+
                     <span className="text-slate-600">
                       ₹{(m.collected / 100000).toFixed(2)}L
                       <span className="text-slate-400 font-sans text-[11px]">

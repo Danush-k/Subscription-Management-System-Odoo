@@ -611,9 +611,31 @@ export default function InvoicesPage() {
                     B
                   </div>
                   <div>
-                    <h3 className="font-black text-slate-900 text-lg">
-                      {selectedInvoice.invoiceNumber}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-slate-900 text-lg">
+                        {selectedInvoice.invoiceNumber}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                          selectedInvoice.status === "PAID"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : selectedInvoice.status === "OVERDUE"
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-amber-50 text-amber-800 border-amber-200"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            selectedInvoice.status === "PAID"
+                              ? "bg-emerald-500"
+                              : selectedInvoice.status === "OVERDUE"
+                              ? "bg-rose-500 animate-ping"
+                              : "bg-amber-500"
+                          }`}
+                        />
+                        {selectedInvoice.status}
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-400">
                       Brightloop Software Pvt. Ltd. &bull; Tax Invoice
                     </p>
@@ -746,6 +768,25 @@ export default function InvoicesPage() {
                     ₹{selectedInvoice.paidAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
+                {selectedInvoice.totalAmount > selectedInvoice.paidAmount ? (
+                  <div className="flex justify-between items-center font-bold text-amber-800 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200 mt-1">
+                    <span className="flex items-center gap-1.5 text-xs">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      Pending Outstanding Balance:
+                    </span>
+                    <span className="font-mono font-black text-amber-900 text-sm">
+                      ₹{(selectedInvoice.totalAmount - selectedInvoice.paidAmount).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center font-bold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 mt-1">
+                    <span className="flex items-center gap-1.5 text-xs">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      Settlement Status:
+                    </span>
+                    <span className="font-mono text-xs">Fully Paid &amp; Reconciled</span>
+                  </div>
+                )}
               </div>
 
               {/* Actions: Download PDF and Print */}
