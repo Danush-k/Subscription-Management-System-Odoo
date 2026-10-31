@@ -25,9 +25,9 @@ export async function GET() {
         ? Math.round((metrics.revenueCollected / metrics.revenueInvoiced) * 1000) / 10
         : 100;
 
-    // Filter monthlyData to relevant months that have activity or current year
-    const formattedMonthlyTrend = monthlyData.slice(0, 11).map((m) => ({
-      month: `${m.month} 2026`,
+    const currentYear = new Date().getFullYear();
+    const formattedMonthlyTrend = monthlyData.map((m) => ({
+      month: `${m.month} ${currentYear}`,
       invoiced: m.invoiced,
       collected: m.collected,
     }));
