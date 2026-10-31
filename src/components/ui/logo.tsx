@@ -84,23 +84,38 @@ export function BrightloopLogo({
         </svg>
       </div>
 
-      {/* Brand Wordmark & Tag */}
+      {/* Brand Wordmark with Capital 'B', Capital 'L', and Distinct 'oo' Color */}
       {showText && (
         <div className="flex items-center gap-2">
-          <div className="flex items-baseline tracking-tight">
+          <div className="flex items-baseline tracking-tight font-extrabold">
             <span
-              className={`font-black tracking-tight ${textSizes[size]} ${
+              className={`tracking-tight ${textSizes[size]} ${
                 isLight ? "text-white" : "text-slate-900"
               }`}
             >
-              bright
+              Bright
             </span>
             <span
-              className={`font-black tracking-tight ${textSizes[size]} ${
+              className={`tracking-tight ${textSizes[size]} ${
+                isLight ? "text-white/90" : "text-slate-800"
+              }`}
+            >
+              L
+            </span>
+            {/* Signature 'oo' color differentiation inspired by Odoo */}
+            <span
+              className={`tracking-tight ${textSizes[size]} ${
                 isLight ? "text-[#FCD34D]" : "text-[#714B67]"
               }`}
             >
-              loop
+              oo
+            </span>
+            <span
+              className={`tracking-tight ${textSizes[size]} ${
+                isLight ? "text-white/90" : "text-slate-800"
+              }`}
+            >
+              p
             </span>
           </div>
 
@@ -122,51 +137,61 @@ export function BrightloopLogo({
 }
 
 /**
- * Pure Odoo-style vector wordmark with geometric rounded typography and interlocking loops
+ * Pure Odoo-inspired Wordmark:
+ * Capital B ('Bright'), Capital L, with geometric circular 'oo' color differentiation
  */
-export function OdooStyleBrandMark({
+export function BrightLoopBrandMark({
   size = "md",
   className = "",
 }: {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }) {
-  const heights = {
-    sm: "h-7",
-    md: "h-9",
-    lg: "h-11",
-    xl: "h-14",
+  const fontSizes = {
+    sm: "text-xl",
+    md: "text-2xl sm:text-3xl",
+    lg: "text-3xl sm:text-4xl",
+    xl: "text-4xl sm:text-5xl",
+  };
+
+  const loopSizes = {
+    sm: "w-6 h-4",
+    md: "w-8 h-5",
+    lg: "w-10 h-6",
+    xl: "w-12 h-7",
   };
 
   return (
-    <div className={`inline-flex items-center gap-1.5 select-none ${className}`}>
-      {/* Modern Odoo-inspired lowercase branding */}
-      <span className="font-extrabold text-2xl sm:text-3xl text-[#714B67] tracking-tight flex items-center">
-        bright
-        <span className="text-[#8A4E7A] inline-flex items-center">
-          l
-          {/* Overlapping double-o loop */}
+    <div className={`inline-flex items-center gap-2 select-none ${className}`}>
+      {/* Brand Lettering: Capital 'B' Bright, Capital 'L', with Odoo-style circular 'oo' color loops */}
+      <span className={`font-black ${fontSizes[size]} tracking-tight flex items-center`}>
+        <span className="text-[#714B67]">Bright</span>
+        <span className="text-slate-800 ml-0.5 inline-flex items-center">
+          L
+          {/* Overlapping double-o loop with signature Odoo plum + amber colors */}
           <span className="relative inline-flex items-center mx-[-1px]">
             <svg
               viewBox="0 0 34 20"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="w-8 h-5 inline-block"
+              className={`${loopSizes[size]} inline-block align-middle`}
             >
+              {/* First 'o' in signature Odoo Plum */}
               <circle
                 cx="10"
                 cy="10"
                 r="7"
                 stroke="#714B67"
-                strokeWidth="3.2"
+                strokeWidth="3.4"
                 fill="none"
               />
+              {/* Second 'o' in vibrant Golden Amber */}
               <circle
                 cx="24"
                 cy="10"
                 r="7"
                 stroke="#F59E0B"
-                strokeWidth="3.2"
+                strokeWidth="3.4"
                 fill="none"
               />
             </svg>
@@ -177,3 +202,6 @@ export function OdooStyleBrandMark({
     </div>
   );
 }
+
+// Backwards-compatible alias for existing imports
+export const OdooStyleBrandMark = BrightLoopBrandMark;

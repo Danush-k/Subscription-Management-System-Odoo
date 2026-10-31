@@ -3,35 +3,35 @@
 import React from "react";
 import Link from "next/link";
 import { OdooAppIconGrid } from "@/components/home/odoo-app-icons";
-import { OdooStyleBrandMark } from "@/components/ui/logo";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans select-none overflow-x-hidden">
-      {/* Top Navigation Bar - Exact Odoo Style from Image 2 */}
-      <header className="sticky top-0 z-50 bg-[#FDFBF7]/95 backdrop-blur-md px-6 lg:px-12 py-4 flex items-center justify-between border-b border-slate-200/50">
+      {/* Top Navigation Bar - Professional Odoo / DayFlow Style */}
+      <header className="sticky top-0 z-50 bg-[#FDFBF7]/95 backdrop-blur-md px-6 lg:px-12 py-3.5 flex items-center justify-between border-b border-slate-200/60">
         <div className="flex items-center gap-10">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            {/* Odoo style lowercase wordmark */}
-            <OdooStyleBrandMark size="md" />
+            {/* BrightLoop with Capital 'B', Capital 'L', and Odoo-inspired 'oo' color differentiation */}
+            <BrightLoopBrandMark size="md" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-700">
             <a href="#apps" className="hover:text-[#714B67] transition-colors">
               Apps
             </a>
-            <Link href="/admin/dashboard" className="hover:text-[#714B67] transition-colors">
-              Industries
+            <Link href="/admin/subscriptions" className="hover:text-[#714B67] transition-colors">
+              Subscriptions
             </Link>
-            <Link href="/customer/dashboard" className="hover:text-[#714B67] transition-colors">
-              Community
+            <Link href="/admin/invoices" className="hover:text-[#714B67] transition-colors">
+              Invoices &amp; Billing
             </Link>
             <Link href="/admin/plans" className="hover:text-[#714B67] transition-colors">
               Pricing
             </Link>
             <Link href="/docs/architecture" className="hover:text-[#714B67] transition-colors">
-              Help
+              Help &amp; Docs
             </Link>
           </nav>
         </div>
@@ -55,7 +55,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with Exact Odoo Headline, Yellow Highlight, and Blue Underline */}
+      {/* Hero Section with Headline, Yellow Highlight, and Blue Underline */}
       <main className="flex-1">
         <section className="relative pt-14 pb-20 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
           {/* Main Headline */}
@@ -95,7 +95,7 @@ export default function HomePage() {
               </Button>
             </Link>
 
-            {/* Handwritten Doodle Arrow & Callout exactly as in Image 2 */}
+            {/* Handwritten Doodle Arrow & Callout */}
             <div className="hidden lg:flex items-start gap-1 absolute left-[102%] -top-4 text-left whitespace-nowrap">
               {/* Curved SVG Doodle Arrow */}
               <svg
@@ -123,9 +123,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Convex Curved White Wave Divider matching Image 2 */}
+        {/* Curvy Color Differentiation Wave Separator matching Image 1 & Image 3 */}
         <div className="relative w-full">
-          {/* Smooth upward arching SVG curve */}
+          {/* Smooth upward arching SVG curve creating two-tone color boundary */}
           <svg
             viewBox="0 0 1440 100"
             fill="none"
@@ -138,9 +138,22 @@ export default function HomePage() {
             />
           </svg>
 
-          {/* 12-App Odoo Icon Grid on pure white background */}
-          <div className="w-full bg-white pt-6 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-100">
-            <div id="apps" className="max-w-6xl mx-auto">
+          {/* 12 BrightLoop Application Modules Grid on pure white background (Image 4) */}
+          <div className="w-full bg-white pt-6 pb-24 px-4 sm:px-6 lg:px-8 border-b border-slate-100">
+            <div id="apps" className="max-w-6xl mx-auto space-y-6">
+              <div className="text-center max-w-2xl mx-auto space-y-1 pb-4">
+                <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
+                  BrightLoop Enterprise Suite
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Integrated Subscription &amp; Financial Workspaces
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Select any core module below to access its live production dashboard.
+                </p>
+              </div>
+
+              {/* 12 BrightLoop Modules */}
               <OdooAppIconGrid />
             </div>
           </div>
@@ -151,7 +164,7 @@ export default function HomePage() {
       <footer className="bg-white border-t border-slate-100 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#714B67] text-sm">brightloop</span>
+            <span className="font-extrabold text-[#714B67] text-sm">BrightLoop</span>
             <span>&bull; Enterprise Subscription &amp; Invoicing Platform</span>
           </div>
 
