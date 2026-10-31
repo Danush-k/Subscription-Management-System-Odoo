@@ -11,10 +11,9 @@ import {
   Shield,
   Users,
   Building,
-  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { OdooStyleBrandMark } from "@/components/ui/logo";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -75,10 +74,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between text-slate-900 font-sans select-none relative overflow-x-hidden">
-      {/* Top Brand Header matching DayFlow Screenshot (Image 3) */}
+      {/* Top Brand Header matching DayFlow Screenshot (Image 1) */}
       <header className="pt-10 pb-4 text-center px-4 relative z-10">
         <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
-          <OdooStyleBrandMark size="lg" />
+          {/* BrightLoop with Capital 'B', Capital 'L', and colored 'oo' */}
+          <BrightLoopBrandMark size="lg" />
         </Link>
 
         {/* Subtitle with Yellow Marker and Blue Underline */}
@@ -98,7 +98,7 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* Main Centered Floating Card matching Screenshot (Image 3) */}
+      {/* Main Centered Floating Card matching Screenshot (Image 1) */}
       <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
         <div className="max-w-[420px] w-full bg-white rounded-3xl p-8 sm:p-9 shadow-xl border border-slate-200/80 space-y-6 relative">
           <div className="text-center space-y-1">
@@ -138,7 +138,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Sign In Form matching Image 3 with uppercase labels and red asterisks */}
+          {/* Sign In Form matching Image 1 with uppercase labels and red asterisks */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
@@ -217,7 +217,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Bottom Right Handwritten Annotation with Curved Arrow matching Image 3 */}
+          {/* Bottom Right Handwritten Annotation with Curved Arrow matching Image 1 */}
           <div className="hidden sm:flex items-center gap-1.5 absolute -right-24 -bottom-9 whitespace-nowrap">
             <svg
               width="45"
@@ -242,13 +242,13 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* Background Soft Horizon Wave */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none opacity-40">
+      {/* Curvy Color Differentiation Wave Separator in Background */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg
           viewBox="0 0 1440 120"
           fill="none"
           preserveAspectRatio="none"
-          className="w-full h-24 text-white"
+          className="w-full h-28 text-white block opacity-90"
         >
           <path
             d="M0,120 C480,20 960,20 1440,120 L1440,120 L0,120 Z"
@@ -259,7 +259,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-slate-400 relative z-10">
-        &copy; 2026 Brightloop Software. All rights reserved.
+        &copy; 2026 BrightLoop Software. All rights reserved.
       </footer>
     </div>
   );
