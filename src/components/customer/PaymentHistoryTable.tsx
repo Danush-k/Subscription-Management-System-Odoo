@@ -10,21 +10,30 @@ import {
   ArrowUpRight,
   ShieldCheck,
   FileCheck2,
+  AlertTriangle,
+  RefreshCw,
+  Calendar,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PaymentRecord, InvoiceItem } from "./types";
+import { PaymentRecord, InvoiceItem, SubscriptionItem } from "./types";
 
 interface PaymentHistoryTableProps {
   payments: PaymentRecord[];
   invoices: InvoiceItem[];
+  subscriptions?: SubscriptionItem[];
   onViewInvoice: (inv: InvoiceItem) => void;
+  onPayAndRenew?: (sub: SubscriptionItem) => void;
 }
 
 export function PaymentHistoryTable({
   payments,
   invoices,
+  subscriptions = [],
   onViewInvoice,
+  onPayAndRenew,
 }: PaymentHistoryTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -37,6 +46,23 @@ export function PaymentHistoryTable({
       minute: "2-digit",
     }).format(new Date(isoStr));
   };
+
+  const formatShortDate = (isoStr: string | null | undefined) => {
+    if (!isoStr) return "N/A";
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(isoStr));
+  };
+
+  // Identify ended, closed, expired, or due subscriptions
+  const endedOrDueSubs = subscriptions.filter(
+    (s) =>
+      s.status === "CLOSED" ||
+      s.status === "EXPIRED" ||
+      (s.nextBillingDate && new Date(s.nextBillingDate) <= new Date())
+  );
 
   const filteredPayments = payments.filter((p) => {
     const q = searchQuery.toLowerCase().trim();
@@ -66,7 +92,134 @@ export function PaymentHistoryTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* 1. Dedicated Ended Subscriptions & Pending Renewal Payments Section */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              endedOrDueSubs.length > 0
+                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+            }`}>
+              {endedOrDueSubs.length > 0 ? (
+                <AlertTriangle className="w-4 h-4 text-amber-700" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                  Subscription Renewals &amp; End-of-Term Re-activations
+                </h3>
+                {endedOrDueSubs.length > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                    {endedOrDueSubs.length} Action Required
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {endedOrDueSubs.length > 0
+                  ? "Contracts that have ended, expired, or are pending cycle renewal. Settle payment to restore or continue access."
+                  : "All subscription agreements are in good standing with zero overdue renewal payments."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {endedOrDueSubs.length > 0 ? (
+          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {endedOrDueSubs.map((sub) => {
+              const primaryLine = sub.lines[0];
+              const productName = primaryLine?.product?.name || sub.plan?.name || "Subscription Service";
+              const totalAmount =
+                sub.lines.reduce((acc, l) => acc + Number(l.total || l.subtotal || 0), 0) ||
+                Number(sub.plan?.subscriptionPrice || 0);
+              const isEnded = sub.status === "CLOSED" || sub.status === "EXPIRED";
+
+              return (
+                <div
+                  key={sub.id}
+                  className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                    isEnded
+                      ? "bg-rose-50/30 border-rose-200"
+                      : "bg-amber-50/30 border-amber-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                          {sub.subscriptionNumber}
+                        </span>
+                        <Badge
+                          variant={isEnded ? "closed" : "paused"}
+                          className="text-[10px] uppercase font-bold"
+                        >
+                          {sub.status === "CLOSED"
+                            ? "ENDED / CANCELLED"
+                            : sub.status === "EXPIRED"
+                            ? "EXPIRED"
+                            : "RENEWAL DUE"}
+                        </Badge>
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-sm mt-1.5 line-clamp-1">
+                        {productName}
+                      </h4>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          {isEnded ? "Ended On: " : "Cycle Due: "}
+                          <strong className="text-slate-700">
+                            {formatShortDate(sub.expiryDate || sub.nextBillingDate)}
+                          </strong>
+                        </span>
+                        <span>&bull;</span>
+                        <span>{sub.billingFrequency}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="font-mono font-black text-slate-900 text-sm">
+                        ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Payable</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
+                    <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#714B67]" />
+                      <span>Instant reactivation via Razorpay</span>
+                    </span>
+
+                    <Button
+                      size="sm"
+                      onClick={() => onPayAndRenew && onPayAndRenew(sub)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Pay &amp; Renew</span>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-4 sm:p-5 flex items-center justify-between text-xs text-slate-600">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>No expired or overdue subscription renewals. All services active.</span>
+            </span>
+            <span className="text-slate-400 font-mono text-[11px]">
+              {subscriptions.filter((s) => s.status === "ACTIVE").length} active subscriptions
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Payment Summary Metrics Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">

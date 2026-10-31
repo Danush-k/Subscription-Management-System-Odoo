@@ -62,6 +62,10 @@ export async function POST(
         throw new Error(`Quotation is ${quotation.status.toLowerCase()} and cannot be accepted`);
       }
 
+      if (session.role === "CUSTOMER" && (!paymentData || !paymentData.paymentMethod)) {
+        throw new Error("Payment is mandatory before quotation acceptance and subscription activation.");
+      }
+
       const hasPayment = Boolean(paymentData && paymentData.paymentMethod);
 
       // Count subscriptions for reference number

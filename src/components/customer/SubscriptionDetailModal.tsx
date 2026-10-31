@@ -434,16 +434,27 @@ export function SubscriptionDetailModal({
               </Button>
             )}
 
+            {(subscription.status === "CLOSED" || subscription.status === "EXPIRED") && (
+              <Button
+                type="button"
+                onClick={() => onRenew(subscription)}
+                disabled={isActionLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs active:scale-95"
+              >
+                <CreditCard className="w-4 h-4" /> Pay &amp; Renew Subscription
+              </Button>
+            )}
+
             {subscription.status === "ACTIVE" && Boolean((subscription.plan as any)?.renewalAllowed) && (
               <Button
                 type="button"
                 onClick={() => onRenew(subscription)}
                 disabled={isActionLoading}
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-xs font-semibold text-slate-700 hover:text-slate-900 gap-1.5 cursor-pointer"
+                className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 gap-1.5 cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4" /> Early Renewal
+                <RefreshCw className="w-4 h-4" /> Pay &amp; Renew Subscription
               </Button>
             )}
 

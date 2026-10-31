@@ -174,9 +174,13 @@ export default function SubscriptionsPage() {
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               Total Subscriptions
             </p>
-            <p className="text-2xl font-black text-slate-900 font-mono mt-2">
-              {subscriptions.length}
-            </p>
+            {loading ? (
+              <div className="h-8 w-16 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-slate-900 font-mono mt-2">
+                {subscriptions.length}
+              </p>
+            )}
             <p className="text-[11px] text-slate-400 mt-0.5">Automated recurring base</p>
           </div>
 
@@ -187,7 +191,11 @@ export default function SubscriptionsPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-2xl font-black text-emerald-700 font-mono mt-2">{activeCount}</p>
+            {loading ? (
+              <div className="h-8 w-16 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-emerald-700 font-mono mt-2">{activeCount}</p>
+            )}
             <p className="text-[11px] text-emerald-600 mt-0.5">Generating recurring revenue</p>
           </div>
 
@@ -198,13 +206,21 @@ export default function SubscriptionsPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-amber-500" />
             </div>
-            <p className="text-2xl font-black text-amber-600 font-mono mt-2">{pausedCount}</p>
+            {loading ? (
+              <div className="h-8 w-16 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-amber-600 font-mono mt-2">{pausedCount}</p>
+            )}
             <p className="text-[11px] text-amber-600 mt-0.5">Billing temporarily held</p>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Closed</p>
-            <p className="text-2xl font-black text-slate-600 font-mono mt-2">{closedCount}</p>
+            {loading ? (
+              <div className="h-8 w-16 bg-slate-100 rounded-lg animate-pulse mt-2" />
+            ) : (
+              <p className="text-2xl font-black text-slate-600 font-mono mt-2">{closedCount}</p>
+            )}
             <p className="text-[11px] text-slate-400 mt-0.5">Cancelled / Non-renewed</p>
           </div>
         </div>
@@ -242,7 +258,7 @@ export default function SubscriptionsPage() {
                       isSelected ? "bg-white/20 text-white" : "bg-white text-slate-600"
                     }`}
                   >
-                    {count}
+                    {loading ? "..." : count}
                   </span>
                 </button>
               );
@@ -267,12 +283,35 @@ export default function SubscriptionsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
-                      <p className="mt-2 text-xs">Loading subscriptions from database...</p>
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-28 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-16" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-36 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-24" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-28 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-20" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-20 mb-1.5" />
+                        <div className="h-3 bg-slate-100 rounded-md w-14" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-4 bg-slate-200/80 rounded-md w-24 mb-1.5" />
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="h-5 bg-slate-200/80 rounded-full w-16" />
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <div className="h-7 bg-slate-100 rounded-md w-16 ml-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : filteredSubscriptions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sliders,
+  CreditCard,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface SubscriptionCardProps {
   onPauseResume: (sub: SubscriptionItem) => void;
   onCancel: (sub: SubscriptionItem) => void;
   onRenew: (sub: SubscriptionItem) => void;
+  onPayAndRenew?: (sub: SubscriptionItem) => void;
   onToggleAutoRenew: (sub: SubscriptionItem) => void;
   loadingActionId: string | null;
 }
@@ -37,6 +39,7 @@ export function SubscriptionCard({
   onPauseResume,
   onCancel,
   onRenew,
+  onPayAndRenew,
   onToggleAutoRenew,
   loadingActionId,
 }: SubscriptionCardProps) {
@@ -61,6 +64,12 @@ export function SubscriptionCard({
   const taxRate = Number(primaryLine?.taxRate || 0);
   const total = Number(primaryLine?.total || unitPrice);
 
+  const isEnded = subscription.status === "CLOSED" || subscription.status === "EXPIRED";
+  const isDue = Boolean(
+    subscription.nextBillingDate &&
+    new Date(subscription.nextBillingDate) <= new Date()
+  );
+
   const statusVariantMap: Record<string, "active" | "paused" | "closed" | "expired" | "draft"> = {
     ACTIVE: "active",
     PAUSED: "paused",
@@ -74,13 +83,56 @@ export function SubscriptionCard({
   return (
     <div
       className={`bg-white rounded-2xl border transition-all shadow-xs hover:shadow-md ${
-        subscription.status === "ACTIVE"
+        isEnded
+          ? "border-rose-200/90 bg-rose-50/20"
+          : subscription.status === "ACTIVE"
           ? "border-slate-200/90"
           : subscription.status === "PAUSED"
           ? "border-amber-200/90 bg-amber-50/10"
           : "border-slate-200/60 opacity-90"
       }`}
     >
+      {/* Informative Renewal Alert Banner for Ended or Due Subscriptions */}
+      {isEnded && (
+        <div className="bg-rose-50 border-b border-rose-200 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>
+              <strong>Subscription Ended:</strong> This SaaS license agreement has terminated. Pay renewal to restore access immediately.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => (onPayAndRenew ? onPayAndRenew(subscription) : onRenew(subscription))}
+            disabled={isActionLoading}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shrink-0 shadow-xs cursor-pointer active:scale-95"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            Pay &amp; Renew Now
+          </Button>
+        </div>
+      )}
+
+      {!isEnded && isDue && (
+        <div className="bg-amber-50 border-b border-amber-200 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Renewal Billing Due:</strong> Payment required for next cycle ({formatDate(subscription.nextBillingDate)}).
+            </span>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => (onPayAndRenew ? onPayAndRenew(subscription) : onRenew(subscription))}
+            disabled={isActionLoading}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shrink-0 shadow-xs cursor-pointer active:scale-95"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            Pay Renewal
+          </Button>
+        </div>
+      )}
+
       <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-start justify-between gap-5 sm:gap-6">
         {/* Left Column: Product & Plan Meta */}
         <div className="space-y-3 flex-1 min-w-0">
@@ -184,6 +236,31 @@ export function SubscriptionCard({
               <Sliders className="w-3.5 h-3.5 text-[#714B67]" />
               View Details
             </Button>
+
+            {isEnded && (
+              <Button
+                onClick={() => (onPayAndRenew ? onPayAndRenew(subscription) : onRenew(subscription))}
+                disabled={isActionLoading}
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                Pay &amp; Renew
+              </Button>
+            )}
+
+            {subscription.status === "ACTIVE" && (
+              <Button
+                onClick={() => (onPayAndRenew ? onPayAndRenew(subscription) : onRenew(subscription))}
+                disabled={isActionLoading}
+                variant="outline"
+                size="sm"
+                className="text-xs font-semibold text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100/70 border-emerald-300 gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Pay &amp; Renew
+              </Button>
+            )}
 
             {subscription.status === "ACTIVE" && subscription.plan.pauseAllowed && (
               <Button

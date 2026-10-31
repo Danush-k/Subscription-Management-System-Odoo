@@ -195,9 +195,21 @@ export default function ProductsPage() {
 
         {/* Products Grid with Clickable Cards */}
         {loading ? (
-          <div className="bg-white rounded-3xl p-12 border border-slate-200/90 shadow-2xs text-center text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#714B67]" />
-            <p className="mt-3 text-xs font-medium">Loading products from database...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-slate-200/80 rounded w-20" />
+                  <div className="h-5 bg-slate-100 rounded-full w-14" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-5 bg-slate-200/80 rounded w-44" />
+                  <div className="h-7 bg-slate-100 rounded w-28" />
+                  <div className="h-3 bg-slate-100 rounded w-full" />
+                </div>
+                <div className="h-9 bg-slate-100 rounded-xl w-full" />
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 border border-slate-200/90 shadow-2xs text-center text-slate-400 font-medium">

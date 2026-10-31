@@ -243,7 +243,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Professional Alert Banner for Overdue Accounts */}
-        {metrics.overdueInvoices > 0 && (
+        {!loading && metrics.overdueInvoices > 0 && (
           <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
@@ -285,18 +285,27 @@ export default function AdminDashboardPage() {
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              ₹{metrics.mrr.toLocaleString("en-IN")}.00
-            </div>
-            <div className="mt-2.5 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                <Sparkles className="w-3 h-3" />
-                <span>Active Run Rate</span>
-              </span>
-              <span className="text-[11px] text-slate-400">
-                ARR ₹{((metrics.arr || metrics.mrr * 12) / 100000).toFixed(2)}L
-              </span>
-            </div>
+            {loading ? (
+              <div className="mt-3 space-y-2 animate-pulse">
+                <div className="h-8 w-36 bg-slate-100 rounded-lg" />
+                <div className="h-4 w-44 bg-slate-100 rounded" />
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
+                  ₹{metrics.mrr.toLocaleString("en-IN")}.00
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Active Run Rate</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    ARR ₹{((metrics.arr || metrics.mrr * 12) / 100000).toFixed(2)}L
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Card 2: Net Collections */}
@@ -309,15 +318,24 @@ export default function AdminDashboardPage() {
                 <CreditCard className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              ₹{metrics.revenueCollected.toLocaleString("en-IN")}.00
-            </div>
-            <div className="mt-2.5 flex items-center gap-2">
-              <span className="inline-flex items-center text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                {metrics.totalInvoices} Invoices
-              </span>
-              <span className="text-[11px] text-slate-400">Database Verified</span>
-            </div>
+            {loading ? (
+              <div className="mt-3 space-y-2 animate-pulse">
+                <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+                <div className="h-4 w-32 bg-slate-100 rounded" />
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
+                  ₹{metrics.revenueCollected.toLocaleString("en-IN")}.00
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="inline-flex items-center text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                    {metrics.totalInvoices} Invoices
+                  </span>
+                  <span className="text-[11px] text-slate-400">Database Verified</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Card 3: Outstanding Receivables */}
@@ -330,15 +348,24 @@ export default function AdminDashboardPage() {
                 <FileText className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              ₹{metrics.outstandingAmount.toLocaleString("en-IN")}.00
-            </div>
-            <div className="mt-2.5 flex items-center gap-2">
-              <span className="inline-flex items-center text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
-                {metrics.overdueInvoices} Overdue
-              </span>
-              <span className="text-[11px] text-slate-400">Total Unpaid</span>
-            </div>
+            {loading ? (
+              <div className="mt-3 space-y-2 animate-pulse">
+                <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+                <div className="h-4 w-32 bg-slate-100 rounded" />
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
+                  ₹{metrics.outstandingAmount.toLocaleString("en-IN")}.00
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="inline-flex items-center text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                    {metrics.overdueInvoices} Overdue
+                  </span>
+                  <span className="text-[11px] text-slate-400">Total Unpaid</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Card 4: Active Subscriptions */}
@@ -351,18 +378,27 @@ export default function AdminDashboardPage() {
                 <RotateCcw className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
-              {metrics.activeSubscriptions}
-            </div>
-            <div className="mt-2.5 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>{metrics.activeSubscriptions} Active</span>
-              </span>
-              <span className="text-[11px] text-slate-400">
-                {metrics.pausedSubscriptions} Paused &bull; {metrics.closedSubscriptions} Closed
-              </span>
-            </div>
+            {loading ? (
+              <div className="mt-3 space-y-2 animate-pulse">
+                <div className="h-8 w-16 bg-slate-100 rounded-lg" />
+                <div className="h-4 w-40 bg-slate-100 rounded" />
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
+                  {metrics.activeSubscriptions}
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span>{metrics.activeSubscriptions} Active</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    {metrics.pausedSubscriptions} Paused &bull; {metrics.closedSubscriptions} Closed
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -415,13 +451,25 @@ export default function AdminDashboardPage() {
                   href="/admin/subscriptions"
                   className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
                 >
-                  <span>View All ({metrics.totalSubscriptions})</span>
+                  <span>View All ({loading ? "..." : metrics.totalSubscriptions})</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
 
               <div className="divide-y divide-slate-100 text-xs">
-                {subscriptionsList.length === 0 ? (
+                {loading ? (
+                  <div className="divide-y divide-slate-100 p-4 space-y-4 animate-pulse">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="flex justify-between items-center py-2">
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-28 bg-slate-100 rounded" />
+                          <div className="h-3 w-40 bg-slate-100 rounded" />
+                        </div>
+                        <div className="h-5 w-20 bg-slate-100 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : subscriptionsList.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
                     No subscriptions in database yet.
                   </div>
@@ -514,13 +562,25 @@ export default function AdminDashboardPage() {
                   href="/admin/invoices"
                   className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
                 >
-                  <span>View All ({metrics.totalInvoices})</span>
+                  <span>View All ({loading ? "..." : metrics.totalInvoices})</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
 
               <div className="divide-y divide-slate-100 text-xs">
-                {invoicesList.length === 0 ? (
+                {loading ? (
+                  <div className="divide-y divide-slate-100 p-4 space-y-4 animate-pulse">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="flex justify-between items-center py-2">
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-28 bg-slate-100 rounded" />
+                          <div className="h-3 w-40 bg-slate-100 rounded" />
+                        </div>
+                        <div className="h-5 w-20 bg-slate-100 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : invoicesList.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
                     No invoices generated yet.
                   </div>

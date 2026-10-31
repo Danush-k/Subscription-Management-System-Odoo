@@ -50,11 +50,20 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { action, reason } = body;
+    const { action, reason, paymentMethod = "UPI", amount, transactionRef, notes } = body;
 
     const subscription = await prisma.subscription.findUnique({
       where: { id },
-      include: { plan: true },
+      include: {
+        plan: true,
+        customer: true,
+        lines: {
+          include: {
+            product: true,
+            variant: true,
+          },
+        },
+      },
     });
 
     if (!subscription) {
@@ -175,38 +184,130 @@ export async function PATCH(
     }
 
     if (action === "renew") {
-      // Advance nextBillingDate by billingFrequency
-      const currentNext = new Date(subscription.nextBillingDate);
-      const newNext = new Date(currentNext);
+      // Calculate renewal next billing date
+      const baseDate = new Date();
+      const newNext = new Date(baseDate);
       if (subscription.billingFrequency === "YEARLY") {
         newNext.setFullYear(newNext.getFullYear() + 1);
+      } else if (subscription.billingFrequency === "WEEKLY") {
+        newNext.setDate(newNext.getDate() + 7);
+      } else if (subscription.billingFrequency === "DAILY") {
+        newNext.setDate(newNext.getDate() + 1);
       } else {
         newNext.setMonth(newNext.getMonth() + 1);
       }
 
-      const updated = await prisma.$transaction(async (tx) => {
+      // Calculate totals from subscription lines
+      const subtotal =
+        subscription.lines.reduce((sum, l) => sum + Number(l.subtotal || 0), 0) ||
+        Number(subscription.plan.subscriptionPrice);
+      const taxAmount =
+        subscription.lines.reduce((sum, l) => sum + (Number(l.total || 0) - Number(l.subtotal || 0)), 0) || 0;
+      const totalAmount = amount ? Number(amount) : subtotal + taxAmount;
+
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Reactivate subscription to ACTIVE and advance nextBillingDate
         const sub = await tx.subscription.update({
           where: { id },
           data: {
+            status: "ACTIVE",
+            pausedAt: null,
+            closedAt: null,
+            cancellationReason: null,
             nextBillingDate: newNext,
             lastBilledDate: new Date(),
           },
         });
 
+        // 2. Generate Renewal Invoice
+        const invCount = await tx.invoice.count();
+        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invCount + 1).padStart(4, "0")}`;
+        const customerSnapshot = {
+          name: subscription.customer.name,
+          companyName: subscription.customer.companyName,
+          email: subscription.customer.email,
+          taxId: subscription.customer.taxId,
+          billingAddress: subscription.customer.billingAddress,
+        };
+
+        const invoice = await tx.invoice.create({
+          data: {
+            invoiceNumber,
+            customerId: subscription.customerId,
+            subscriptionId: subscription.id,
+            billingPeriodStart: new Date(),
+            billingPeriodEnd: newNext,
+            dueDate: new Date(),
+            subtotal,
+            taxAmount,
+            discountAmount: 0,
+            totalAmount,
+            paidAmount: totalAmount,
+            outstandingAmount: 0,
+            status: "PAID",
+            customerSnapshot: customerSnapshot as any,
+            lines: {
+              create: subscription.lines.map((line) => ({
+                productId: line.productId,
+                variantId: line.variantId,
+                productName: line.product?.name || subscription.plan.name,
+                variantName: line.variant?.variantName || null,
+                quantity: line.quantity,
+                unitPrice: line.unitPrice,
+                taxRate: line.taxRate,
+                taxAmount: Number(line.total) - Number(line.subtotal),
+                discountAmount: line.discountAmount,
+                subtotal: line.subtotal,
+                total: line.total,
+              })),
+            },
+          },
+        });
+
+        // 3. Generate Settled Payment Record
+        const payCount = await tx.payment.count();
+        const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, "0")}`;
+
+        let validMethod = "UPI";
+        if (["UPI", "CREDIT_CARD", "DEBIT_CARD", "BANK_TRANSFER", "CASH"].includes(paymentMethod)) {
+          validMethod = paymentMethod;
+        }
+
+        const payment = await tx.payment.create({
+          data: {
+            paymentNumber,
+            invoiceId: invoice.id,
+            customerId: subscription.customerId,
+            paymentMethod: validMethod as any,
+            amount: totalAmount,
+            paymentDate: new Date(),
+            transactionRef: transactionRef || `PAY_RENEW_${Date.now()}`,
+            notes: notes || `Customer subscription renewal settlement via ${validMethod}`,
+            status: "SUCCESS",
+          },
+        });
+
+        // 4. Create History
         await tx.subscriptionHistory.create({
           data: {
             subscriptionId: id,
             previousStatus: subscription.status,
-            newStatus: subscription.status,
-            action: "Manual Early Renewal",
-            note: `Renewed early. Next billing cycle advanced to ${newNext.toLocaleDateString("en-IN")}`,
+            newStatus: "ACTIVE",
+            action: "RENEWED_WITH_PAYMENT",
+            note: `Renewed and paid ₹${totalAmount.toLocaleString("en-IN")} via ${validMethod} (Ref: ${payment.transactionRef}). Active until ${newNext.toLocaleDateString("en-IN")}`,
           },
         });
 
-        return sub;
+        return { sub, invoice, payment };
       });
 
-      return NextResponse.json({ success: true, subscription: updated });
+      return NextResponse.json({
+        success: true,
+        message: `Subscription ${result.sub.subscriptionNumber} renewed and settled successfully!`,
+        subscription: result.sub,
+        invoice: result.invoice,
+        payment: result.payment,
+      });
     }
 
     if (action === "toggleAutoRenew") {

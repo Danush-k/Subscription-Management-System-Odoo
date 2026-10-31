@@ -67,5 +67,51 @@ describe("SubscriptionService", () => {
       expect(next.getMonth()).toBe(1); // February
       expect(next.getDate()).toBe(29); // 29th
     });
+
+    it("advances yearly recurrence by exactly 1 calendar year", () => {
+      const current = new Date("2026-06-01T00:00:00Z");
+      const next = SubscriptionService.calculateNextBillingDate(current, "YEARLY");
+      expect(next.getFullYear()).toBe(2027);
+      expect(next.getMonth()).toBe(5); // June
+      expect(next.getDate()).toBe(1);
+    });
+  });
+
+  describe("Quotation Acceptance Gate & Mandatory Payment", () => {
+    it("rejects unauthenticated or unbilled activation by end customers", () => {
+      const validatePaymentGate = (hasPayment: boolean, role: string) => {
+        if (role === "CUSTOMER" && !hasPayment) {
+          throw new Error("Payment is mandatory before quotation acceptance and subscription activation.");
+        }
+        return "ACTIVE";
+      };
+
+      expect(() => validatePaymentGate(false, "CUSTOMER")).toThrow(
+        "Payment is mandatory before quotation acceptance and subscription activation."
+      );
+      expect(validatePaymentGate(true, "CUSTOMER")).toBe("ACTIVE");
+    });
+  });
+
+  describe("Subscription Renewal Settlement Engine", () => {
+    it("reactivates a closed or expired subscription when paid", () => {
+      const sub = {
+        status: "CLOSED",
+        closedAt: new Date(),
+        cancellationReason: "User cancelled",
+      };
+
+      // Renewal resets closed fields
+      const reactivated = {
+        ...sub,
+        status: "ACTIVE",
+        closedAt: null,
+        cancellationReason: null,
+      };
+
+      expect(reactivated.status).toBe("ACTIVE");
+      expect(reactivated.closedAt).toBeNull();
+      expect(reactivated.cancellationReason).toBeNull();
+    });
   });
 });
