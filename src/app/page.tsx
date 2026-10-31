@@ -2,302 +2,190 @@
 
 import React from "react";
 import Link from "next/link";
-import {
-  Shield,
-  Users,
-  Building,
-  RotateCcw,
-  FileText,
-  CreditCard,
-  Percent,
-  Layers,
-  BarChart3,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Lock,
-  ChevronRight,
-} from "lucide-react";
+import { OdooAppIconGrid } from "@/components/home/odoo-app-icons";
+import { BrightLoopBrandMark } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
-import { BrightloopLogo } from "@/components/ui/logo";
 
 export default function HomePage() {
-  const portalCards = [
-    {
-      title: "Administrator Console",
-      role: "Danush Kalyan (Admin)",
-      desc: "Full business operations, automated recurring billing engine, revenue analytics (MRR/ARR), plan policies, and financial audit logs.",
-      icon: Shield,
-      href: "/login",
-      color: "bg-[#714B67] text-white",
-      badge: "Full Access",
-      features: ["Recurring Billing Engine", "12 Real-Time KPI Cards", "Tax Engine & Discounts"],
-    },
-    {
-      title: "Operations & Staff Workspace",
-      role: "Operations Staff",
-      desc: "Quotation pipeline, client proposal dispatching, overdue payment collection queues, and customer subscription conversions.",
-      icon: Users,
-      href: "/login",
-      color: "bg-blue-600 text-white",
-      badge: "Operations",
-      features: ["Quotation Proposals", "Overdue Account Followups", "1-Click Subscription Setup"],
-    },
-    {
-      title: "Customer Self-Service Portal",
-      role: "SSN Technology Labs",
-      desc: "Dedicated client workspace to review active subscription plans, pause/resume billing agreements, and download official GST tax invoices.",
-      icon: Building,
-      href: "/login",
-      color: "bg-emerald-600 text-white",
-      badge: "Client Portal",
-      features: ["Pause / Resume Subscriptions", "GST Tax Invoices & Receipts", "B2B Profile Management"],
-    },
-  ];
-
-  const features = [
-    {
-      title: "Automated Recurring Billing",
-      desc: "Daily, monthly, quarterly, and annual billing runs with DB-level idempotency preventing duplicate charges.",
-      icon: RotateCcw,
-    },
-    {
-      title: "Decimal Precision & GST Audits",
-      desc: "Full 18% GST (inclusive & exclusive) engine using decimal.js to eliminate rounding discrepancies.",
-      icon: Percent,
-    },
-    {
-      title: "Multi-Tier Product Variants",
-      desc: "Base software catalogs with add-on editions (Standard Cloud, Odoo Enterprise, SAP Migration).",
-      icon: Layers,
-    },
-    {
-      title: "Atomic Payment Settlement",
-      desc: "Multi-channel settlement across UPI, Cards, and Bank Transfers with partial payment reconciliation.",
-      icon: CreditCard,
-    },
-    {
-      title: "Proposal-to-Subscription Pipeline",
-      desc: "Draft client quotes with custom discounts and convert to active agreements in a single click.",
-      icon: FileText,
-    },
-    {
-      title: "Revenue Intelligence (MRR/ARR)",
-      desc: "Clear segregation between Invoiced Revenue (Accrual), Collected Cash, and Receivables.",
-      icon: BarChart3,
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans">
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="hover:opacity-95 transition-opacity">
-              <BrightloopLogo size="md" variant="colored" />
-            </Link>
+    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 flex flex-col font-sans select-none overflow-x-hidden">
+      {/* Top Navigation Bar - Professional Odoo / DayFlow Style */}
+      <header className="sticky top-0 z-50 bg-[#FDFBF7]/95 backdrop-blur-md px-6 lg:px-12 py-3.5 flex items-center justify-between border-b border-slate-200/60">
+        <div className="flex items-center gap-10">
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            {/* BrightLoop with Capital 'B', Capital 'L', and Odoo-inspired 'oo' color differentiation */}
+            <BrightLoopBrandMark size="md" />
+          </Link>
 
-            <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
-              <a href="#portals" className="hover:text-[#714B67] transition-colors">
-                Workspaces
-              </a>
-              <a href="#features" className="hover:text-[#714B67] transition-colors">
-                Engine Features
-              </a>
-              <Link href="/docs/architecture" className="hover:text-[#714B67] transition-colors">
-                Architecture & RBAC
-              </Link>
-            </nav>
-          </div>
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-700">
+            <a href="#apps" className="hover:text-[#714B67] transition-colors">
+              Apps
+            </a>
+            <Link href="/admin/subscriptions" className="hover:text-[#714B67] transition-colors">
+              Subscriptions
+            </Link>
+            <Link href="/admin/invoices" className="hover:text-[#714B67] transition-colors">
+              Invoices &amp; Billing
+            </Link>
+            <Link href="/admin/plans" className="hover:text-[#714B67] transition-colors">
+              Pricing
+            </Link>
+            <Link href="/docs/architecture" className="hover:text-[#714B67] transition-colors">
+              Help &amp; Docs
+            </Link>
+          </nav>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="font-bold text-slate-700 hover:text-[#714B67]"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button
-                size="sm"
-                className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold rounded-xl shadow-xs"
-              >
-                Create Account
-              </Button>
-            </Link>
-          </div>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm font-bold text-slate-800 hover:text-[#714B67] transition-colors"
+          >
+            Sign in
+          </Link>
+
+          <Link href="/register">
+            <Button
+              size="sm"
+              className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs transition-transform active:scale-95"
+            >
+              Try it free
+            </Button>
+          </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section with Headline, Yellow Highlight, and Blue Underline */}
       <main className="flex-1">
-        <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#F2C744]" />
-            Enterprise Subscription & Invoicing Engine &bull; Zero Spreadsheets
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
-            Simplify Subscription Billing.
+        <section className="relative pt-14 pb-20 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.18] sm:leading-[1.12]">
+            <span className="italic font-serif">All your business on </span>
+            <span className="relative inline-block mx-1">
+              <span className="relative z-10 px-3 py-1 font-extrabold text-slate-950">
+                one platform.
+              </span>
+              <span className="absolute inset-0 bg-[#F59E0B] rounded-xl -rotate-1 shadow-xs -z-0 transform scale-105" />
+            </span>
             <br />
-            <span className="text-[#714B67] underline decoration-[#F2C744] decoration-[6px] underline-offset-8">
-              One Unified SaaS Engine.
+            <span className="italic font-serif">Simple, efficient, yet </span>
+            <span className="relative inline-block font-extrabold text-slate-900 underline decoration-[#38BDF8] decoration-[6px] sm:decoration-[8px] underline-offset-8">
+              affordable!
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Brightloop automates recurring billing cycles, financial ledger snapshots, multi-tier product variants, and customer self-service with PostgreSQL precision.
-          </p>
-
-          {/* Primary CTA Row */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login" className="w-full sm:w-auto">
+          {/* Action Buttons & Hand-drawn Pricing Doodle matching Image 2 */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 relative max-w-lg mx-auto">
+            <Link href="/register" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#714B67] hover:bg-[#5C3C54] text-white font-black text-sm rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-7 py-3.5 bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold text-sm rounded-xl shadow-md transition-all active:scale-95"
               >
-                <Lock className="w-4 h-4 text-[#F2C744]" />
-                <span>Sign In to Workspace</span>
-                <ArrowRight className="w-4 h-4" />
+                Start now - It&apos;s free
               </Button>
             </Link>
 
-            <Link href="/register" className="w-full sm:w-auto">
+            <Link href="/login" className="w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto px-8 py-3.5 border-slate-300 hover:bg-slate-100/80 text-slate-800 font-bold text-sm rounded-xl"
+                className="w-full sm:w-auto px-7 py-3.5 bg-white/90 border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-sm rounded-xl shadow-2xs"
               >
-                Register Customer Account
+                Meet an advisor
               </Button>
             </Link>
-          </div>
 
-          <p className="text-xs text-slate-400 font-medium">
-            Demo preloaded with Admin, Staff, and Customer accounts. 1-click quick login available.
-          </p>
-        </section>
-
-        {/* 3 Workspaces Selection Grid */}
-        <section id="portals" className="py-12 bg-white border-y border-slate-200/80">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div className="text-center max-w-xl mx-auto space-y-1.5">
-              <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
-                Role-Based Access
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Select Your Dedicated Workspace
-              </h2>
-              <p className="text-xs text-slate-500">
-                Sign in to experience tailored dashboards designed for each business stakeholder.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {portalCards.map((portal) => {
-                const Icon = portal.icon;
-                return (
-                  <div
-                    key={portal.title}
-                    className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#714B67]/40 hover:shadow-xl transition-all flex flex-col justify-between space-y-6"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className={`p-2.5 rounded-2xl ${portal.color}`}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          {portal.badge}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-900">{portal.title}</h3>
-                        <p className="text-xs font-semibold text-[#714B67] mt-0.5">{portal.role}</p>
-                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                          {portal.desc}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2 pt-2 border-t border-slate-100">
-                        {portal.features.map((f) => (
-                          <div key={f} className="flex items-center gap-2 text-xs text-slate-700">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>{f}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Link href="/login" className="block w-full">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full text-xs font-bold justify-between group"
-                      >
-                        <span>Sign In to Access</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </Button>
-                    </Link>
-                  </div>
-                );
-              })}
+            {/* Handwritten Doodle Arrow & Callout */}
+            <div className="hidden lg:flex items-start gap-1 absolute left-[102%] -top-4 text-left whitespace-nowrap">
+              {/* Curved SVG Doodle Arrow */}
+              <svg
+                width="64"
+                height="54"
+                viewBox="0 0 64 54"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-[#714B67] transform -rotate-12 shrink-0 mt-3"
+              >
+                <path
+                  d="M10 10C25 15 45 25 50 42M50 42L42 38M50 42L53 32"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div className="font-handwriting text-2xl font-bold text-[#714B67] leading-tight">
+                580.00 Rs / month
+                <br />
+                <span className="text-xl text-slate-600">for ALL apps</span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Architectural Features Grid */}
-        <section id="features" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="text-center max-w-xl mx-auto space-y-1.5">
-            <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
-              System Capabilities
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Enterprise Billing Engine
-            </h2>
-            <p className="text-xs text-slate-500">
-              Built on PostgreSQL decimal precision, atomic transactions, and automated schedulers.
-            </p>
-          </div>
+        {/* Curvy Color Differentiation Wave Separator matching Image 1 & Image 3 */}
+        <div className="relative w-full">
+          {/* Smooth upward arching SVG curve creating two-tone color boundary */}
+          <svg
+            viewBox="0 0 1440 100"
+            fill="none"
+            preserveAspectRatio="none"
+            className="w-full h-14 sm:h-20 md:h-24 text-white block -mb-[1px]"
+          >
+            <path
+              d="M0,100 C480,15 960,15 1440,100 L1440,100 L0,100 Z"
+              fill="currentColor"
+            />
+          </svg>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <div
-                  key={feat.title}
-                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-base">{feat.title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{feat.desc}</p>
-                </div>
-              );
-            })}
+          {/* 12 BrightLoop Application Modules Grid on pure white background (Image 4) */}
+          <div className="w-full bg-white pt-6 pb-24 px-4 sm:px-6 lg:px-8 border-b border-slate-100">
+            <div id="apps" className="max-w-6xl mx-auto space-y-6">
+              <div className="text-center max-w-2xl mx-auto space-y-1 pb-4">
+                <span className="text-xs font-bold text-[#714B67] uppercase tracking-wider">
+                  BrightLoop Enterprise Suite
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Integrated Subscription &amp; Financial Workspaces
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Select any core module below to access its live production dashboard.
+                </p>
+              </div>
+
+              {/* 12 BrightLoop Modules */}
+              <OdooAppIconGrid />
+            </div>
           </div>
-        </section>
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
-        <div className="flex items-center justify-center gap-6 font-semibold">
-          <Link href="/login" className="hover:text-[#714B67]">
-            Sign In
-          </Link>
-          <Link href="/register" className="hover:text-[#714B67]">
-            Register Account
-          </Link>
-          <Link href="/docs/architecture" className="hover:text-[#714B67]">
-            Documentation
-          </Link>
+      {/* Minimalist Professional Footer */}
+      <footer className="bg-white border-t border-slate-100 py-6 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-[#714B67] text-sm">BrightLoop</span>
+            <span>&bull; Enterprise Subscription &amp; Invoicing Platform</span>
+          </div>
+
+          <div className="flex items-center gap-6 font-semibold">
+            <Link href="/login" className="hover:text-[#714B67]">
+              Sign In
+            </Link>
+            <Link href="/register" className="hover:text-[#714B67]">
+              Create Account
+            </Link>
+            <Link href="/admin/dashboard" className="hover:text-[#714B67]">
+              Admin Workspace
+            </Link>
+            <Link href="/staff/dashboard" className="hover:text-[#714B67]">
+              Staff Operations
+            </Link>
+            <Link href="/customer/dashboard" className="hover:text-[#714B67]">
+              Customer Portal
+            </Link>
+          </div>
         </div>
-        <p>&copy; 2026 Brightloop Software. Engineered for scalable subscription enterprises.</p>
       </footer>
     </div>
   );
