@@ -202,7 +202,7 @@ export default function TaxesPage() {
                     </td>
                     <td className="py-4 px-6 text-xs text-slate-600">{t.jurisdiction}</td>
                     <td className="py-4 px-6">
-                      <Badge variant="success">{t.status}</Badge>
+                      <Badge variant="active">{t.status}</Badge>
                     </td>
                   </tr>
                 ))}

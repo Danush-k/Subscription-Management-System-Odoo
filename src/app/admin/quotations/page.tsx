@@ -176,9 +176,9 @@ export default function QuotationsPage() {
                   <Badge
                     variant={
                       quot.status === "CONFIRMED"
-                        ? "success"
+                        ? "confirmed"
                         : quot.status === "SENT"
-                        ? "info"
+                        ? "quotation"
                         : "outline"
                     }
                   >

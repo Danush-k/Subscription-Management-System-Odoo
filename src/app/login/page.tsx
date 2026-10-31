@@ -69,31 +69,42 @@ export default function LoginPage() {
     setEmail(persona.email);
     setPassword(persona.password);
     setSelectedPersona(persona.id);
+    void submitLogin(persona.email, persona.password);
+  };
+
+  const submitLogin = async (loginEmail: string, loginPassword: string) => {
     setIsLoading(true);
     setErrorMsg(null);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        setErrorMsg(payload.error ?? "Unable to sign in");
+        return;
+      }
+
+      const roleRedirects = {
+        ADMIN: "/admin/dashboard",
+        STAFF: "/staff/dashboard",
+        CUSTOMER: "/customer/dashboard",
+      } as const;
+      router.push(roleRedirects[payload.data.user.role as keyof typeof roleRedirects]);
+    } catch {
+      setErrorMsg("Unable to reach the authentication service");
+    } finally {
       setIsLoading(false);
-      router.push(persona.redirect);
-    }, 400);
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg(null);
-
-    // Simple role router based on credentials
-    setTimeout(() => {
-      setIsLoading(false);
-      if (email.includes("admin")) {
-        router.push("/admin/dashboard");
-      } else if (email.includes("staff")) {
-        router.push("/staff/dashboard");
-      } else {
-        router.push("/customer/dashboard");
-      }
-    }, 400);
+    void submitLogin(email, password);
   };
 
   return (
@@ -169,6 +180,12 @@ export default function LoginPage() {
 
           {/* Traditional Form */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {errorMsg}
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
                 Work Email

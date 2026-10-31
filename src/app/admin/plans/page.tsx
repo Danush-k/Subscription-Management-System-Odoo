@@ -120,7 +120,7 @@ export default function PlansPage() {
                   <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                     {p.planCode}
                   </span>
-                  <Badge variant="success">{p.status}</Badge>
+                  <Badge variant="active">{p.status}</Badge>
                 </div>
 
                 <div>

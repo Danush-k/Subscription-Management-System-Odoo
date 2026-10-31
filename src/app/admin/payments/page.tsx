@@ -118,7 +118,7 @@ export default function PaymentsPage() {
                     </td>
                     <td className="py-4 px-6 text-xs text-slate-500">{p.paidAt}</td>
                     <td className="py-4 px-6">
-                      <Badge variant="success">{p.status}</Badge>
+                      <Badge variant="active">{p.status}</Badge>
                     </td>
                   </tr>
                 ))}

@@ -10,9 +10,9 @@ async function main() {
 
   // 1. Password Hashes (Production-grade bcrypt)
   console.log("1. Generating secure bcrypt password hashes...");
-  const adminPassword = await bcrypt.hash("BrightloopAdmin#2026", 10);
-  const staffPassword = await bcrypt.hash("BrightloopStaff#2026", 10);
-  const clientPassword = await bcrypt.hash("BrightloopClient#2026", 10);
+  const adminPassword = await bcrypt.hash("BrightloopAdmin#2026", 12);
+  const staffPassword = await bcrypt.hash("BrightloopStaff#2026", 12);
+  const clientPassword = await bcrypt.hash("BrightloopClient#2026", 12);
 
   // 2. Users (Admin, Staff, Customer)
   console.log("2. Upserting Role-Based Access Users...");
