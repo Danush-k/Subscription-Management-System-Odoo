@@ -59,7 +59,7 @@ export function AdminNav() {
     <>
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-2xs select-none">
         {/* Top Professional Executive Bar */}
-        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs border-b border-slate-100 bg-[#FDFBF7]">
+        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/admin/dashboard"

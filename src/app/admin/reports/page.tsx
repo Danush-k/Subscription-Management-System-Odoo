@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BrightLoopModuleIcon } from "@/components/home/odoo-app-icons";
 import {
   BarChart3,
   TrendingUp,
@@ -43,17 +44,17 @@ export default function ReportsPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#714B67]/10 rounded-lg text-[#714B67]">
-              <BarChart3 className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <BrightLoopModuleIcon appId="analytics" className="w-12 h-12" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                Financial Analytics &amp; Revenue Intelligence
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Separation of Invoiced vs Collected revenue, recurring run rates, and GST compliance liability.
+              </p>
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Financial Analytics & Revenue Intelligence
-            </h1>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Separation of Invoiced vs Collected revenue, recurring run rates, and GST compliance liability.
-          </p>
         </div>
 
         {/* 6 Key Revenue Cards */}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BrightLoopModuleIcon } from "@/components/home/odoo-app-icons";
 import {
   Percent,
   Calculator,
@@ -90,19 +91,17 @@ export default function TaxesPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#714B67]/10 rounded-lg text-[#714B67]">
-                <Percent className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <BrightLoopModuleIcon appId="taxes" className="w-12 h-12" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                  Tax Engine &amp; Compliance Rules
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes.
+                </p>
               </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                Tax Engine & Compliance Rules
-              </h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">
-              Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes.
-            </p>
-          </div>
         </div>
 
         {/* Live Tax Simulator */}

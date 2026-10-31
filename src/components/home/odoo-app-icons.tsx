@@ -119,10 +119,10 @@ export const BRIGHTLOOP_APPS: BrightLoopAppItem[] = [
     ),
   },
 
-  // 6. Subscription Plans
+  // 6. Plans
   {
     id: "plans",
-    name: "Subscription Plans",
+    name: "Plans",
     href: "/admin/plans",
     description: "Daily, Weekly, Monthly, and Yearly cadence models",
     iconSvg: (
@@ -286,6 +286,32 @@ export function OdooAppIconGrid() {
           </span>
         </Link>
       ))}
+    </div>
+  );
+}
+
+export function getBrightLoopApp(id: string): BrightLoopAppItem | undefined {
+  return BRIGHTLOOP_APPS.find((a) => a.id === id);
+}
+
+export function BrightLoopModuleIcon({
+  appId,
+  className = "w-10 h-10",
+}: {
+  appId: string;
+  className?: string;
+}) {
+  const app = getBrightLoopApp(appId);
+  if (!app) return null;
+
+  return (
+    <div
+      className={`rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-center p-1.5 shrink-0 transition-transform hover:scale-105 duration-200 ${className}`}
+      title={app.name}
+    >
+      <div className="w-full h-full flex items-center justify-center">
+        {app.iconSvg}
+      </div>
     </div>
   );
 }

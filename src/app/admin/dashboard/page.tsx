@@ -161,12 +161,12 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-900 pb-20 font-sans select-none">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-20 font-sans select-none">
       {/* Unified Enterprise Navigation */}
       <AdminNav />
 
       {/* Clean, Minimalist Executive Workspace Header */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/70 px-4 sm:px-6 lg:px-8 py-5">
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8 animate-fadeIn">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6 animate-fadeIn">
         {/* Billing Success Notification */}
         {billingResult && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-xs animate-slideDown">
@@ -225,20 +225,20 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* Minimalist Attention Banner for Overdue Accounts */}
+        {/* Professional Alert Banner for Overdue Accounts */}
         {metrics.overdueInvoices > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4 text-amber-700" />
               </div>
               <div>
-                <p className="font-bold text-xs sm:text-sm text-amber-950">
+                <p className="font-bold text-xs sm:text-sm text-slate-900">
                   {metrics.overdueInvoices} Invoices Require Payment Reconciliation
                 </p>
-                <p className="text-[11px] text-amber-800">
+                <p className="text-[11px] text-slate-600">
                   Total outstanding overdue:{" "}
-                  <span className="font-mono font-bold">
+                  <span className="font-mono font-bold text-slate-900">
                     ₹{metrics.overdueAmount.toLocaleString("en-IN")}.00
                   </span>
                 </p>
@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100/80 text-xs font-bold rounded-xl shadow-2xs"
+                className="border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl shadow-2xs px-3"
               >
                 Reconcile Overdue &rarr;
               </Button>
@@ -256,86 +256,92 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* 4 High-Impact Executive Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* 4 Professional Financial & Operational Cadence KPI Cards (Odoo / Zoho Books style) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: MRR */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Monthly Recurring (MRR)
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
-                <TrendingUp className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-3xl font-black text-[#714B67] font-mono tracking-tight">
+            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               ₹{metrics.mrr.toLocaleString("en-IN")}.00
             </div>
-            <div className="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>+14.2% MoM growth rate</span>
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                <Sparkles className="w-3 h-3" />
+                <span>+14.2% MoM</span>
+              </span>
+              <span className="text-[11px] text-slate-400">ARR ₹29.76L</span>
             </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-[#714B67]" />
           </div>
 
-          {/* Card 2: Revenue Collected */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          {/* Card 2: Net Collections */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Net Collections
               </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                <CreditCard className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <CreditCard className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-3xl font-black text-emerald-700 font-mono tracking-tight">
+            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               ₹{metrics.revenueCollected.toLocaleString("en-IN")}
             </div>
-            <div className="mt-2 text-xs text-slate-500 font-semibold">
-              {metrics.totalPayments} settled transactions
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="inline-flex items-center text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                {metrics.totalPayments} Settled
+              </span>
+              <span className="text-[11px] text-slate-400">100% Reconciled</span>
             </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
           </div>
 
           {/* Card 3: Outstanding Receivables */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Outstanding Balance
               </span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                <FileText className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <FileText className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-3xl font-black text-amber-600 font-mono tracking-tight">
+            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               ₹{metrics.outstandingAmount.toLocaleString("en-IN")}
             </div>
-            <div className="mt-2 text-xs text-slate-500 font-semibold">
-              Across {metrics.totalInvoices} generated invoices
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="inline-flex items-center text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                {metrics.overdueInvoices} Overdue
+              </span>
+              <span className="text-[11px] text-slate-400">Across {metrics.totalInvoices} Invoices</span>
             </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
           </div>
 
           {/* Card 4: Active Subscriptions */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Active Subscriptions
               </span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#714B67] flex items-center justify-center">
-                <RotateCcw className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <RotateCcw className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="mt-3 text-3xl font-black text-slate-900 font-mono tracking-tight">
+            <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               {metrics.activeSubscriptions}
             </div>
-            <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{metrics.activeSubscriptions} Active</span>
-              <span className="text-slate-300">•</span>
-              <span>{metrics.pausedSubscriptions} Paused</span>
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{metrics.activeSubscriptions} Active</span>
+              </span>
+              <span className="text-[11px] text-slate-400">{metrics.pausedSubscriptions} Paused &bull; {metrics.closedSubscriptions} Closed</span>
             </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
           </div>
         </div>
 
