@@ -87,6 +87,85 @@ const INITIAL_PLANS: PlanItem[] = [
 
 export default function PlansPage() {
   const [plans, setPlans] = useState<PlanItem[]>(INITIAL_PLANS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // New plan form state
+  const [formName, setFormName] = useState("");
+  const [formCode, setFormCode] = useState("");
+  const [formPrice, setFormPrice] = useState("15000");
+  const [formFrequency, setFormFrequency] = useState<"MONTHLY" | "YEARLY" | "QUARTERLY" | "WEEKLY">("MONTHLY");
+  const [formTrialDays, setFormTrialDays] = useState("14");
+  const [formDescription, setFormDescription] = useState("");
+  const [formPauseAllowed, setFormPauseAllowed] = useState(true);
+  const [formEarlyClosureAllowed, setFormEarlyClosureAllowed] = useState(true);
+  const [formAutoClose, setFormAutoClose] = useState(true);
+
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch("/api/admin/plans");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.plans && data.plans.length > 0) {
+          setPlans(data.plans);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch plans", err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const handleCreatePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/admin/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planCode: formCode,
+          name: formName,
+          description: formDescription,
+          frequency: formFrequency,
+          price: Number(formPrice),
+          trialDays: Number(formTrialDays) || 0,
+          pauseAllowed: formPauseAllowed,
+          earlyClosureAllowed: formEarlyClosureAllowed,
+          autoClose: formAutoClose,
+          renewalAllowed: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create plan");
+      }
+
+      setNotification(`Plan "${formName}" created successfully!`);
+      setTimeout(() => setNotification(null), 4000);
+      setIsModalOpen(false);
+
+      // Reset form
+      setFormName("");
+      setFormCode("");
+      setFormPrice("15000");
+      setFormDescription("");
+
+      await fetchPlans();
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create plan");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
@@ -94,18 +173,33 @@ export default function PlansPage() {
 
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <BrightLoopModuleIcon appId="plans" className="w-12 h-12" />
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                  Subscription Recurring Plans &amp; Policies
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Recurrence schedules, month-end leap-year rollover rules, pause permissions, and trial periods.
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <BrightLoopModuleIcon appId="plans" className="w-12 h-12" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                Subscription Recurring Plans &amp; Policies
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Recurrence schedules, month-end leap-year rollover rules, pause permissions, and trial periods.
+              </p>
             </div>
+          </div>
+
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold flex items-center gap-1.5 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Plan</span>
+          </Button>
         </div>
+
+        {notification && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{notification}</span>
+          </div>
+        )}
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -169,6 +263,165 @@ export default function PlansPage() {
           ))}
         </div>
       </main>
+
+      {/* Add Plan Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base">Create New Subscription Plan</h3>
+                  <p className="text-xs text-slate-400">Configure recurring billing cycles and lifecycle policies</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100"
+              >
+                &times;
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleCreatePlan} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Plan Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Enterprise Cloud Suite"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Plan Code / SKU</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PLAN-ENT-ANNUAL"
+                    value={formCode}
+                    onChange={(e) => setFormCode(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Billing Frequency *</label>
+                  <select
+                    value={formFrequency}
+                    onChange={(e) => setFormFrequency(e.target.value as any)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  >
+                    <option value="MONTHLY">MONTHLY (Every Month)</option>
+                    <option value="YEARLY">YEARLY (Annual Recurring)</option>
+                    <option value="QUARTERLY">QUARTERLY (Every 3 Months)</option>
+                    <option value="WEEKLY">WEEKLY (Every 7 Days)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Recurring Price (₹ INR) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Trial Period (Days)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formTrialDays}
+                    onChange={(e) => setFormTrialDays(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Plan Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Outline feature inclusions, user seats, and service terms..."
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                />
+              </div>
+
+              <div className="border-t border-slate-100 pt-3 space-y-2">
+                <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] block">
+                  Lifecycle Policies &amp; Permissions
+                </span>
+
+                <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formPauseAllowed}
+                    onChange={(e) => setFormPauseAllowed(e.target.checked)}
+                    className="rounded text-[#714B67] focus:ring-[#714B67]"
+                  />
+                  <span>Allow customer to pause subscription self-service</span>
+                </label>
+
+                <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formEarlyClosureAllowed}
+                    onChange={(e) => setFormEarlyClosureAllowed(e.target.checked)}
+                    className="rounded text-[#714B67] focus:ring-[#714B67]"
+                  />
+                  <span>Allow early termination / cancellation before cycle end</span>
+                </label>
+
+                <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formAutoClose}
+                    onChange={(e) => setFormAutoClose(e.target.checked)}
+                    className="rounded text-[#714B67] focus:ring-[#714B67]"
+                  />
+                  <span>Auto-close subscription after repeated payment failures</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold"
+                >
+                  {isSubmitting ? "Saving..." : "Create Plan"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

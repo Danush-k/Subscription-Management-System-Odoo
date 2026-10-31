@@ -40,19 +40,30 @@ interface ProductVariantOption {
   addonPrice: number;
 }
 
+interface TaxOption {
+  id: string;
+  name: string;
+  code: string;
+  rate: number;
+  type: "EXCLUSIVE" | "INCLUSIVE";
+  jurisdiction: string;
+  status: string;
+}
+
 export default function NewSubscriptionPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [variants, setVariants] = useState<ProductVariantOption[]>([]);
+  const [taxes, setTaxes] = useState<TaxOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [customer, setCustomer] = useState("");
   const [plan, setPlan] = useState("");
   const [variant, setVariant] = useState("");
+  const [selectedTaxId, setSelectedTaxId] = useState("");
   const [discountCode, setDiscountCode] = useState("BRIGHT20");
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [taxInclusive, setTaxInclusive] = useState(false);
   const [billingFrequency, setBillingFrequency] = useState("MONTHLY");
   const [status, setStatus] = useState<"ACTIVE" | "CONFIRMED">("ACTIVE");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,19 +72,22 @@ export default function NewSubscriptionPage() {
   useEffect(() => {
     async function loadFormData() {
       try {
-        const [cRes, pRes, prodRes] = await Promise.all([
+        const [cRes, pRes, prodRes, tRes] = await Promise.all([
           fetch("/api/admin/customers"),
           fetch("/api/admin/plans"),
           fetch("/api/admin/products"),
+          fetch("/api/admin/taxes"),
         ]);
 
         if (cRes.ok && pRes.ok && prodRes.ok) {
           const cData = await cRes.json();
           const pData = await pRes.json();
           const prodData = await prodRes.json();
+          const tData = tRes.ok ? await tRes.json() : { taxes: [] };
 
           const custList = cData.customers || [];
           const planList = pData.plans || [];
+          const taxList: TaxOption[] = tData.taxes || [];
           const allVariants: ProductVariantOption[] = [];
 
           (prodData.products || []).forEach((prod: any) => {
@@ -90,6 +104,7 @@ export default function NewSubscriptionPage() {
           setCustomers(custList);
           setPlans(planList);
           setVariants(allVariants);
+          setTaxes(taxList);
 
           if (custList.length > 0) setCustomer(custList[0].id);
           if (planList.length > 0) {
@@ -97,6 +112,10 @@ export default function NewSubscriptionPage() {
             setBillingFrequency(planList[0].frequency || "MONTHLY");
           }
           if (allVariants.length > 0) setVariant(allVariants[0].id);
+          if (taxList.length > 0) {
+            const defaultTax = taxList.find((t) => t.code === "GST-18-EXCL") || taxList[0];
+            setSelectedTaxId(defaultTax.id);
+          }
         }
       } catch (err) {
         console.error("Failed to load options", err);
@@ -110,16 +129,33 @@ export default function NewSubscriptionPage() {
 
   const selectedPlanObj = plans.find((p) => p.id === plan);
   const selectedVariantObj = variants.find((v) => v.id === variant);
+  const activeTax = taxes.find((t) => t.id === selectedTaxId) || taxes[0];
 
-  // Pricing calculations
+  // Pricing & dynamic tax calculations matching Taxes Engine
   const basePrice = selectedPlanObj ? Number(selectedPlanObj.price) : 0;
   const variantAddon = selectedVariantObj ? Number(selectedVariantObj.addonPrice) : 0;
   const subtotalBeforeDiscount = basePrice + variantAddon;
   const discountAmount = discountApplied ? Math.round(subtotalBeforeDiscount * 0.2) : 0;
-  const taxableSubtotal = subtotalBeforeDiscount - discountAmount;
-  const taxRate = 0.18; // GST 18%
-  const taxAmount = Math.round(taxableSubtotal * taxRate);
-  const totalAmount = taxableSubtotal + taxAmount;
+  const netSubtotal = subtotalBeforeDiscount - discountAmount;
+
+  const taxRate = activeTax ? Number(activeTax.rate) : 0;
+  const isTaxInclusive = activeTax?.type === "INCLUSIVE";
+
+  let taxableBase = 0;
+  let taxAmount = 0;
+  let totalAmount = 0;
+
+  if (isTaxInclusive) {
+    // Inclusive: Tax = Gross - (Gross / (1 + Rate / 100))
+    taxableBase = taxRate > 0 ? Math.round((netSubtotal / (1 + taxRate / 100)) * 100) / 100 : netSubtotal;
+    taxAmount = Math.round((netSubtotal - taxableBase) * 100) / 100;
+    totalAmount = netSubtotal;
+  } else {
+    // Exclusive: Tax = TaxableBase * (Rate / 100), Total = TaxableBase + Tax
+    taxableBase = netSubtotal;
+    taxAmount = Math.round(((taxableBase * taxRate) / 100) * 100) / 100;
+    totalAmount = taxableBase + taxAmount;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +170,7 @@ export default function NewSubscriptionPage() {
           customerId: customer,
           planId: plan,
           variantId: variant || null,
+          taxId: activeTax?.id || null,
           billingFrequency,
           status,
         }),
@@ -145,8 +182,8 @@ export default function NewSubscriptionPage() {
       } else {
         setErrorMessage(data.error || "Failed to create subscription agreement.");
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Network error occurred.");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Network error occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -308,29 +345,48 @@ export default function NewSubscriptionPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">
-                    Tax Calculation Rule
-                  </label>
-                  <div className="flex items-center gap-4 mt-2">
-                    <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={!taxInclusive}
-                        onChange={() => setTaxInclusive(false)}
-                        className="text-[#714B67] focus:ring-[#714B67]"
-                      />
-                      GST 18% Exclusive (Standard)
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase">
+                      Tax Engine Compliance Rule
                     </label>
-                    <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={taxInclusive}
-                        onChange={() => setTaxInclusive(true)}
-                        className="text-[#714B67] focus:ring-[#714B67]"
-                      />
-                      GST 18% Inclusive
-                    </label>
+                    <Link
+                      href="/admin/taxes"
+                      target="_blank"
+                      className="text-[11px] font-bold text-[#714B67] hover:underline flex items-center gap-1"
+                    >
+                      <Percent className="w-3 h-3" />
+                      View Tax Rules &rarr;
+                    </Link>
                   </div>
+                  <select
+                    value={selectedTaxId}
+                    onChange={(e) => setSelectedTaxId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#714B67] focus:outline-none"
+                    required
+                  >
+                    {taxes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.rate}% {t.type}) - {t.code}
+                      </option>
+                    ))}
+                  </select>
+
+                  {activeTax && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                          activeTax.type === "EXCLUSIVE"
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "bg-purple-50 text-purple-700 border border-purple-200"
+                        }`}
+                      >
+                        {activeTax.type} CALCULATION
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        {activeTax.code} &bull; {activeTax.jurisdiction}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -338,32 +394,53 @@ export default function NewSubscriptionPage() {
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-sm">
                 <div className="flex justify-between text-slate-600">
                   <span>Base Plan Price:</span>
-                  <span className="font-mono">₹{basePrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  <span className="font-mono">₹{basePrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Variant Add-on:</span>
-                  <span className="font-mono">+₹{variantAddon.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-                </div>
+                {variantAddon > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Variant Add-on:</span>
+                    <span className="font-mono">+₹{variantAddon.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                )}
                 {discountApplied && (
                   <div className="flex justify-between text-emerald-600 font-medium">
                     <span>Discount (20%):</span>
-                    <span className="font-mono">-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono">-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
-                  <span>Taxable Subtotal:</span>
-                  <span className="font-mono">₹{taxableSubtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  <span>Taxable Base Subtotal:</span>
+                  <span className="font-mono">₹{taxableBase.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>GST (18%):</span>
-                  <span className="font-mono">+₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  <span className="flex items-center gap-1.5">
+                    <span>Tax ({activeTax?.name || "GST"} - {taxRate}% {isTaxInclusive ? "Incl." : "Excl."}):</span>
+                    {isTaxInclusive && (
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200">
+                        Included
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-mono">
+                    {isTaxInclusive ? "" : "+"}₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="border-t border-slate-200 pt-2 flex justify-between font-black text-slate-900 text-base">
                   <span>Total Recurring Billing Amount:</span>
                   <span className="text-[#714B67] font-mono">
-                    ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} / {billingFrequency.toLowerCase()}
+                    ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {billingFrequency.toLowerCase()}
                   </span>
                 </div>
+                {isTaxInclusive && (
+                  <p className="text-[11px] text-purple-700 font-medium pt-1">
+                    ℹ Prices are tax-inclusive: ₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} tax is already embedded inside the ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })} billing amount.
+                  </p>
+                )}
+                {taxRate === 0 && (
+                  <p className="text-[11px] text-emerald-700 font-medium pt-1">
+                    ℹ Zero-rated export tax exemption applied (0% tax under LUT / bond).
+                  </p>
+                )}
               </div>
             </div>
 

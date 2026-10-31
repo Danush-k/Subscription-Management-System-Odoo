@@ -3,9 +3,10 @@ interface BrevoEmail {
   toName: string;
   subject: string;
   htmlContent: string;
+  attachments?: Array<{ name: string; content: Buffer }>;
 }
 
-export async function sendBrevoEmail({ to, toName, subject, htmlContent }: BrevoEmail): Promise<boolean> {
+export async function sendBrevoEmail({ to, toName, subject, htmlContent, attachments }: BrevoEmail): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.FROM_EMAIL;
   const senderName = process.env.FROM_NAME ?? "Brightloop";
@@ -24,6 +25,14 @@ export async function sendBrevoEmail({ to, toName, subject, htmlContent }: Brevo
       to: [{ email: to, name: toName }],
       subject,
       htmlContent,
+      ...(attachments?.length
+        ? {
+            attachment: attachments.map((attachment) => ({
+              name: attachment.name,
+              content: attachment.content.toString("base64"),
+            })),
+          }
+        : {}),
     }),
   });
 

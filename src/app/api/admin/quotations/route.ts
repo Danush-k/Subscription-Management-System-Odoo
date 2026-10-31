@@ -37,7 +37,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ quotations: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Quotations Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load quotations" }, { status: 500 });
   }

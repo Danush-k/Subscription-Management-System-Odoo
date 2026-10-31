@@ -73,7 +73,7 @@ export function PayInvoiceModal({
 
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       setErrorMsg(err.message || "Payment submission failed");
       setIsSubmitting(false);
     }

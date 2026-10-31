@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node tests/run_tests.mjs",
+    "test:phase11": "node tests/phase11_verification.mjs",
     "test:watch": "vitest",
     "seed": "node scripts/seed.mjs",
     "db:setup": "prisma db push && node scripts/seed.mjs",

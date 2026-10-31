@@ -802,6 +802,38 @@ async function main() {
     },
   });
 
+  const q5 = await prisma.quotation.upsert({
+    where: { quotationNumber: "QUO-2026-0013" },
+    update: {},
+    create: {
+      quotationNumber: "QUO-2026-0013",
+      customerId: cust5.id,
+      planId: starterPlan.id,
+      status: "QUOTATION",
+      subtotal: 3500.0,
+      taxAmount: 630.0,
+      discountAmount: 0.0,
+      totalAmount: 4130.0,
+      paymentTerms: "IMMEDIATE",
+      expiryDate: new Date("2026-12-15"),
+    },
+  });
+
+  await prisma.quotationLine.deleteMany({ where: { quotationId: q5.id } });
+  await prisma.quotationLine.create({
+    data: {
+      quotationId: q5.id,
+      productId: erpProduct.id,
+      variantId: stdVariant.id,
+      quantity: 1,
+      unitPrice: 3500.0,
+      taxRate: 18.0,
+      taxAmount: 630.0,
+      subtotal: 3500.0,
+      total: 4130.0,
+    },
+  });
+
   // 10. Invoices & Billing Records
   console.log("10. Upserting Tax Invoices & Immutable Snapshots...");
   const inv1 = await prisma.invoice.upsert({
@@ -1111,9 +1143,62 @@ async function main() {
     },
   });
 
+  // 12. Recurring billing history for worker/idempotency verification
+  console.log("12. Upserting Recurring Billing History Samples...");
+  await prisma.billingHistory.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        subscriptionId: sub1.id,
+        invoiceId: inv1.id,
+        billingPeriodStart: new Date("2026-01-15"),
+        billingPeriodEnd: new Date("2027-01-14"),
+        scheduledDate: new Date("2026-01-15"),
+        executedDate: new Date("2026-01-15"),
+        status: "SUCCESS",
+        attemptCount: 1,
+      },
+      {
+        subscriptionId: sub2.id,
+        invoiceId: inv2.id,
+        billingPeriodStart: new Date("2026-10-01"),
+        billingPeriodEnd: new Date("2026-10-31"),
+        scheduledDate: new Date("2026-10-01"),
+        executedDate: new Date("2026-10-01"),
+        status: "SUCCESS",
+        attemptCount: 1,
+      },
+      {
+        subscriptionId: sub5.id,
+        invoiceId: inv4.id,
+        billingPeriodStart: new Date("2026-09-01"),
+        billingPeriodEnd: new Date("2026-09-30"),
+        scheduledDate: new Date("2026-09-01"),
+        executedDate: new Date("2026-09-01"),
+        status: "SUCCESS",
+        attemptCount: 1,
+      },
+    ],
+  });
+
   console.log("\n=================================================================");
-  console.log("  SEEDING COMPLETE! ALL 26 ENTITIES SYNCHRONIZED AND READY");
+  const [customerCount, subscriptionCount, quotationCount, invoiceCount, paymentCount, billingHistoryCount] =
+    await Promise.all([
+      prisma.customer.count(),
+      prisma.subscription.count(),
+      prisma.quotation.count(),
+      prisma.invoice.count(),
+      prisma.payment.count(),
+      prisma.billingHistory.count(),
+    ]);
+  console.log("  SEEDING COMPLETE! DEMO DATA SYNCHRONIZED AND READY");
   console.log("=================================================================");
+  console.log(`  Customers: ${customerCount} (3+ active accounts and inactive history)`);
+  console.log(`  Subscriptions: ${subscriptionCount} (confirmed, active, paused, closed)`);
+  console.log(`  Quotations: ${quotationCount} (draft, pending, confirmed, expired)`);
+  console.log(`  Invoices: ${invoiceCount} (paid, partial, unpaid, overdue)`);
+  console.log(`  Payments: ${paymentCount} (full and partial settlements)`);
+  console.log(`  Billing history: ${billingHistoryCount} (worker/idempotency samples)`);
   console.log("Demo Credentials:");
   console.log("  • Admin:    admin@brightloopsoftware.com / BrightloopAdmin#2026");
   console.log("  • Staff:    staff@brightloopsoftware.com / BrightloopStaff#2026");

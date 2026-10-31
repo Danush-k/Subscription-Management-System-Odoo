@@ -95,8 +95,8 @@ export default function InvoicesPage() {
       } else {
         setAlertMessage(`Payment error: ${data.error || "Failed to record payment"}`);
       }
-    } catch (err: any) {
-      setAlertMessage(`Error: ${err.message || "Failed to record payment"}`);
+    } catch (err) {
+      setAlertMessage(`Error: ${err instanceof Error ? err.message : "Failed to record payment"}`);
     }
     setTimeout(() => setAlertMessage(null), 5000);
   };

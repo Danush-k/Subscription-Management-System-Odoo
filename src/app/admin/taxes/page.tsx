@@ -67,6 +67,78 @@ export default function TaxesPage() {
   const [taxes, setTaxes] = useState<TaxRule[]>(INITIAL_TAXES);
   const [calcAmount, setCalcAmount] = useState<number>(10000);
   const [selectedTax, setSelectedTax] = useState<string>("tax-1");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // New tax form state
+  const [formName, setFormName] = useState("");
+  const [formCode, setFormCode] = useState("");
+  const [formRate, setFormRate] = useState("5.0");
+  const [formType, setFormType] = useState<"EXCLUSIVE" | "INCLUSIVE">("EXCLUSIVE");
+  const [formJurisdiction, setFormJurisdiction] = useState("India (Intra/Interstate)");
+
+  const fetchTaxes = async () => {
+    try {
+      const res = await fetch("/api/admin/taxes");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.taxes && data.taxes.length > 0) {
+          setTaxes(data.taxes);
+          if (!selectedTax || !data.taxes.some((t: any) => t.id === selectedTax)) {
+            setSelectedTax(data.taxes[0].id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch taxes", err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTaxes();
+  }, []);
+
+  const handleCreateTax = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/admin/taxes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formName,
+          code: formCode,
+          rate: Number(formRate),
+          type: formType,
+          jurisdiction: formJurisdiction,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create tax rule");
+      }
+
+      setNotification(`Tax rule "${formName}" created successfully!`);
+      setTimeout(() => setNotification(null), 4000);
+      setIsModalOpen(false);
+
+      // Reset form
+      setFormName("");
+      setFormCode("");
+      setFormRate("5.0");
+
+      await fetchTaxes();
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create tax rule");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const activeTax = taxes.find((t) => t.id === selectedTax) || taxes[0];
 
@@ -74,15 +146,17 @@ export default function TaxesPage() {
   let computedTax = 0;
   let finalGross = 0;
 
-  if (activeTax.type === "EXCLUSIVE") {
-    taxableBase = calcAmount;
-    computedTax = (calcAmount * activeTax.rate) / 100;
-    finalGross = taxableBase + computedTax;
-  } else {
-    // Inclusive: Tax = Gross - (Gross / (1 + Rate))
-    taxableBase = calcAmount / (1 + activeTax.rate / 100);
-    computedTax = calcAmount - taxableBase;
-    finalGross = calcAmount;
+  if (activeTax) {
+    if (activeTax.type === "EXCLUSIVE") {
+      taxableBase = calcAmount;
+      computedTax = (calcAmount * activeTax.rate) / 100;
+      finalGross = taxableBase + computedTax;
+    } else {
+      // Inclusive: Tax = Gross - (Gross / (1 + Rate))
+      taxableBase = calcAmount / (1 + activeTax.rate / 100);
+      computedTax = calcAmount - taxableBase;
+      finalGross = calcAmount;
+    }
   }
 
   return (
@@ -91,18 +165,33 @@ export default function TaxesPage() {
 
       <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <BrightLoopModuleIcon appId="taxes" className="w-12 h-12" />
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                  Tax Engine &amp; Compliance Rules
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes.
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <BrightLoopModuleIcon appId="taxes" className="w-12 h-12" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                Tax Engine &amp; Compliance Rules
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Inclusive/exclusive tax calculations, CGST/SGST/IGST breakdowns, and immutable audit freezes.
+              </p>
             </div>
+          </div>
+
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold flex items-center gap-1.5 shadow-xs"
+          >
+            <Percent className="w-4 h-4" />
+            <span>Add Tax Rule</span>
+          </Button>
         </div>
+
+        {notification && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>{notification}</span>
+          </div>
+        )}
 
         {/* Live Tax Simulator */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
@@ -149,7 +238,7 @@ export default function TaxesPage() {
                 </span>
               </div>
               <div className="flex justify-between text-[#714B67]">
-                <span>Tax Amount ({activeTax.rate}%):</span>
+                <span>Tax Amount ({activeTax ? activeTax.rate : 0}%):</span>
                 <span className="font-mono font-bold">
                   ₹{computedTax.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                 </span>
@@ -210,6 +299,127 @@ export default function TaxesPage() {
           </div>
         </div>
       </main>
+
+      {/* Add Tax Rule Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center">
+                  <Percent className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base">Create Tax Compliance Rule</h3>
+                  <p className="text-xs text-slate-400">Configure GST rates, inclusive/exclusive modes, and jurisdictions</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100"
+              >
+                &times;
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateTax} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Tax Rule Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Reduced GST (5% IT Hardware)"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tax Code / Identifier</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. GST-5-EXCL"
+                    value={formCode}
+                    onChange={(e) => setFormCode(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tax Rate Percentage (%) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    required
+                    value={formRate}
+                    onChange={(e) => setFormRate(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Calculation Type *</label>
+                  <select
+                    value={formType}
+                    onChange={(e) => setFormType(e.target.value as any)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  >
+                    <option value="EXCLUSIVE">EXCLUSIVE (Added on top)</option>
+                    <option value="INCLUSIVE">INCLUSIVE (Embedded in price)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tax Jurisdiction</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. India (Intra/Interstate)"
+                    value={formJurisdiction}
+                    onChange={(e) => setFormJurisdiction(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600">
+                <span className="font-bold text-slate-800">Rule Logic Preview:</span>
+                <p className="mt-1">
+                  {formType === "EXCLUSIVE"
+                    ? `A ${formRate}% tax will be computed and added to line subtotals.`
+                    : `Base prices will be back-calculated as (Price / ${(1 + Number(formRate || 0)/100).toFixed(4)}), with ${formRate}% embedded tax.`}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-[#714B67] hover:bg-[#5C3C54] text-white font-bold"
+                >
+                  {isSubmitting ? "Saving..." : "Create Tax Rule"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

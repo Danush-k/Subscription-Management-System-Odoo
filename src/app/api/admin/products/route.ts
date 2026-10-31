@@ -30,7 +30,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ products: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Products Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load products" }, { status: 500 });
   }

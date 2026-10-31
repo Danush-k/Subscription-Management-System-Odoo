@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { dispatchEmail } from "@/server/services/emailDispatchService";
 
 export async function POST(
   _request: Request,
@@ -69,7 +70,21 @@ export async function POST(
       return created;
     });
 
-    return NextResponse.json({ success: true, data: { subscription } });
+    const customer = await prisma.customer.findUnique({ where: { id: subscription.customerId } });
+    const emailResult = customer
+      ? await dispatchEmail({
+          to: customer.email,
+          toName: customer.name,
+          subject: `Subscription ${subscription.subscriptionNumber} confirmed`,
+          htmlContent: `<p>Hello ${customer.name},</p><p>Your subscription <strong>${subscription.subscriptionNumber}</strong> has been confirmed and is ready for activation.</p>`,
+          entityType: "Subscription",
+          entityId: subscription.id,
+        })
+      : { sent: false, error: "Customer not found" };
+    return NextResponse.json({
+      success: true,
+      data: { subscription, emailSent: emailResult.sent, emailError: emailResult.error },
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unable to convert quotation" },

@@ -15,6 +15,17 @@ export interface RecordPaymentParams {
 }
 
 export class PaymentService {
+  private static validateTransactionReference(
+    paymentMethod: PaymentMethod,
+    transactionRef?: string | null
+  ): string | null {
+    const reference = transactionRef?.trim() || null;
+    if (paymentMethod !== "CASH" && paymentMethod !== "OTHER" && !reference) {
+      throw new Error("Transaction reference is required for this payment method");
+    }
+    return reference;
+  }
+
   /**
    * Records a payment against an invoice inside a strict database transaction
    */
@@ -32,6 +43,7 @@ export class PaymentService {
     if (paymentDecimal.isNegative() || paymentDecimal.isZero()) {
       throw new Error("Payment amount must be greater than zero");
     }
+    const reference = this.validateTransactionReference(paymentMethod, transactionRef);
 
     return prisma.$transaction(async (tx) => {
       const invoice = await tx.invoice.findUnique({
@@ -52,6 +64,12 @@ export class PaymentService {
           `Payment amount of ₹${paymentDecimal.toFixed(2)} exceeds outstanding balance of ₹${currentOutstanding.toFixed(2)}`
         );
       }
+      if (reference) {
+        const duplicate = await tx.payment.findFirst({
+          where: { transactionRef: reference, status: { not: "REFUNDED" } },
+        });
+        if (duplicate) throw new Error("This transaction reference has already been recorded");
+      }
 
       // Generate sequential payment number
       const paymentCount = await tx.payment.count();
@@ -66,7 +84,7 @@ export class PaymentService {
           paymentMethod,
           amount: paymentDecimal.toNumber(),
           paymentDate,
-          transactionRef: transactionRef || null,
+          transactionRef: reference,
           notes: notes || null,
           status: "SUCCESS",
           recordedByUserId: recordedByUserId || null,
@@ -86,6 +104,16 @@ export class PaymentService {
           status: isFullyPaid ? "PAID" : "CONFIRMED",
         },
       });
+      await tx.auditLog.create({
+        data: {
+          userId: recordedByUserId || null,
+          action: "PAYMENT_RECORDED",
+          entityType: "Payment",
+          entityId: payment.id,
+          oldValues: { invoiceStatus: invoice.status, paidAmount: currentPaid.toString() },
+          newValues: { invoiceStatus: updatedInvoice.status, paidAmount: newPaid.toString() },
+        },
+      });
 
       return {
         payment,
@@ -93,6 +121,64 @@ export class PaymentService {
         remainingBalance: newOutstanding.toNumber(),
         isFullyPaid,
       };
+    });
+  }
+
+  public static async reversePayment(
+    paymentId: string,
+    recordedByUserId: string,
+    reason: string
+  ) {
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) throw new Error("A reversal reason is required");
+
+    return prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.findUnique({
+        where: { id: paymentId },
+        include: { invoice: true },
+      });
+      if (!payment) throw new Error("Payment not found");
+      if (payment.status !== "SUCCESS") {
+        throw new Error("Only successful payments can be reversed");
+      }
+
+      const paid = new Decimal(payment.invoice.paidAmount.toString())
+        .minus(payment.amount.toString())
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+      const outstanding = new Decimal(payment.invoice.totalAmount.toString())
+        .minus(paid)
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+      const invoiceStatus =
+        outstanding.isZero()
+          ? "PAID"
+          : payment.invoice.dueDate < new Date()
+            ? "OVERDUE"
+            : "CONFIRMED";
+
+      const reversed = await tx.payment.update({
+        where: { id: payment.id },
+        data: { status: "REFUNDED", notes: `${payment.notes ? `${payment.notes}; ` : ""}Reversed: ${trimmedReason}` },
+      });
+      const invoice = await tx.invoice.update({
+        where: { id: payment.invoiceId },
+        data: {
+          paidAmount: paid.toNumber(),
+          outstandingAmount: outstanding.toNumber(),
+          status: invoiceStatus,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: recordedByUserId,
+          action: "PAYMENT_REVERSED",
+          entityType: "Payment",
+          entityId: payment.id,
+          oldValues: { status: "SUCCESS", paidAmount: payment.invoice.paidAmount.toString() },
+          newValues: { status: "REFUNDED", paidAmount: paid.toString(), reason: trimmedReason },
+        },
+      });
+
+      return { payment: reversed, invoice };
     });
   }
 }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { QuotationCreateSchema } from "@/lib/validations";
-import { sendBrevoEmail } from "@/server/services/brevoService";
+import { createQuotationPdf } from "@/server/services/documentService";
+import { dispatchEmail } from "@/server/services/emailDispatchService";
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -82,18 +83,26 @@ export async function POST(request: Request) {
     });
 
     let emailSent = false;
-    try {
-      emailSent = await sendBrevoEmail({
+    const emailResult = await dispatchEmail({
         to: quotation.customer.email,
         toName: quotation.customer.name,
         subject: `Quotation ${quotation.quotationNumber} from Brightloop`,
         htmlContent: `<p>Hello ${quotation.customer.name},</p><p>Your quotation <strong>${quotation.quotationNumber}</strong> totals ₹${quotation.totalAmount.toString()} and is valid until ${quotation.expiryDate.toLocaleDateString("en-IN")}.</p>`,
+        entityType: "Quotation",
+        entityId: quotation.id,
+        attachment: {
+          name: `${quotation.quotationNumber}.pdf`,
+          content: createQuotationPdf({
+            quotationNumber: quotation.quotationNumber,
+            customerName: quotation.customer.name,
+            totalAmount: quotation.totalAmount.toString(),
+            expiryDate: quotation.expiryDate,
+          }),
+        },
       });
-    } catch (error) {
-      console.error("Quotation email dispatch failed", error);
-    }
+    emailSent = emailResult.sent;
 
-    return NextResponse.json({ success: true, data: { quotation, emailSent } }, { status: 201 });
+    return NextResponse.json({ success: true, data: { quotation, emailSent, emailError: emailResult.error } }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unable to create quotation" },

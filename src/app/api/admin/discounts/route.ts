@@ -27,3 +27,33 @@ export async function GET() {
     return NextResponse.json({ error: error.message || "Failed to load discounts" }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { code, name, type = "PERCENTAGE", value, minPurchase = 0, maxUsage = 100 } = body;
+
+    if (!code || !name || value === undefined || value === null) {
+      return NextResponse.json({ error: "Coupon code, campaign name, and discount value are required" }, { status: 400 });
+    }
+
+    const newDiscount = await prisma.discount.create({
+      data: {
+        discountCode: code.toUpperCase().trim(),
+        name: name.trim(),
+        discountType: type as any,
+        discountValue: Number(value),
+        minPurchaseAmount: Number(minPurchase) || 0,
+        minQuantity: 1,
+        maxUsageCount: Number(maxUsage) || 100,
+        currentUsageCount: 0,
+        status: "ACTIVE",
+      },
+    });
+
+    return NextResponse.json({ success: true, discount: newDiscount });
+  } catch (error: any) {
+    console.error("[API Create Discount Error]", error);
+    return NextResponse.json({ error: error.message || "Failed to create discount coupon" }, { status: 500 });
+  }
+}

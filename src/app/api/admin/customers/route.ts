@@ -20,7 +20,7 @@ export async function GET() {
     });
 
     const formatted = customers.map((c) => {
-      const address = c.billingAddress as any;
+      const address = c.billingAddress as { city?: string; state?: string } | null;
       const totalSpent = c.invoices.reduce((acc, inv) => acc + Number(inv.paidAmount), 0);
 
       return {
@@ -40,7 +40,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ customers: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Customers Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load customers" }, { status: 500 });
   }

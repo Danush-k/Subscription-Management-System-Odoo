@@ -36,6 +36,7 @@ import { PayInvoiceModal } from "@/components/customer/PayInvoiceModal";
 import { PaymentHistoryTable } from "@/components/customer/PaymentHistoryTable";
 import { BillingProfileSection } from "@/components/customer/BillingProfileSection";
 import { ActivityTimeline } from "@/components/customer/ActivityTimeline";
+type CustomerTab = "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity";
 
 // Types
 import {
@@ -47,7 +48,10 @@ import {
 function CustomerDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as any) || "overview";
+  const requestedTab = searchParams.get("tab");
+  const initialTab: CustomerTab = ["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(requestedTab ?? "")
+    ? requestedTab as CustomerTab
+    : "overview";
 
   const [data, setData] = useState<PortalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,8 +65,10 @@ function CustomerDashboardContent() {
     "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity"
   >(initialTab);
 
-  const setActiveTab = (tab: any) => {
-    setActiveTabState(tab);
+  const setActiveTab = (tab: string) => {
+    if (!["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tab)) return;
+    const selectedTab = tab as CustomerTab;
+    setActiveTabState(selectedTab);
     const url = new URL(window.location.href);
     url.searchParams.set("tab", tab);
     window.history.pushState({}, "", url.toString());
@@ -73,7 +79,9 @@ function CustomerDashboardContent() {
     if (tabParam === "payments") { setInvoiceSubView("payments"); }
     if (tabParam === "invoices") { setInvoiceSubView("invoices"); }
     if (tabParam && tabParam !== activeTab) {
-      setActiveTabState(tabParam as any);
+      if (["overview", "subscriptions", "invoices", "payments", "billing", "activity"].includes(tabParam)) {
+        setActiveTabState(tabParam as CustomerTab);
+      }
     }
   }, [searchParams]);
 
@@ -124,7 +132,7 @@ function CustomerDashboardContent() {
       }
       const json: PortalData = await res.json();
       setData(json);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Portal load error:", err);
       setError(err.message || "Failed to load portal data");
     } finally {
@@ -162,7 +170,7 @@ function CustomerDashboardContent() {
       });
 
       await fetchPortalData();
-    } catch (err: any) {
+    } catch (err) {
       setActionMessage({
         type: "error",
         text: err.message || `Could not ${action} subscription`,
@@ -196,7 +204,7 @@ function CustomerDashboardContent() {
       setCancellingSubscription(null);
       setSelectedSubId(null);
       await fetchPortalData();
-    } catch (err: any) {
+    } catch (err) {
       setActionMessage({
         type: "error",
         text: err.message || "Cancellation failed",
@@ -229,7 +237,7 @@ function CustomerDashboardContent() {
       });
 
       await fetchPortalData();
-    } catch (err: any) {
+    } catch (err) {
       setActionMessage({
         type: "error",
         text: err.message || "Renewal failed",
@@ -258,7 +266,7 @@ function CustomerDashboardContent() {
       }
 
       await fetchPortalData();
-    } catch (err: any) {
+    } catch (err) {
       setActionMessage({
         type: "error",
         text: err.message || "Failed to toggle auto-renew",

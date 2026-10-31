@@ -32,7 +32,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ invoices: formatted });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API Admin Invoices Error]", error);
     return NextResponse.json({ error: error.message || "Failed to load invoices" }, { status: 500 });
   }

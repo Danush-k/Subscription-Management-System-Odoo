@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { PaymentMethod } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { PaymentService } from "@/server/services/paymentService";
+import { SubscriptionService } from "@/server/services/subscriptionService";
+import { createPaymentReceiptPdf } from "@/server/services/documentService";
+import { dispatchEmail } from "@/server/services/emailDispatchService";
+import { prisma } from "@/lib/prisma";
 
 const paymentMethods: Record<string, PaymentMethod> = {
   "UPI / Instant Transfer": "UPI",
@@ -15,7 +19,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession();
-  if (!session || (session.role !== "STAFF" && session.role !== "ADMIN")) {
+  if (!session || !SubscriptionService.isStaffRole(session.role)) {
     return NextResponse.json({ success: false, error: "Staff access required" }, { status: 403 });
   }
 
@@ -33,9 +37,38 @@ export async function POST(
       amount,
       paymentMethod,
       transactionRef: typeof body.transactionRef === "string" ? body.transactionRef : null,
+      notes: typeof body.notes === "string" ? body.notes : null,
       recordedByUserId: session.userId,
     });
-    return NextResponse.json({ success: true, data: result });
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { customer: true },
+    });
+    const emailResult = invoice
+      ? await dispatchEmail({
+          to: invoice.customer.email,
+          toName: invoice.customer.name,
+          subject: `Payment receipt ${result.payment.paymentNumber}`,
+          htmlContent: `<p>Hello ${invoice.customer.name},</p><p>Payment <strong>${result.payment.paymentNumber}</strong> of ₹${amount.toFixed(2)} was recorded against invoice ${invoice.invoiceNumber}.</p>`,
+          entityType: "Payment",
+          entityId: result.payment.id,
+          attachment: {
+            name: `${result.payment.paymentNumber}.pdf`,
+            content: createPaymentReceiptPdf({
+              paymentNumber: result.payment.paymentNumber,
+              invoiceNumber: invoice.invoiceNumber,
+              customerName: invoice.customer.name,
+              amount: amount.toFixed(2),
+              paymentDate: result.payment.paymentDate,
+              transactionRef: result.payment.transactionRef,
+            }),
+          },
+        })
+      : { sent: false, error: "Invoice customer not found" };
+    return NextResponse.json({
+      success: true,
+      data: { ...result, emailSent: emailResult.sent, emailError: emailResult.error },
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unable to record payment" },
