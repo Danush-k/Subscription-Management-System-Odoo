@@ -17,14 +17,28 @@ import {
   ChevronRight,
   User,
   Headphones,
+  Lock,
+  ArrowRight,
+  Receipt,
+  Eye,
+  CreditCard,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuotationItem, QuotationLineItem } from "./types";
+import {
+  RazorpayCheckoutModal,
+  CheckoutPaymentDetails,
+} from "./RazorpayCheckoutModal";
 
 interface QuotationsSectionProps {
   quotations: QuotationItem[];
-  onAcceptQuotation: (quotationId: string) => Promise<void>;
+  customerName?: string;
+  customerEmail?: string;
+  onAcceptQuotation: (
+    quotationId: string,
+    paymentDetails?: CheckoutPaymentDetails
+  ) => Promise<void>;
   onSendNegotiation: (
     quotationId: string,
     message: string,
@@ -36,16 +50,26 @@ interface QuotationsSectionProps {
 
 export function QuotationsSection({
   quotations = [],
+  customerName = "Customer",
+  customerEmail = "billing@brightloop.io",
   onAcceptQuotation,
   onSendNegotiation,
   onViewSubscription,
   isAccepting = false,
 }: QuotationsSectionProps) {
   const [activeFilter, setActiveFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
-  const [negotiatingQuotation, setNegotiatingQuotation] = useState<QuotationItem | null>(null);
+
+  // Selected quotation for itemized detail popup modal
+  const [selectedQuotation, setSelectedQuotation] = useState<QuotationItem | null>(null);
+
+  // Negotiation thread state
+  const [isNegotiating, setIsNegotiating] = useState(false);
   const [negotiationMessage, setNegotiationMessage] = useState("");
   const [proposedDiscount, setProposedDiscount] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingNegotiation, setIsSubmittingNegotiation] = useState(false);
+
+  // Active quotation in Razorpay Checkout modal
+  const [checkoutQuotation, setCheckoutQuotation] = useState<QuotationItem | null>(null);
 
   const pendingCount = quotations.filter((q) => q.status === "QUOTATION").length;
   const confirmedCount = quotations.filter((q) => q.status === "CONFIRMED").length;
@@ -56,31 +80,6 @@ export function QuotationsSection({
     return true;
   });
 
-  const handleOpenNegotiation = (q: QuotationItem) => {
-    setNegotiatingQuotation(q);
-    setNegotiationMessage("");
-    setProposedDiscount("");
-  };
-
-  const handleSubmitNegotiation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!negotiatingQuotation || !negotiationMessage.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      await onSendNegotiation(
-        negotiatingQuotation.id,
-        negotiationMessage.trim(),
-        proposedDiscount ? Number(proposedDiscount) : undefined
-      );
-      setNegotiatingQuotation(null);
-      setNegotiationMessage("");
-      setProposedDiscount("");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const formatCurrency = (val: number | string) => {
     const num = Number(val) || 0;
     return new Intl.NumberFormat("en-IN", {
@@ -88,6 +87,42 @@ export function QuotationsSection({
       currency: "INR",
       maximumFractionDigits: 0,
     }).format(num);
+  };
+
+  const handleOpenDetailModal = (q: QuotationItem) => {
+    setSelectedQuotation(q);
+    setIsNegotiating(false);
+    setNegotiationMessage("");
+    setProposedDiscount("");
+  };
+
+  const handleSubmitNegotiation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedQuotation || !negotiationMessage.trim()) return;
+
+    setIsSubmittingNegotiation(true);
+    try {
+      await onSendNegotiation(
+        selectedQuotation.id,
+        negotiationMessage.trim(),
+        proposedDiscount ? Number(proposedDiscount) : undefined
+      );
+      setNegotiationMessage("");
+      setProposedDiscount("");
+      setIsNegotiating(false);
+    } finally {
+      setIsSubmittingNegotiation(false);
+    }
+  };
+
+  const handleOpenCheckout = (q: QuotationItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setCheckoutQuotation(q);
+  };
+
+  const handlePaymentSuccess = async (details: CheckoutPaymentDetails) => {
+    if (!checkoutQuotation) return;
+    await onAcceptQuotation(checkoutQuotation.id, details);
   };
 
   return (
@@ -101,26 +136,26 @@ export function QuotationsSection({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                   Quotations &amp; Commercial Proposals
                 </h2>
                 {pendingCount > 0 && (
-                  <Badge className="bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[10px]">
+                  <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-bold text-[10px] px-2 py-0.5">
                     {pendingCount} Pending Action
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Review proposals dispatched by your Brightloop account team, negotiate custom terms, and confirm into active subscriptions.
+                Review tailored proposals, negotiate terms in real-time, and securely activate subscriptions via Razorpay.
               </p>
             </div>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start sm:self-center">
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start sm:self-center border border-slate-200/60">
             <button
               onClick={() => setActiveFilter("ALL")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeFilter === "ALL"
                   ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900"
@@ -130,7 +165,7 @@ export function QuotationsSection({
             </button>
             <button
               onClick={() => setActiveFilter("PENDING")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeFilter === "PENDING"
                   ? "bg-white text-amber-800 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900"
@@ -140,7 +175,7 @@ export function QuotationsSection({
             </button>
             <button
               onClick={() => setActiveFilter("CONFIRMED")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeFilter === "CONFIRMED"
                   ? "bg-white text-emerald-800 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900"
@@ -152,7 +187,9 @@ export function QuotationsSection({
         </div>
       </div>
 
-      {/* Quotations List */}
+      {/* ========================================================================= */}
+      {/* COMPACT & EXECUTIVE PROPOSALS GRID                                        */}
+      {/* ========================================================================= */}
       {filteredQuotations.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs">
           <FileCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
@@ -164,283 +201,127 @@ export function QuotationsSection({
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredQuotations.map((quotation) => {
             const isPending = quotation.status === "QUOTATION";
             const isConfirmed = quotation.status === "CONFIRMED";
+            const isExpired = quotation.status === "EXPIRED";
             const negotiations = quotation.negotiations || [];
 
             return (
               <div
                 key={quotation.id}
-                className={`bg-white rounded-2xl border transition-all shadow-2xs overflow-hidden ${
+                onClick={() => handleOpenDetailModal(quotation)}
+                className={`bg-white rounded-2xl border transition-all duration-200 p-5 shadow-2xs hover:shadow-md cursor-pointer flex flex-col justify-between group relative ${
                   isPending
-                    ? "border-amber-200 ring-2 ring-amber-100/60"
+                    ? "border-amber-300 ring-1 ring-amber-200/60 hover:border-amber-400"
+                    : isConfirmed
+                    ? "border-emerald-200/90 hover:border-emerald-300"
                     : "border-slate-200/80 hover:border-slate-300"
                 }`}
               >
-                {/* Quotation Header Bar */}
-                <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50/50">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span className="font-mono text-sm font-black text-slate-900">
-                        {quotation.quotationNumber}
+                <div className="space-y-3.5">
+                  {/* Card Header: Quotation Number & Status Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 group-hover:bg-[#714B67]/10 group-hover:text-[#714B67] px-2.5 py-1 rounded-lg transition-colors">
+                      {quotation.quotationNumber}
+                    </span>
+                    {isPending && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        Pending Action
                       </span>
-                      {isPending && (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 font-bold text-[11px] px-2.5 py-0.5">
-                          Pending Client Action
-                        </Badge>
-                      )}
-                      {isConfirmed && (
-                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-bold text-[11px] px-2.5 py-0.5">
-                          ✓ Confirmed &amp; Subscribed
-                        </Badge>
-                      )}
-                      {quotation.status === "EXPIRED" && (
-                        <Badge className="bg-slate-100 text-slate-600 border-slate-300 font-bold text-[11px]">
-                          Expired
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-0.5">
-                      <span>Created: {new Date(quotation.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      <span>•</span>
-                      {quotation.expiryDate && (
-                        <span className="flex items-center gap-1 font-medium text-amber-700">
-                          <Clock className="w-3.5 h-3.5" />
-                          Valid Until: {new Date(quotation.expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                        </span>
-                      )}
-                      <span>•</span>
-                      <span>Terms: <strong className="text-slate-700">{quotation.paymentTerms || "NET_30"}</strong></span>
-                    </div>
+                    )}
+                    {isConfirmed && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Confirmed
+                      </span>
+                    )}
+                    {isExpired && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        Expired
+                      </span>
+                    )}
                   </div>
 
-                  {/* Right Header Status / Total */}
-                  <div className="flex items-center gap-4 self-start lg:self-center">
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  {/* Plan Information */}
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 group-hover:text-[#714B67] transition-colors line-clamp-1">
+                      {quotation.plan?.name || "Brightloop Enterprise Subscription"}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                      {quotation.plan?.billingFrequency || "MONTHLY"} Billing &bull; Terms: {quotation.paymentTerms || "IMMEDIATE"}
+                    </p>
+                  </div>
+
+                  {/* Proposal Value Callout */}
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
                         Net Proposal Value
                       </span>
-                      <span className="text-lg sm:text-xl font-black text-slate-900">
+                      <span className="text-base font-black text-slate-900 font-mono">
                         {formatCurrency(quotation.totalAmount)}
                       </span>
                     </div>
-                  </div>
-                </div>
 
-                {/* Plan & Line Items */}
-                <div className="p-5 sm:p-6 space-y-6">
-                  {/* Plan Card Banner */}
-                  {quotation.plan && (
-                    <div className="p-4 rounded-xl bg-[#714B67]/5 border border-[#714B67]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <span className="text-[10px] font-extrabold text-[#714B67] uppercase tracking-wider">
-                          Proposed SaaS Subscription Plan
+                    {quotation.expiryDate && (
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                          Valid Until
                         </span>
-                        <h4 className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
-                          {quotation.plan.name}
-                        </h4>
-                        {quotation.plan.description && (
-                          <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
-                            {quotation.plan.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs font-bold text-[#714B67] border-[#714B67]/30 bg-white">
-                          {quotation.plan.billingFrequency || "MONTHLY"} Billing
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Line Items Table */}
-                  <div className="overflow-x-auto border border-slate-200/80 rounded-xl">
-                    <table className="w-full text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200/80">
-                        <tr>
-                          <th className="py-2.5 px-4 text-left">Description / Component</th>
-                          <th className="py-2.5 px-4 text-center w-20">Qty</th>
-                          <th className="py-2.5 px-4 text-right w-28">Unit Price</th>
-                          <th className="py-2.5 px-4 text-right w-24">Tax (GST)</th>
-                          <th className="py-2.5 px-4 text-right w-32">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {quotation.lines.map((line, idx) => (
-                          <tr key={line.id || idx} className="hover:bg-slate-50/50">
-                            <td className="py-3 px-4 font-semibold text-slate-800">
-                              {line.product?.name || quotation.plan?.name || "Enterprise SaaS License"}
-                            </td>
-                            <td className="py-3 px-4 text-center font-mono text-slate-700">
-                              {line.quantity}
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono text-slate-700">
-                              {formatCurrency(line.unitPrice)}
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono text-slate-500">
-                              {line.taxRate}% ({formatCurrency(line.taxAmount)})
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                              {formatCurrency(line.total)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Financial Breakdown & Totals */}
-                  <div className="flex flex-col sm:flex-row justify-end">
-                    <div className="w-full sm:w-72 bg-slate-50 rounded-xl p-3.5 space-y-2 border border-slate-200/60 text-xs">
-                      <div className="flex justify-between text-slate-600">
-                        <span>Taxable Subtotal:</span>
-                        <span className="font-mono font-semibold">{formatCurrency(quotation.subtotal)}</span>
-                      </div>
-                      {Number(quotation.discountAmount) > 0 && (
-                        <div className="flex justify-between text-emerald-600 font-medium">
-                          <span>Special Discount:</span>
-                          <span className="font-mono">-{formatCurrency(quotation.discountAmount)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-slate-600">
-                        <span>GST Amount (18%):</span>
-                        <span className="font-mono font-semibold">{formatCurrency(quotation.taxAmount)}</span>
-                      </div>
-                      <div className="border-t border-slate-200 pt-2 flex justify-between text-slate-900 font-black text-sm">
-                        <span>Gross Proposal Amount:</span>
-                        <span className="font-mono text-[#714B67]">{formatCurrency(quotation.totalAmount)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Real-time Sales Negotiation & Messaging Thread */}
-                  <div className="bg-slate-50/70 border border-slate-200/70 rounded-xl p-4 sm:p-5 space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-[#714B67]" />
-                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                          Sales Negotiation &amp; Real-time Feedback
-                        </h4>
-                      </div>
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        {negotiations.length} message{negotiations.length === 1 ? "" : "s"} exchanged
-                      </span>
-                    </div>
-
-                    {negotiations.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic py-2">
-                        No negotiation notes yet. Click &quot;Negotiate / Request Revision&quot; below if you would like to request altered terms or pricing from our staff.
-                      </p>
-                    ) : (
-                      <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                        {negotiations.map((msg, index) => {
-                          const isStaff = msg.senderRole === "STAFF" || msg.senderRole === "ADMIN";
-                          return (
-                            <div
-                              key={msg.id || index}
-                              className={`flex items-start gap-2.5 text-xs ${
-                                isStaff ? "justify-start" : "justify-end"
-                              }`}
-                            >
-                              {isStaff && (
-                                <div className="w-6 h-6 rounded-full bg-[#714B67] text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                                  <Headphones className="w-3 h-3" />
-                                </div>
-                              )}
-                              <div
-                                className={`rounded-xl p-3 max-w-lg border ${
-                                  isStaff
-                                    ? "bg-purple-50/80 border-[#714B67]/20 text-slate-800"
-                                    : "bg-white border-slate-200 text-slate-900 shadow-2xs"
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-4 mb-1">
-                                  <span className="font-bold text-[11px] text-[#714B67]">
-                                    {msg.senderName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                </div>
-                                <p className="text-xs leading-relaxed text-slate-700">
-                                  {msg.message}
-                                </p>
-                                {msg.proposedDiscount !== undefined && msg.proposedDiscount !== null && (
-                                  <div className="mt-1.5 pt-1.5 border-t border-slate-200/50 flex items-center gap-1.5">
-                                    <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-bold text-[10px]">
-                                      Target Discount Requested: {msg.proposedDiscount}%
-                                    </Badge>
-                                  </div>
-                                )}
-                              </div>
-                              {!isStaff && (
-                                <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                                  <User className="w-3 h-3" />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                        <span className="text-xs font-bold text-amber-800 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(quotation.expiryDate).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Action Buttons Row */}
-                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                    {isPending ? (
-                      <>
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                          <span>Accepting will immediately create your active recurring subscription.</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            onClick={() => handleOpenNegotiation(quotation)}
-                            className="border-[#714B67]/40 text-[#714B67] hover:bg-[#714B67]/10 text-xs font-bold gap-2 cursor-pointer"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            Negotiate / Request Revision
-                          </Button>
-                          <Button
-                            onClick={() => onAcceptQuotation(quotation.id)}
-                            disabled={isAccepting}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-2 shadow-xs cursor-pointer"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                            {isAccepting ? "Confirming..." : "Accept & Confirm Subscription"}
-                          </Button>
-                        </div>
-                      </>
-                    ) : isConfirmed ? (
-                      <div className="w-full flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs">
-                        <div className="flex items-center gap-2 text-emerald-800 font-semibold">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>
-                            Subscription confirmed!{" "}
-                            {quotation.convertedSubscription?.subscriptionNumber && (
-                              <strong className="font-mono text-emerald-950 font-black">
-                                ({quotation.convertedSubscription.subscriptionNumber})
-                              </strong>
-                            )}
-                          </span>
-                        </div>
-                        {quotation.convertedSubscription?.id && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onViewSubscription(quotation.convertedSubscription!.id)}
-                            className="text-emerald-800 border-emerald-300 hover:bg-emerald-100 text-xs font-bold gap-1 cursor-pointer"
-                          >
-                            <span>View in My Subscriptions</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
+                  {/* Negotiation Activity Badge */}
+                  {negotiations.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#714B67] font-semibold">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>{negotiations.length} message{negotiations.length > 1 ? "s" : ""} exchanged</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Action Footer */}
+                <div className="pt-3.5 border-t border-slate-100 mt-3.5 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-[#714B67] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View Breakdown</span>
+                  </span>
+
+                  {isPending && (
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleOpenCheckout(quotation, e)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-1.5 rounded-xl shadow-xs cursor-pointer active:scale-95"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Review &amp; Pay</span>
+                    </Button>
+                  )}
+
+                  {isConfirmed && quotation.convertedSubscription?.id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewSubscription(quotation.convertedSubscription!.id);
+                      }}
+                      className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-xs font-bold rounded-xl"
+                    >
+                      <span>Active Sub &rarr;</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -448,112 +329,292 @@ export function QuotationsSection({
         </div>
       )}
 
-      {/* Negotiation Modal Dialog */}
-      {negotiatingQuotation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[#714B67]" />
-                <h3 className="text-sm font-black text-slate-900">
-                  Negotiate Proposal ({negotiatingQuotation.quotationNumber})
-                </h3>
+      {/* ========================================================================= */}
+      {/* MODAL 1: ITEMIZE QUOTATION DETAILS & NEGOTIATION POPUP                    */}
+      {/* ========================================================================= */}
+      {selectedQuotation && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200 cursor-pointer"
+          onClick={() => setSelectedQuotation(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-200 cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#714B67]/10 text-[#714B67] flex items-center justify-center font-black">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-slate-900 text-base sm:text-lg">
+                      {selectedQuotation.quotationNumber}
+                    </h3>
+                    <Badge
+                      className={
+                        selectedQuotation.status === "QUOTATION"
+                          ? "bg-amber-100 text-amber-800 border-amber-300 text-[10px]"
+                          : selectedQuotation.status === "CONFIRMED"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]"
+                          : "bg-slate-100 text-slate-600 text-[10px]"
+                      }
+                    >
+                      {selectedQuotation.status === "QUOTATION" ? "Pending Action" : selectedQuotation.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Commercial Proposal &bull; Valid Until:{" "}
+                    {new Date(selectedQuotation.expiryDate).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
               </div>
+
               <button
-                onClick={() => setNegotiatingQuotation(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                onClick={() => setSelectedQuotation(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitNegotiation} className="space-y-4">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
-                <div className="flex justify-between text-slate-600">
-                  <span>Current Proposed Total:</span>
-                  <span className="font-bold text-slate-900">{formatCurrency(negotiatingQuotation.totalAmount)}</span>
+            {/* Plan Info Banner */}
+            {selectedQuotation.plan && (
+              <div className="bg-[#714B67]/5 border border-[#714B67]/15 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-extrabold text-[#714B67] uppercase tracking-wider block">
+                    Proposed SaaS Plan
+                  </span>
+                  <h4 className="font-black text-slate-900 text-sm mt-0.5">
+                    {selectedQuotation.plan.name}
+                  </h4>
+                  {selectedQuotation.plan.description && (
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      {selectedQuotation.plan.description}
+                    </p>
+                  )}
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Plan:</span>
-                  <span className="font-semibold text-slate-800">{negotiatingQuotation.plan?.name || "Enterprise Tier"}</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-[#714B67]/30 text-[#714B67] font-bold text-xs">
+                    {selectedQuotation.plan.billingFrequency} Billing
+                  </Badge>
+                  <span className="text-xs text-slate-500 font-mono">
+                    Terms: {selectedQuotation.paymentTerms || "IMMEDIATE"}
+                  </span>
                 </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Target Discount (%) or Custom Pricing Request
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  placeholder="e.g. 10 for 10% off"
-                  value={proposedDiscount}
-                  onChange={(e) => setProposedDiscount(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
-                />
+            {/* Line Items Table */}
+            <div>
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
+                Itemized Components &amp; Add-ons
+              </span>
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-3">Description</th>
+                      <th className="py-2.5 px-3 text-center">Qty</th>
+                      <th className="py-2.5 px-3 text-right">Unit Price</th>
+                      <th className="py-2.5 px-3 text-right">Tax (GST)</th>
+                      <th className="py-2.5 px-3 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                    {selectedQuotation.lines?.map((line, idx) => {
+                      const prodName = line.product?.name || (line as any).productName || "Product License";
+                      const varName = line.variant?.variantName || (line as any).variantName;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/50">
+                          <td className="py-3 px-3">
+                            <div className="font-bold">{prodName}</div>
+                            {varName && (
+                              <div className="text-[11px] text-slate-400">Edition: {varName}</div>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-center font-mono">{line.quantity}</td>
+                          <td className="py-3 px-3 text-right font-mono">{formatCurrency(line.unitPrice)}</td>
+                          <td className="py-3 px-3 text-right font-mono text-slate-500">{line.taxRate}%</td>
+                          <td className="py-3 px-3 text-right font-black font-mono">{formatCurrency(line.total)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-1.5 text-xs text-slate-600">
+              <div className="flex justify-between">
+                <span>Taxable Subtotal:</span>
+                <span className="font-mono">{formatCurrency(selectedQuotation.subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST Tax Breakdown (18%):</span>
+                <span className="font-mono">{formatCurrency(selectedQuotation.taxAmount)}</span>
+              </div>
+              {Number(selectedQuotation.discountAmount) > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Special Commercial Discount:</span>
+                  <span className="font-mono">-{formatCurrency(selectedQuotation.discountAmount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-slate-200 pt-2 font-black text-slate-900 text-sm">
+                <span>Gross Payable Proposal:</span>
+                <span className="font-mono text-[#714B67] text-base">
+                  {formatCurrency(selectedQuotation.totalAmount)}
+                </span>
+              </div>
+            </div>
+
+            {/* Negotiation & Sales Feedback */}
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#714B67]" />
+                  <span>Sales Negotiation &amp; Real-Time Feedback</span>
+                </span>
+                {!isNegotiating && selectedQuotation.status === "QUOTATION" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsNegotiating(true)}
+                    className="text-xs font-bold text-[#714B67] border-[#714B67]/30 hover:bg-[#714B67]/10"
+                  >
+                    Send Counter Offer
+                  </Button>
+                )}
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Message to Brightloop Sales Team <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Tell our sales executive about your preferred payment cadence, seat requirements, or contract adjustments..."
-                  value={negotiationMessage}
-                  onChange={(e) => setNegotiationMessage(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
-                />
-              </div>
+              {/* Chat Thread */}
+              {selectedQuotation.negotiations && selectedQuotation.negotiations.length > 0 && (
+                <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-100">
+                  {selectedQuotation.negotiations.map((msg, i) => (
+                    <div key={i} className="p-2.5 rounded-lg bg-white border border-slate-200/80 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-[#714B67]">{msg.senderName}</span>
+                        <span className="text-slate-400 text-[10px]">
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-slate-700">{msg.message}</p>
+                      {msg.proposedDiscount && (
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                          Target Discount: {msg.proposedDiscount}%
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              {/* Quick suggestions */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProposedDiscount("10");
-                    setNegotiationMessage("We would like to confirm this subscription if you can provide a 10% annual billing discount.");
-                  }}
-                  className="text-[10px] font-semibold bg-purple-50 hover:bg-purple-100 text-[#714B67] px-2.5 py-1 rounded-lg border border-purple-200 cursor-pointer"
-                >
-                  + Request 10% Discount
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNegotiationMessage("We request NET_60 payment terms instead of NET_30 to align with our procurement cycle.");
-                  }}
-                  className="text-[10px] font-semibold bg-purple-50 hover:bg-purple-100 text-[#714B67] px-2.5 py-1 rounded-lg border border-purple-200 cursor-pointer"
-                >
-                  + Request NET_60 Terms
-                </button>
-              </div>
+              {/* Negotiation Input Form */}
+              {isNegotiating && (
+                <form onSubmit={handleSubmitNegotiation} className="space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <textarea
+                    rows={2}
+                    value={negotiationMessage}
+                    onChange={(e) => setNegotiationMessage(e.target.value)}
+                    placeholder="Provide your feedback or counter-offer to the Brightloop sales team..."
+                    className="w-full p-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                    required
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <input
+                      type="number"
+                      value={proposedDiscount}
+                      onChange={(e) => setProposedDiscount(e.target.value)}
+                      placeholder="Target discount %"
+                      className="w-36 p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsNegotiating(false)}
+                        className="text-xs"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={isSubmittingNegotiation}
+                        className="bg-[#714B67] text-white text-xs font-bold"
+                      >
+                        {isSubmittingNegotiation ? "Sending..." : "Submit to Sales"}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            {/* Modal Bottom CTA Bar */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedQuotation(null)}
+                className="text-xs font-bold"
+              >
+                Close
+              </Button>
+
+              {selectedQuotation.status === "QUOTATION" && (
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setNegotiatingQuotation(null)}
-                  className="text-xs"
+                  onClick={() => {
+                    const q = selectedQuotation;
+                    setSelectedQuotation(null);
+                    handleOpenCheckout(q);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-2 py-2.5 px-5 rounded-xl shadow-md cursor-pointer active:scale-95"
                 >
-                  Cancel
+                  <Lock className="w-4 h-4" />
+                  <span>Accept &amp; Pay {formatCurrency(selectedQuotation.totalAmount)} via Razorpay</span>
                 </Button>
+              )}
+
+              {selectedQuotation.status === "CONFIRMED" && selectedQuotation.convertedSubscription?.id && (
                 <Button
-                  type="submit"
-                  disabled={isSubmitting || !negotiationMessage.trim()}
-                  className="bg-[#714B67] hover:bg-[#5a3b52] text-white text-xs font-bold gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    const subId = selectedQuotation.convertedSubscription!.id;
+                    setSelectedQuotation(null);
+                    onViewSubscription(subId);
+                  }}
+                  className="bg-[#714B67] text-white font-bold text-xs gap-1.5 rounded-xl"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  {isSubmitting ? "Sending..." : "Send to Sales Staff"}
+                  <span>Go to Active Subscription Agreement &rarr;</span>
                 </Button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: RAZORPAY SECURE CHECKOUT GATEWAY WITH ANIMATIONS                 */}
+      {/* ========================================================================= */}
+      {checkoutQuotation && (
+        <RazorpayCheckoutModal
+          isOpen={Boolean(checkoutQuotation)}
+          onClose={() => setCheckoutQuotation(null)}
+          title={`Brightloop Software: ${checkoutQuotation.plan?.name || "Subscription Plan"}`}
+          amount={Number(checkoutQuotation.totalAmount)}
+          customerName={customerName}
+          customerEmail={customerEmail}
+          onPaymentSuccess={handlePaymentSuccess}
+          successButtonText="View Active Subscription Agreement"
+        />
       )}
     </div>
   );
 }
-

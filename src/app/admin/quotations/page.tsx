@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -29,62 +29,72 @@ interface QuotationItem {
   totalAmount: number;
   validUntil: string;
   status: "DRAFT" | "SENT" | "CONFIRMED" | "EXPIRED";
+  convertedSubscriptionId?: string | null;
 }
 
-const INITIAL_QUOTATIONS: QuotationItem[] = [
-  {
-    id: "quot-1",
-    quotationNumber: "QUO-2026-0012",
-    customerName: "Vertex Media Works",
-    customerEmail: "procure@vertexmedia.in",
-    planName: "Enterprise Cloud Suite",
-    variantName: "Odoo Enterprise Edition",
-    totalAmount: 141600,
-    validUntil: "2026-11-20",
-    status: "CONFIRMED",
-  },
-  {
-    id: "quot-2",
-    quotationNumber: "QUO-2026-0011",
-    customerName: "Omega Healthcare Systems",
-    customerEmail: "it@omegahealth.com",
-    planName: "Growth Monthly Tier",
-    variantName: "Standard Cloud Tier",
-    totalAmount: 9912,
-    validUntil: "2026-11-15",
-    status: "SENT",
-  },
-  {
-    id: "quot-3",
-    quotationNumber: "QUO-2026-0010",
-    customerName: "Nexus Global Exports",
-    customerEmail: "finance@nexusglobal.com",
-    planName: "Odoo Business Suite",
-    variantName: "SAP Migration Edition",
-    totalAmount: 32450,
-    validUntil: "2026-11-08",
-    status: "DRAFT",
-  },
-];
-
 export default function QuotationsPage() {
-  const [quotations, setQuotations] = useState<QuotationItem[]>(INITIAL_QUOTATIONS);
+  const [quotations, setQuotations] = useState<QuotationItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const handleSendQuotation = (id: string) => {
-    setQuotations((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, status: "SENT" as const } : q))
-    );
-    setAlertMessage("Quotation marked as SENT and dispatched via email.");
+  const fetchQuotations = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/quotations", { cache: "no-store" });
+      const data = await res.json();
+      if (res.ok && data.quotations) {
+        setQuotations(data.quotations);
+      }
+    } catch (err) {
+      console.error("Failed to load admin quotations:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConvertToSubscription = (quot: QuotationItem) => {
-    setQuotations((prev) => prev.filter((q) => q.id !== quot.id));
-    setAlertMessage(
-      `Quotation ${quot.quotationNumber} successfully converted into active Subscription agreement for ${quot.customerName}!`
-    );
+  useEffect(() => {
+    fetchQuotations();
+  }, []);
+
+  const handleSendQuotation = async (id: string) => {
+    setProcessingId(id);
+    try {
+      const res = await fetch(`/api/admin/quotations/${id}/send`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAlertMessage(data.message || "Quotation marked as SENT and dispatched via email.");
+        await fetchQuotations();
+      } else {
+        setAlertMessage(data.error || "Failed to dispatch quotation");
+      }
+    } catch (err: any) {
+      setAlertMessage(err.message || "Failed to dispatch quotation");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleConvertToSubscription = async (quot: QuotationItem) => {
+    setProcessingId(quot.id);
+    try {
+      const res = await fetch(`/api/admin/quotations/${quot.id}/convert`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAlertMessage(
+          `Quotation ${quot.quotationNumber} successfully converted into active Subscription agreement!`
+        );
+        await fetchQuotations();
+      } else {
+        setAlertMessage(data.error || "Failed to convert quotation");
+      }
+    } catch (err: any) {
+      setAlertMessage(err.message || "Failed to convert quotation");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const filtered = quotations.filter((q) => {
@@ -161,102 +171,131 @@ export default function QuotationsPage() {
         </div>
 
         {/* Quotations List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((quot) => (
-            <div
-              key={quot.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-[#714B67] bg-[#714B67]/10 px-2.5 py-1 rounded-md">
-                    {quot.quotationNumber}
-                  </span>
-                  <Badge
-                    variant={
-                      quot.status === "CONFIRMED"
-                        ? "confirmed"
-                        : quot.status === "SENT"
-                        ? "quotation"
-                        : "outline"
-                    }
-                  >
-                    {quot.status}
-                  </Badge>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs animate-pulse space-y-4"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="h-6 bg-slate-200 rounded-md w-28" />
+                  <div className="h-5 bg-slate-200 rounded-full w-20" />
                 </div>
-
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base">{quot.customerName}</h3>
-                  <p className="text-xs text-slate-400">{quot.customerEmail}</p>
+                <div className="space-y-2">
+                  <div className="h-5 bg-slate-200 rounded-md w-40" />
+                  <div className="h-4 bg-slate-100 rounded-md w-32" />
                 </div>
-
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Plan:</span>
-                    <span className="font-semibold text-slate-800">{quot.planName}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Variant:</span>
-                    <span className="text-slate-700">{quot.variantName}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Valid Until:</span>
-                    <span className="text-slate-700">{quot.validUntil}</span>
-                  </div>
-                  <div className="border-t border-slate-200 pt-1.5 flex justify-between font-black text-slate-900 text-sm">
-                    <span>Proposal Value:</span>
-                    <span className="text-[#714B67] font-mono">
-                      ₹{quot.totalAmount.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
+                <div className="h-24 bg-slate-100 rounded-xl" />
+                <div className="h-9 bg-slate-200 rounded-xl" />
               </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+            <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-slate-800">No Quotations Found</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              No quotations match the active status or search query. Quotations created by staff operations or sales reps will appear here automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((quot) => {
+              const isProcessing = processingId === quot.id;
+              return (
+                <div
+                  key={quot.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-[#714B67] bg-[#714B67]/10 px-2.5 py-1 rounded-md">
+                        {quot.quotationNumber}
+                      </span>
+                      <Badge
+                        variant={
+                          quot.status === "CONFIRMED"
+                            ? "confirmed"
+                            : quot.status === "SENT"
+                            ? "quotation"
+                            : "outline"
+                        }
+                      >
+                        {quot.status}
+                      </Badge>
+                    </div>
 
-              <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between gap-2">
-                {quot.status === "DRAFT" && (
-                  <Button
-                    onClick={() => handleSendQuotation(quot.id)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs font-bold gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5 text-blue-600" />
-                    Send to Client
-                  </Button>
-                )}
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base">{quot.customerName}</h3>
+                      <p className="text-xs text-slate-400">{quot.customerEmail}</p>
+                    </div>
 
-                {quot.status === "CONFIRMED" && (
-                  <Button
-                    onClick={() => handleConvertToSubscription(quot)}
-                    className="w-full bg-[#714B67] hover:bg-[#5C3C54] text-white text-xs font-bold gap-1.5"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Convert to Subscription
-                  </Button>
-                )}
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5">
+                      <div className="flex justify-between text-slate-600">
+                        <span>Plan:</span>
+                        <span className="font-semibold text-slate-800">{quot.planName}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Variant:</span>
+                        <span className="text-slate-700">{quot.variantName}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Valid Until:</span>
+                        <span className="text-slate-700">{quot.validUntil}</span>
+                      </div>
+                      <div className="border-t border-slate-200 pt-1.5 flex justify-between font-black text-slate-900 text-sm">
+                        <span>Proposal Value:</span>
+                        <span className="text-[#714B67] font-mono">
+                          ₹{quot.totalAmount.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-                {quot.status === "SENT" && (
-                  <Button
-                    onClick={() => {
-                      setQuotations((prev) =>
-                        prev.map((q) =>
-                          q.id === quot.id ? { ...q, status: "CONFIRMED" as const } : q
-                        )
-                      );
-                      setAlertMessage(`Client accepted quotation ${quot.quotationNumber}!`);
-                    }}
-                    variant="secondary"
-                    size="sm"
-                    className="w-full text-xs font-bold gap-1.5"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Client Accepted
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                  <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between gap-2">
+                    {quot.status === "DRAFT" && (
+                      <Button
+                        onClick={() => handleSendQuotation(quot.id)}
+                        disabled={isProcessing}
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs font-bold gap-1.5 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5 text-blue-600" />
+                        {isProcessing ? "Sending..." : "Send to Client"}
+                      </Button>
+                    )}
+
+                    {quot.status === "CONFIRMED" && (
+                      <Button
+                        onClick={() => handleConvertToSubscription(quot)}
+                        disabled={isProcessing || Boolean(quot.convertedSubscriptionId)}
+                        className="w-full bg-[#714B67] hover:bg-[#5C3C54] text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        {isProcessing ? "Converting..." : quot.convertedSubscriptionId ? "Converted" : "Convert to Subscription"}
+                      </Button>
+                    )}
+
+                    {quot.status === "SENT" && (
+                      <Button
+                        onClick={() => handleConvertToSubscription(quot)}
+                        disabled={isProcessing}
+                        variant="secondary"
+                        size="sm"
+                        className="w-full text-xs font-bold gap-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        {isProcessing ? "Processing..." : "Convert to Subscription"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
     </div>
   );

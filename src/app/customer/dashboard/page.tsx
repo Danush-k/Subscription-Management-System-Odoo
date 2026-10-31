@@ -32,6 +32,7 @@ import { CancelSubscriptionModal } from "@/components/customer/CancelSubscriptio
 import { InvoicesTable } from "@/components/customer/InvoicesTable";
 import { InvoiceDetailModal } from "@/components/customer/InvoiceDetailModal";
 import { PayInvoiceModal } from "@/components/customer/PayInvoiceModal";
+import { RazorpayCheckoutModal, CheckoutPaymentDetails } from "@/components/customer/RazorpayCheckoutModal";
 import { PaymentHistoryTable } from "@/components/customer/PaymentHistoryTable";
 import { BillingProfileSection } from "@/components/customer/BillingProfileSection";
 import { ActivityTimeline } from "@/components/customer/ActivityTimeline";
@@ -98,20 +99,22 @@ function CustomerDashboardContent() {
   const [payingInvoice, setPayingInvoice] = useState<InvoiceItem | null>(null);
   const [isAcceptingQuotation, setIsAcceptingQuotation] = useState(false);
 
-  const handleAcceptQuotation = async (quotationId: string) => {
-    if (!window.confirm("Are you sure you want to accept this proposal and activate your subscription?")) {
-      return;
-    }
+  const handleAcceptQuotation = async (
+    quotationId: string,
+    paymentDetails?: CheckoutPaymentDetails
+  ) => {
     setIsAcceptingQuotation(true);
     try {
       const res = await fetch(`/api/customer/quotations/${quotationId}/accept`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentDetails || {}),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to accept quotation");
       setActionMessage({
         type: "success",
-        text: `Proposal accepted! Subscription ${result.subscription?.subscriptionNumber || ""} has been activated.`,
+        text: `Proposal accepted & payment verified! Active subscription ${result.subscription?.subscriptionNumber || ""} is now live.`,
       });
       await fetchPortalData();
     } catch (err: any) {
@@ -569,6 +572,8 @@ function CustomerDashboardContent() {
         {activeTab === "quotations" && (
           <QuotationsSection
             quotations={data.quotations || []}
+            customerName={data.customer?.companyName || data.customer?.name}
+            customerEmail={data.customer?.email}
             onAcceptQuotation={handleAcceptQuotation}
             onSendNegotiation={handleSendNegotiation}
             onViewSubscription={(subId) => {
@@ -748,18 +753,38 @@ function CustomerDashboardContent() {
         onPayInvoice={(inv) => setPayingInvoice(inv)}
       />
 
-      {/* 4. Pay Invoice Settlement Modal */}
-      <PayInvoiceModal
-        invoice={payingInvoice}
-        onClose={() => setPayingInvoice(null)}
-        onSuccess={() => {
-          setActionMessage({
-            type: "success",
-            text: "Invoice settlement recorded successfully!",
-          });
-          fetchPortalData();
-        }}
-      />
+      {/* 4. Pay Invoice Settlement Modal with Razorpay Checkout */}
+      {payingInvoice && (
+        <RazorpayCheckoutModal
+          isOpen={Boolean(payingInvoice)}
+          onClose={() => setPayingInvoice(null)}
+          title={`Invoice ${payingInvoice.invoiceNumber}`}
+          subtitle={`Payment settlement for ${payingInvoice.subscription?.subscriptionNumber || "Brightloop Subscription"}`}
+          amount={Number(payingInvoice.outstandingAmount)}
+          customerName={data.customer?.name}
+          customerEmail={data.customer?.email}
+          onPaymentSuccess={async (details) => {
+            const res = await fetch(`/api/customer/invoices/${payingInvoice.id}/pay`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                paymentMethod: details.paymentMethod,
+                amount: details.amount,
+                transactionRef: details.transactionRef,
+                notes: details.notes,
+              }),
+            });
+            const resJson = await res.json();
+            if (!res.ok) throw new Error(resJson.error || "Payment failed");
+            setActionMessage({
+              type: "success",
+              text: `Payment of ₹${Number(details.amount).toLocaleString("en-IN")} settled successfully for Invoice ${payingInvoice.invoiceNumber}!`,
+            });
+            await fetchPortalData();
+          }}
+          successButtonText="Done & Return to Invoices"
+        />
+      )}
     </div>
   );
 }
