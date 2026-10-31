@@ -87,13 +87,6 @@ export function CustomerHeader({
       tabKey: "invoices",
     },
     {
-      id: "payments",
-      label: "Payment History",
-      icon: CreditCard,
-      href: "/customer/dashboard?tab=payments",
-      tabKey: "payments",
-    },
-    {
       id: "activity",
       label: "Activity Timeline",
       icon: Clock,
@@ -118,6 +111,9 @@ export function CustomerHeader({
       return false;
     }
     const currentTab = activeTab || searchParams.get("tab") || "overview";
+    if (item.id === "invoices" && currentTab === "payments") {
+      return true;
+    }
     return currentTab === item.tabKey;
   };
 

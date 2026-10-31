@@ -54,6 +54,9 @@ function CustomerDashboardContent() {
   const [error, setError] = useState<string | null>(null);
 
   // Active navigation tab
+  const [invoiceSubView, setInvoiceSubView] = useState<"invoices" | "payments">(
+    initialTab === "payments" ? "payments" : "invoices"
+  );
   const [activeTab, setActiveTabState] = useState<
     "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity"
   >(initialTab);
@@ -67,6 +70,8 @@ function CustomerDashboardContent() {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
+    if (tabParam === "payments") { setInvoiceSubView("payments"); }
+    if (tabParam === "invoices") { setInvoiceSubView("invoices"); }
     if (tabParam && tabParam !== activeTab) {
       setActiveTabState(tabParam as any);
     }
@@ -556,46 +561,60 @@ function CustomerDashboardContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 3: INVOICES & RECEIPTS (Invoice Table Only)                           */}
+        {/* TAB 3: INVOICES & RECEIPTS (Consolidated with Payment History)            */}
         {/* ========================================================================= */}
-        {activeTab === "invoices" && (
+        {(activeTab === "invoices" || activeTab === "payments") && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                Invoices, Statements &amp; Tax Receipts
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Download verified tax invoices, review line-item GST calculations, and settle outstanding balances.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  Invoices, Receipts &amp; Remittances
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Download verified tax invoices, review line-item GST calculations, and audit payment receipts.
+                </p>
+              </div>
+
+              {/* Sub-view Segmented Switcher */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/80">
+                <button
+                  onClick={() => setInvoiceSubView("invoices")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    invoiceSubView === "invoices"
+                      ? "bg-white text-[#714B67] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#714B67]" />
+                  <span>Invoices &amp; Receipts ({data.invoices.length})</span>
+                </button>
+                <button
+                  onClick={() => setInvoiceSubView("payments")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    invoiceSubView === "payments"
+                      ? "bg-white text-[#714B67] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-[#714B67]" />
+                  <span>Payment History ({data.payments.length})</span>
+                </button>
+              </div>
             </div>
 
-            <InvoicesTable
-              invoices={data.invoices}
-              onViewInvoice={(inv) => setSelectedInvId(inv.id)}
-              onPayInvoice={(inv) => setPayingInvoice(inv)}
-            />
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* TAB 4: PAYMENT HISTORY (Reconciled Transactions Only)                     */}
-        {/* ========================================================================= */}
-        {activeTab === "payments" && (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                Payment History &amp; Bank Reconciliation
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Audited ledger of all received wire transfers, UPI remittances, and card charges.
-              </p>
-            </div>
-
-            <PaymentHistoryTable
-              payments={data.payments}
-              invoices={data.invoices}
-              onViewInvoice={(inv) => setSelectedInvId(inv.id)}
-            />
+            {invoiceSubView === "invoices" ? (
+              <InvoicesTable
+                invoices={data.invoices}
+                onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+                onPayInvoice={(inv) => setPayingInvoice(inv)}
+              />
+            ) : (
+              <PaymentHistoryTable
+                payments={data.payments}
+                invoices={data.invoices}
+                onViewInvoice={(inv) => setSelectedInvId(inv.id)}
+              />
+            )}
           </div>
         )}
 
