@@ -45,14 +45,23 @@ export function AdminNav() {
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   ];
 
-  const handleQuickBilling = () => {
+  const handleQuickBilling = async () => {
     setBillingRunning(true);
     setBillingToast(null);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/admin/billing/run", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setBillingToast(data.message || "Recurring billing run complete.");
+      } else {
+        setBillingToast(data.error || "Failed to execute recurring billing run.");
+      }
+    } catch (err: any) {
+      setBillingToast(err.message || "Network error while running billing.");
+    } finally {
       setBillingRunning(false);
-      setBillingToast("Recurring billing run complete: 3 subscriptions billed, 3 invoices posted.");
-      setTimeout(() => setBillingToast(null), 4000);
-    }, 1000);
+      setTimeout(() => setBillingToast(null), 5000);
+    }
   };
 
   return (
