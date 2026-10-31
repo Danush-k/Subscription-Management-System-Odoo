@@ -14,7 +14,7 @@ import { MetricSummary } from "./types";
 
 interface CustomerOverviewCardsProps {
   metrics: MetricSummary;
-  onSelectTab: (tab: "overview" | "subscriptions" | "invoices" | "payments" | "billing" | "activity") => void;
+  onSelectTab: (tab: "overview" | "subscriptions" | "invoices" | "payments" | "billing") => void;
   onPayBalance: () => void;
 }
 
@@ -36,13 +36,13 @@ export function CustomerOverviewCards({
       {/* 1. Active Subscriptions */}
       <div
         onClick={() => onSelectTab("subscriptions")}
-        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Active Subscriptions
           </span>
-          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
+          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20 group-hover:scale-105 transition-transform">
             <RotateCcw className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
@@ -61,13 +61,13 @@ export function CustomerOverviewCards({
       {/* 2. Upcoming Renewals */}
       <div
         onClick={() => onSelectTab("subscriptions")}
-        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Next Renewal
           </span>
-          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
+          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20 group-hover:scale-105 transition-transform">
             <CalendarCheck className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
@@ -115,7 +115,7 @@ export function CustomerOverviewCards({
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Outstanding Due
           </span>
-          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
+          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20 group-hover:scale-105 transition-transform">
             <CreditCard className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
@@ -144,13 +144,13 @@ export function CustomerOverviewCards({
       {/* 5. Paused Subscriptions */}
       <div
         onClick={() => onSelectTab("subscriptions")}
-        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-[#714B67]/40 hover:shadow-xs transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Paused Services
           </span>
-          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
+          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20 group-hover:scale-105 transition-transform">
             <PauseCircle className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
@@ -177,7 +177,7 @@ export function CustomerOverviewCards({
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Overdue Invoices
           </span>
-          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20">
+          <div className="p-2 rounded-xl bg-[#714B67]/10 text-[#714B67] border border-[#714B67]/20 group-hover:scale-105 transition-transform">
             <AlertOctagon className="w-4 h-4 text-[#714B67]" />
           </div>
         </div>
