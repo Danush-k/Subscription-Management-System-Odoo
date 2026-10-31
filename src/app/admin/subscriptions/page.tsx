@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Calendar,
   Building,
+  Loader2,
 } from "lucide-react";
 
 interface SubscriptionItem {
@@ -29,127 +30,81 @@ interface SubscriptionItem {
   amount: number;
   currency: string;
   billingFrequency: string;
-  status: "DRAFT" | "QUOTATION" | "CONFIRMED" | "ACTIVE" | "PAUSED" | "CLOSED";
+  status: "DRAFT" | "QUOTATION" | "CONFIRMED" | "ACTIVE" | "PAUSED" | "CLOSED" | "EXPIRED";
   startDate: string;
   nextBillingDate: string;
   pauseAllowed: boolean;
+  earlyClosureAllowed: boolean;
 }
 
-const INITIAL_SUBSCRIPTIONS: SubscriptionItem[] = [
-  {
-    id: "sub-1",
-    subscriptionNumber: "SUB-2026-0042",
-    customerName: "SSN Technology Labs",
-    customerEmail: "billing@ssntechlabs.com",
-    planName: "Enterprise Cloud Suite",
-    variantName: "Odoo Enterprise Edition",
-    amount: 120000,
-    currency: "INR",
-    billingFrequency: "YEARLY",
-    status: "ACTIVE",
-    startDate: "2026-01-15",
-    nextBillingDate: "2027-01-15",
-    pauseAllowed: true,
-  },
-  {
-    id: "sub-2",
-    subscriptionNumber: "SUB-2026-0041",
-    customerName: "Kalyan Retailers LLP",
-    customerEmail: "finance@kalyanretail.in",
-    planName: "Odoo Business Suite",
-    variantName: "Standard Cloud Tier",
-    amount: 18500,
-    currency: "INR",
-    billingFrequency: "MONTHLY",
-    status: "ACTIVE",
-    startDate: "2026-06-01",
-    nextBillingDate: "2026-11-01",
-    pauseAllowed: true,
-  },
-  {
-    id: "sub-3",
-    subscriptionNumber: "SUB-2026-0040",
-    customerName: "AeroDynamics Corp",
-    customerEmail: "procure@aerodynamics.com",
-    planName: "Growth Monthly Tier",
-    variantName: "SAP Migration Edition",
-    amount: 8400,
-    currency: "INR",
-    billingFrequency: "MONTHLY",
-    status: "PAUSED",
-    startDate: "2026-03-10",
-    nextBillingDate: "2026-11-10",
-    pauseAllowed: true,
-  },
-  {
-    id: "sub-4",
-    subscriptionNumber: "SUB-2026-0039",
-    customerName: "Zenith Financials Ltd.",
-    customerEmail: "accounts@zenithfin.co",
-    planName: "Standard Core License",
-    variantName: "Standard Cloud Tier",
-    amount: 24000,
-    currency: "INR",
-    billingFrequency: "MONTHLY",
-    status: "CLOSED",
-    startDate: "2025-08-01",
-    nextBillingDate: "—",
-    pauseAllowed: false,
-  },
-  {
-    id: "sub-5",
-    subscriptionNumber: "SUB-2026-0038",
-    customerName: "BlueHorizon Logistics",
-    customerEmail: "ops@bluehorizon.io",
-    planName: "Enterprise Cloud Suite",
-    variantName: "Odoo Enterprise Edition",
-    amount: 45000,
-    currency: "INR",
-    billingFrequency: "QUARTERLY",
-    status: "CONFIRMED",
-    startDate: "2026-11-01",
-    nextBillingDate: "2026-11-01",
-    pauseAllowed: true,
-  },
-];
-
 export default function SubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(INITIAL_SUBSCRIPTIONS);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [actionAlert, setActionAlert] = useState<string | null>(null);
 
-  const handlePauseResume = (id: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) => {
-        if (sub.id === id) {
-          if (sub.status === "ACTIVE") {
-            if (!sub.pauseAllowed) {
-              setActionAlert(`Action blocked: Subscription ${sub.subscriptionNumber} plan terms do not permit pause.`);
-              return sub;
-            }
-            setActionAlert(`Subscription ${sub.subscriptionNumber} paused successfully. Next billing cycle suspended.`);
-            return { ...sub, status: "PAUSED" as const };
-          } else if (sub.status === "PAUSED") {
-            setActionAlert(`Subscription ${sub.subscriptionNumber} resumed. Automated recurring billing active.`);
-            return { ...sub, status: "ACTIVE" as const };
-          }
-        }
-        return sub;
-      })
-    );
+  const fetchSubscriptions = async () => {
+    try {
+      const res = await fetch("/api/admin/subscriptions", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setSubscriptions(data.subscriptions || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch subscriptions", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleClose = (id: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) => {
-        if (sub.id === id) {
-          setActionAlert(`Subscription ${sub.subscriptionNumber} closed. Recurring billing cancelled.`);
-          return { ...sub, status: "CLOSED" as const, nextBillingDate: "—" };
-        }
-        return sub;
-      })
-    );
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const handlePauseResume = async (sub: SubscriptionItem) => {
+    const action = sub.status === "ACTIVE" ? "PAUSE" : "RESUME";
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${sub.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionAlert(
+          action === "PAUSE"
+            ? `Subscription ${sub.subscriptionNumber} paused successfully. Next billing cycle suspended.`
+            : `Subscription ${sub.subscriptionNumber} resumed. Automated recurring billing active.`
+        );
+        fetchSubscriptions();
+      } else {
+        setActionAlert(`Action blocked: ${data.error || "Cannot change status"}`);
+      }
+    } catch (err: any) {
+      setActionAlert(`Error: ${err.message || "Failed to update subscription"}`);
+    }
+  };
+
+  const handleClose = async (sub: SubscriptionItem) => {
+    if (!confirm(`Are you sure you want to close subscription ${sub.subscriptionNumber}?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${sub.id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "CLOSE" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionAlert(`Subscription ${sub.subscriptionNumber} closed. Recurring billing cancelled.`);
+        fetchSubscriptions();
+      } else {
+        setActionAlert(`Action blocked: ${data.error || "Cannot close subscription"}`);
+      }
+    } catch (err: any) {
+      setActionAlert(`Error: ${err.message || "Failed to close subscription"}`);
+    }
   };
 
   const filteredSubscriptions = subscriptions.filter((sub) => {
@@ -160,37 +115,32 @@ export default function SubscriptionsPage() {
       sub.planName.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === "ALL" || sub.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
   const activeCount = subscriptions.filter((s) => s.status === "ACTIVE").length;
   const pausedCount = subscriptions.filter((s) => s.status === "PAUSED").length;
   const closedCount = subscriptions.filter((s) => s.status === "CLOSED").length;
-  const confirmedCount = subscriptions.filter((s) => s.status === "CONFIRMED").length;
-
-  const countByStatus = (status: string) => {
-    if (status === "ALL") return subscriptions.length;
-    return subscriptions.filter((s) => s.status === status).length;
-  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6 animate-fadeIn">
-        {/* Sub-header */}
+      <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
+        {/* Header Title with Odoo/Zoho aesthetics */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#714B67]/10 rounded-xl text-[#714B67]">
+              <div className="p-2 bg-[#714B67]/10 rounded-lg text-[#714B67]">
                 <RotateCcw className="w-5 h-5" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                Subscription Lifecycle Management
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                Subscription Lifecycle Directory
               </h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Automated recurring agreements, status transitions, and period renewals.
+            <p className="text-sm text-slate-500 mt-1">
+              Live contracts loaded from PostgreSQL database with automated recurrence management.
             </p>
           </div>
 
@@ -248,184 +198,177 @@ export default function SubscriptionsPage() {
               </p>
               <span className="w-2 h-2 rounded-full bg-amber-500" />
             </div>
-            <p className="text-2xl font-black text-amber-600 font-mono mt-2">{pausedCount}</p>
-            <p className="text-[11px] text-amber-600 mt-0.5">Billing temporarily held</p>
+            <p className="text-2xl font-black text-amber-700 font-mono mt-2">{pausedCount}</p>
+            <p className="text-[11px] text-amber-600 mt-0.5">Temporarily suspended</p>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Closed</p>
             <p className="text-2xl font-black text-slate-600 font-mono mt-2">{closedCount}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Cancelled / Non-renewed</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Cancelled or terminated</p>
           </div>
         </div>
 
-        {/* Filters and Search Bar */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Filter and Search Bar */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div className="relative w-full sm:w-96">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by subscription #, customer, email, or plan..."
+              placeholder="Search contract number, company, email, plan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67] transition-all"
+              className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]/20 focus:border-[#714B67] transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {["ALL", "ACTIVE", "PAUSED", "CONFIRMED", "CLOSED"].map((status) => {
-              const count = countByStatus(status);
-              const isSelected = statusFilter === status;
-              return (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
-                    isSelected
-                      ? "bg-[#714B67] text-white shadow-xs"
-                      : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
-                  }`}
-                >
-                  <span>{status}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isSelected ? "bg-white/20 text-white" : "bg-white text-slate-600"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+            <span className="text-xs font-bold text-slate-400 whitespace-nowrap flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" /> Filter:
+            </span>
+            {["ALL", "ACTIVE", "PAUSED", "CONFIRMED", "CLOSED"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
+                  statusFilter === status
+                    ? "bg-[#714B67] text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Subscriptions Table */}
+        {/* Zoho-styled Data-dense Table */}
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#F8FAFC] text-slate-600 font-bold text-[11px] uppercase tracking-wider border-b border-slate-200">
-                <tr>
-                  <th className="py-3.5 px-5">Subscription #</th>
-                  <th className="py-3.5 px-5">Customer Profile</th>
-                  <th className="py-3.5 px-5">Plan &amp; Variant Edition</th>
-                  <th className="py-3.5 px-5">Recurring Amount</th>
-                  <th className="py-3.5 px-5">Next Billing</th>
-                  <th className="py-3.5 px-5">Status</th>
-                  <th className="py-3.5 px-5 text-right">Actions</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3.5 px-4">Contract #</th>
+                  <th className="py-3.5 px-4">Customer &amp; Account</th>
+                  <th className="py-3.5 px-4">Plan &amp; Variant Edition</th>
+                  <th className="py-3.5 px-4">Billing Cadence</th>
+                  <th className="py-3.5 px-4">Recurring Total</th>
+                  <th className="py-3.5 px-4">Next Billing Date</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4 text-right">Lifecycle Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredSubscriptions.map((sub) => {
-                  const isActive = sub.status === "ACTIVE";
-                  const isPaused = sub.status === "PAUSED";
-                  const isConfirmed = sub.status === "CONFIRMED";
+              <tbody className="divide-y divide-slate-100 font-normal">
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
+                      <p className="mt-2 text-xs">Loading subscriptions from PostgreSQL...</p>
+                    </td>
+                  </tr>
+                ) : filteredSubscriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
+                      No subscriptions match the filter or search criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSubscriptions.map((sub) => {
+                    const isPaused = sub.status === "PAUSED";
+                    const isActive = sub.status === "ACTIVE";
 
-                  return (
-                    <tr
-                      key={sub.id}
-                      className={`hover:bg-[#F8FAFC] transition-colors relative ${
-                        isActive
-                          ? "border-l-4 border-l-emerald-500"
-                          : isPaused
-                          ? "border-l-4 border-l-amber-400"
-                          : isConfirmed
-                          ? "border-l-4 border-l-blue-400"
-                          : "border-l-4 border-l-slate-300"
-                      }`}
-                    >
-                      <td className="py-4 px-5 font-mono font-bold text-slate-900">
-                        {sub.subscriptionNumber}
-                        <div className="text-[10px] text-slate-400 font-normal">
-                          Start: {sub.startDate}
-                        </div>
-                      </td>
-                      <td className="py-4 px-5">
-                        <div className="font-bold text-slate-900">{sub.customerName}</div>
-                        <div className="text-[11px] text-slate-400">{sub.customerEmail}</div>
-                      </td>
-                      <td className="py-4 px-5">
-                        <div className="font-bold text-slate-900">{sub.planName}</div>
-                        <div className="text-[11px] text-slate-500">{sub.variantName}</div>
-                      </td>
-                      <td className="py-4 px-5">
-                        <div className="font-bold font-mono text-slate-900 text-sm">
-                          ₹{sub.amount.toLocaleString("en-IN")}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-semibold uppercase">
-                          {sub.billingFrequency}
-                        </div>
-                      </td>
-                      <td className="py-4 px-5 text-slate-600 font-medium">
-                        {sub.nextBillingDate}
-                      </td>
-                      <td className="py-4 px-5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                            isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : isPaused
-                              ? "bg-amber-50 text-amber-800 border-amber-200"
-                              : isConfirmed
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200"
-                          }`}
-                        >
+                    return (
+                      <tr key={sub.id} className="hover:bg-slate-50/70 transition-colors group">
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
+                          {sub.subscriptionNumber}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="font-bold text-slate-900">{sub.customerName}</div>
+                          <div className="text-[11px] text-slate-400">{sub.customerEmail}</div>
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="font-semibold text-slate-800">{sub.planName}</div>
+                          <div className="text-[11px] text-[#714B67] font-medium">{sub.variantName}</div>
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                            {sub.billingFrequency}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
+                          ₹{sub.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap font-mono text-[11px]">
+                          {sub.nextBillingDate}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                               isActive
-                                ? "bg-emerald-500 animate-pulse"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : isPaused
-                                ? "bg-amber-500"
-                                : isConfirmed
-                                ? "bg-blue-500"
-                                : "bg-slate-400"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : sub.status === "CONFIRMED"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200"
                             }`}
-                          />
-                          {sub.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {sub.status === "ACTIVE" && (
-                            <button
-                              onClick={() => handlePauseResume(sub.id)}
-                              className="p-1.5 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200/60"
-                              title="Pause Subscription"
-                            >
-                              <Pause className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {sub.status === "PAUSED" && (
-                            <button
-                              onClick={() => handlePauseResume(sub.id)}
-                              className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200/60"
-                              title="Resume Subscription"
-                            >
-                              <Play className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {sub.status !== "CLOSED" && (
-                            <button
-                              onClick={() => handleClose(sub.id)}
-                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-rose-200/60"
-                              title="Close Subscription"
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <Link
-                            href={`/admin/invoices?sub=${sub.subscriptionNumber}`}
-                            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/60"
-                            title="View Invoices"
                           >
-                            <FileText className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isActive
+                                  ? "bg-emerald-500 animate-pulse"
+                                  : isPaused
+                                  ? "bg-amber-500"
+                                  : sub.status === "CONFIRMED"
+                                  ? "bg-blue-500"
+                                  : "bg-slate-400"
+                              }`}
+                            />
+                            {sub.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {isActive && (
+                              <button
+                                onClick={() => handlePauseResume(sub)}
+                                className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200/60"
+                                title="Pause Subscription"
+                              >
+                                <Pause className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {isPaused && (
+                              <button
+                                onClick={() => handlePauseResume(sub)}
+                                className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200/60"
+                                title="Resume Subscription"
+                              >
+                                <Play className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {sub.status !== "CLOSED" && (
+                              <button
+                                onClick={() => handleClose(sub)}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-rose-200/60"
+                                title="Close Subscription"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <Link
+                              href={`/admin/invoices?sub=${sub.subscriptionNumber}`}
+                              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/60"
+                              title="View Invoices"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
