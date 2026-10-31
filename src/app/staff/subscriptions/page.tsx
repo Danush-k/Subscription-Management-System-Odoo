@@ -126,7 +126,7 @@ export default function StaffSubscriptionsPage() {
         userRole="Subscription Management"
         companyName="Brightloop Enterprise Ops"
       />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="dashboard-container pt-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <Link href="/staff/dashboard" className="inline-flex items-center gap-1 text-xs font-bold text-[#714B67] mb-3">

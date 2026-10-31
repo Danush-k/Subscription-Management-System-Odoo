@@ -160,9 +160,11 @@ export default function StaffDashboardPage() {
         userName={currentUser.name}
         userRole={currentUser.email || "Staff Operations"}
         companyName="Brightloop Enterprise Ops"
+        quotationsBadge={pendingQuotations.length}
+        invoicesBadge={pendingInvoices.length}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <main className="dashboard-container pt-8 space-y-8">
         {/* Header Action Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
           <div>
@@ -334,12 +336,16 @@ export default function StaffDashboardPage() {
                       <span className="text-base font-black text-slate-900 font-mono">
                         {quo.amount}
                       </span>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md self-start sm:self-auto">
+                        ⏳ Awaiting Customer Approval
+                      </span>
                       <Button
                         size="sm"
-                        className="bg-[#714B67] hover:bg-[#5C3C54] text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-2xs active:scale-95"
-                        onClick={() => handleConvertQuotation(quo.id, quo.customer)}
+                        className="border-[#714B67]/30 text-[#714B67] hover:bg-[#714B67]/10 text-xs font-bold px-3 py-1.5 rounded-xl shadow-2xs"
+                        variant="outline"
+                        asChild
                       >
-                        Confirm &amp; Convert
+                        <Link href="/staff/quotations">Reply &amp; Negotiate</Link>
                       </Button>
                     </div>
                   </div>

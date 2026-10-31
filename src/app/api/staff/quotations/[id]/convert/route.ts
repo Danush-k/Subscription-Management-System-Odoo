@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { dispatchEmail } from "@/server/services/emailDispatchService";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession();
@@ -14,22 +14,51 @@ export async function POST(
 
   const { id } = await params;
   try {
+    const body = await request.json().catch(() => ({}));
+    const { customerConsentConfirmed, consentReference } = body;
+
+    const quotation = await prisma.quotation.findUnique({
+      where: { id },
+      include: { customer: true, plan: true, lines: true },
+    });
+
+    if (!quotation) throw new Error("Quotation not found");
+    if (!["DRAFT", "QUOTATION"].includes(quotation.status)) {
+      throw new Error(`Quotation cannot be converted from status ${quotation.status}`);
+    }
+    if (quotation.expiryDate < new Date()) throw new Error("Quotation has expired");
+
+    // Verify Customer Permission / Confirmation
+    // Check if customer accepted directly in customer portal
+    const customerAcceptedLog = await prisma.auditLog.findFirst({
+      where: {
+        entityType: "QUOTATION",
+        entityId: id,
+        action: { in: ["CUSTOMER_CONFIRMED", "QUOTATION_ACCEPTED", "CUSTOMER_NEGOTIATION"] },
+      },
+    });
+
+    const hasExplicitPortalAcceptance = customerAcceptedLog && customerAcceptedLog.action === "QUOTATION_ACCEPTED";
+    const hasVerifiedStaffAuthorization = customerConsentConfirmed === true && Boolean(consentReference && consentReference.trim().length >= 3);
+
+    if (!hasExplicitPortalAcceptance && !hasVerifiedStaffAuthorization) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Customer permission required: The customer has not yet confirmed or approved this proposal. The customer must accept it in their portal, or staff must record verified customer authorization.",
+          requiresCustomerApproval: true,
+        },
+        { status: 403 }
+      );
+    }
+
     const subscription = await prisma.$transaction(async (tx) => {
-      const quotation = await tx.quotation.findUnique({
-        where: { id },
-        include: { plan: true, lines: true },
-      });
-
-      if (!quotation) throw new Error("Quotation not found");
-      if (!["DRAFT", "QUOTATION"].includes(quotation.status)) {
-        throw new Error(`Quotation cannot be converted from status ${quotation.status}`);
-      }
-      if (quotation.expiryDate < new Date()) throw new Error("Quotation has expired");
-
       const count = await tx.subscription.count();
+      const subscriptionNumber = `SUB-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`;
+
       const created = await tx.subscription.create({
         data: {
-          subscriptionNumber: `SUB-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`,
+          subscriptionNumber,
           customerId: quotation.customerId,
           planId: quotation.planId,
           quotationId: quotation.id,
@@ -64,6 +93,27 @@ export async function POST(
           newStatus: "CONFIRMED",
           action: "QUOTATION_CONVERTED",
           performedByUserId: session.userId,
+          note: hasVerifiedStaffAuthorization
+            ? `Customer authorization verified by staff: ${consentReference}`
+            : "Confirmed per customer portal approval.",
+        },
+      });
+
+      // Audit Log the conversion with confirmation source
+      await tx.auditLog.create({
+        data: {
+          entityType: "QUOTATION",
+          entityId: quotation.id,
+          userId: session.userId,
+          action: "QUOTATION_CONVERTED_WITH_CONSENT",
+          newValues: {
+            subscriptionId: created.id,
+            subscriptionNumber,
+            consentType: hasExplicitPortalAcceptance ? "CUSTOMER_PORTAL_ACCEPTED" : "VERIFIED_CUSTOMER_AUTHORIZATION",
+            consentReference: consentReference || "Customer Portal Approval",
+            operator: session.name || "Staff",
+            timestamp: new Date().toISOString(),
+          },
         },
       });
 
@@ -81,8 +131,10 @@ export async function POST(
           entityId: subscription.id,
         })
       : { sent: false, error: "Customer not found" };
+
     return NextResponse.json({
       success: true,
+      message: `Quotation ${quotation.quotationNumber} confirmed! Active subscription ${subscription.subscriptionNumber} generated.`,
       data: { subscription, emailSent: emailResult.sent, emailError: emailResult.error },
     });
   } catch (error) {

@@ -5,6 +5,53 @@ import { QuotationCreateSchema } from "@/lib/validations";
 import { createQuotationPdf } from "@/server/services/documentService";
 import { dispatchEmail } from "@/server/services/emailDispatchService";
 
+export async function GET() {
+  const session = await getServerSession();
+  if (!session || (session.role !== "STAFF" && session.role !== "ADMIN")) {
+    return NextResponse.json({ success: false, error: "Staff access required" }, { status: 403 });
+  }
+
+  try {
+    const quotations = await prisma.quotation.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        customer: true,
+        plan: true,
+        lines: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: quotations.map((q) => ({
+        id: q.id,
+        quotationNumber: q.quotationNumber,
+        customerName: q.customer.companyName || q.customer.name,
+        customerEmail: q.customer.email,
+        planName: q.plan.name,
+        subtotal: Number(q.subtotal),
+        taxAmount: Number(q.taxAmount),
+        discountAmount: Number(q.discountAmount),
+        totalAmount: Number(q.totalAmount),
+        status: q.status,
+        validUntil: q.expiryDate ? q.expiryDate.toISOString() : null,
+        createdAt: q.createdAt.toISOString(),
+        paymentTerms: q.paymentTerms,
+        linesCount: q.lines.length,
+      })),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : "Unable to load quotations" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession();
   if (!session || (session.role !== "STAFF" && session.role !== "ADMIN")) {
@@ -83,23 +130,89 @@ export async function POST(request: Request) {
     });
 
     let emailSent = false;
+    const formattedAmount = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(Number(quotation.totalAmount));
+
+    const formattedExpiry = quotation.expiryDate
+      ? new Date(quotation.expiryDate).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "Within 30 Days";
+
     const emailResult = await dispatchEmail({
-        to: quotation.customer.email,
-        toName: quotation.customer.name,
-        subject: `Quotation ${quotation.quotationNumber} from Brightloop`,
-        htmlContent: `<p>Hello ${quotation.customer.name},</p><p>Your quotation <strong>${quotation.quotationNumber}</strong> totals ₹${quotation.totalAmount.toString()} and is valid until ${quotation.expiryDate.toLocaleDateString("en-IN")}.</p>`,
-        entityType: "Quotation",
-        entityId: quotation.id,
-        attachment: {
-          name: `${quotation.quotationNumber}.pdf`,
-          content: createQuotationPdf({
-            quotationNumber: quotation.quotationNumber,
-            customerName: quotation.customer.name,
-            totalAmount: quotation.totalAmount.toString(),
-            expiryDate: quotation.expiryDate,
-          }),
-        },
-      });
+      to: quotation.customer.email,
+      toName: quotation.customer.name,
+      subject: `Official Quotation ${quotation.quotationNumber} - Brightloop Enterprise`,
+      htmlContent: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #714B67; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">Brightloop Enterprise</h1>
+            <p style="color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px;">New Subscription Proposal & Commercial Quotation</p>
+          </div>
+          
+          <div style="padding: 28px 24px;">
+            <p style="font-size: 15px; color: #1e293b; margin: 0 0 16px;">Dear <strong>${quotation.customer.name}</strong>,</p>
+            <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 20px;">
+              Our commercial team has prepared and generated your official subscription quotation <strong>${quotation.quotationNumber}</strong>. Please review the proposal details below or in your customer self-service portal.
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr>
+                  <td style="color: #64748b; padding: 6px 0;">Quotation Reference:</td>
+                  <td style="color: #0f172a; font-weight: 600; text-align: right; padding: 6px 0;">${quotation.quotationNumber}</td>
+                </tr>
+                <tr>
+                  <td style="color: #64748b; padding: 6px 0;">Quoted Total Amount:</td>
+                  <td style="color: #714B67; font-weight: 700; font-size: 16px; text-align: right; padding: 6px 0;">${formattedAmount}</td>
+                </tr>
+                <tr>
+                  <td style="color: #64748b; padding: 6px 0;">Payment Terms:</td>
+                  <td style="color: #0f172a; font-weight: 600; text-align: right; padding: 6px 0;">${quotation.paymentTerms || "NET_15"}</td>
+                </tr>
+                <tr>
+                  <td style="color: #64748b; padding: 6px 0;">Offer Valid Until:</td>
+                  <td style="color: #0f172a; font-weight: 600; text-align: right; padding: 6px 0;">${formattedExpiry}</td>
+                </tr>
+              </table>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 24px;">
+              You can review the complete line-item breakdown, negotiate counter-offers, or digitally confirm this proposal directly in your Customer Portal.
+            </p>
+
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="http://localhost:3000/customer/dashboard?tab=quotations" 
+                 style="background-color: #017E84; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 8px; display: inline-block;">
+                Review & Confirm Quotation &rarr;
+              </a>
+            </div>
+          </div>
+
+          <div style="background-color: #f1f5f9; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 12px; color: #64748b; margin: 0;">
+              Brightloop Technologies Pvt. Ltd. &bull; Enterprise Billing &bull; An official PDF copy is attached.
+            </p>
+          </div>
+        </div>
+      `,
+      entityType: "Quotation",
+      entityId: quotation.id,
+      attachment: {
+        name: `${quotation.quotationNumber}.pdf`,
+        content: createQuotationPdf({
+          quotationNumber: quotation.quotationNumber,
+          customerName: quotation.customer.name,
+          totalAmount: quotation.totalAmount.toString(),
+          expiryDate: quotation.expiryDate,
+        }),
+      },
+    });
     emailSent = emailResult.sent;
 
     return NextResponse.json({ success: true, data: { quotation, emailSent, emailError: emailResult.error } }, { status: 201 });
