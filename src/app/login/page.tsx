@@ -80,7 +80,7 @@ export default function LoginPage() {
         STAFF: "/staff/dashboard",
         CUSTOMER: "/customer/dashboard",
       } as const;
-      router.push(roleRedirects[payload.data.user.role as keyof typeof roleRedirects]);
+      window.location.href = roleRedirects[payload.data.user.role as keyof typeof roleRedirects];
     } catch {
       setErrorMsg("Unable to reach the authentication service");
     } finally {
