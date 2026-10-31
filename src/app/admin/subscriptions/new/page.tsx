@@ -52,7 +52,7 @@ export default function NewSubscriptionPage() {
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
       <AdminNav />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="dashboard-container max-w-5xl pt-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link
             href="/admin/subscriptions"

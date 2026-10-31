@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -156,8 +156,8 @@ export default function AdminDashboardPage() {
       <AdminNav />
 
       {/* Page Title & Operational Action Header */}
-      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border-b border-slate-200/80 py-4">
+        <div className="dashboard-container flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#714B67] bg-[#714B67]/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8 animate-fadeIn">
+      <main className="dashboard-container pt-8 space-y-8 animate-fadeIn">
         {/* Billing Success Notification */}
         {billingResult && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-2xs animate-slideDown">
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
             <span className="text-xs text-slate-400 font-medium">Auto-updated live</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -525,3 +525,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
