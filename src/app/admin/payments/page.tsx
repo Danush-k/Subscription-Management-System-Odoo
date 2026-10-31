@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Search, CheckCircle2, ShieldCheck, Building, Loader2 } from "lucide-react";
+import { BrightLoopModuleIcon } from "@/components/home/odoo-app-icons";
+import { CreditCard, Search, CheckCircle2, ShieldCheck, Building } from "lucide-react";
 
 interface PaymentItem {
   id: string;
@@ -13,34 +14,47 @@ interface PaymentItem {
   invoiceNumber: string;
   customerName: string;
   amount: number;
-  paymentMethod: "UPI" | "CARD" | "BANK_TRANSFER" | "CASH" | "CREDIT_CARD" | "DEBIT_CARD" | "OTHER";
+  paymentMethod: "UPI" | "CARD" | "BANK_TRANSFER" | "CASH";
   paidAt: string;
   status: "SETTLED" | "PENDING";
-  notes?: string;
 }
 
+const INITIAL_PAYMENTS: PaymentItem[] = [
+  {
+    id: "pay-1",
+    transactionRef: "TXN-2026-9901",
+    invoiceNumber: "INV-2026-0086",
+    customerName: "SSN Technology Labs Pvt. Ltd.",
+    amount: 120000,
+    paymentMethod: "BANK_TRANSFER",
+    paidAt: "2026-10-31 09:14 AM",
+    status: "SETTLED",
+  },
+  {
+    id: "pay-2",
+    transactionRef: "TXN-2026-9900",
+    invoiceNumber: "INV-2026-0083",
+    customerName: "Digital Dynamics Corp",
+    amount: 14200,
+    paymentMethod: "UPI",
+    paidAt: "2026-10-28 02:45 PM",
+    status: "SETTLED",
+  },
+  {
+    id: "pay-3",
+    transactionRef: "TXN-2026-9899",
+    invoiceNumber: "INV-2026-0082",
+    customerName: "BlueHorizon Logistics",
+    amount: 25000,
+    paymentMethod: "CARD",
+    paidAt: "2026-10-21 11:20 AM",
+    status: "SETTLED",
+  },
+];
+
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<PaymentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState<PaymentItem[]>(INITIAL_PAYMENTS);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const fetchPayments = async () => {
-    try {
-      const res = await fetch("/api/admin/payments", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setPayments(data.payments || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch payments", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPayments();
-  }, []);
 
   const filtered = payments.filter(
     (p) =>
@@ -53,35 +67,19 @@ export default function PaymentsPage() {
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16">
       <AdminNav />
 
-      <main className="dashboard-container pt-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#714B67]/10 rounded-lg text-[#714B67]">
-                <CreditCard className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <BrightLoopModuleIcon appId="payments" className="w-12 h-12" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                  Payment Transactions &amp; Settlements
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Multi-channel payments (UPI, Cards, Bank Transfer) with partial settlement logs.
+                </p>
               </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                Settled Payment Receipts &amp; Ledger
-              </h1>
             </div>
-            <p className="text-sm text-slate-500 mt-1">
-              Real-time payment settlements, bank references, and invoice reconciliations from PostgreSQL.
-            </p>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by transaction reference, invoice #, customer..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#714B67]"
-            />
-          </div>
         </div>
 
         {/* Payments Table */}
@@ -90,54 +88,39 @@ export default function PaymentsPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 font-semibold text-xs uppercase border-b border-slate-200">
                 <tr>
-                  <th className="py-3.5 px-6">Transaction Ref #</th>
+                  <th className="py-3.5 px-6">Transaction Ref</th>
                   <th className="py-3.5 px-6">Invoice #</th>
-                  <th className="py-3.5 px-6">Customer &amp; Company</th>
-                  <th className="py-3.5 px-6">Method</th>
-                  <th className="py-3.5 px-6">Amount Paid</th>
-                  <th className="py-3.5 px-6">Settlement Date</th>
+                  <th className="py-3.5 px-6">Customer</th>
+                  <th className="py-3.5 px-6">Payment Method</th>
+                  <th className="py-3.5 px-6">Settled Amount</th>
+                  <th className="py-3.5 px-6">Timestamp</th>
                   <th className="py-3.5 px-6">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
-                      <p className="mt-2 text-xs">Loading payment transactions from database...</p>
+                {filtered.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-4 px-6 font-mono font-bold text-slate-900 text-xs">
+                      {p.transactionRef}
+                    </td>
+                    <td className="py-4 px-6 font-mono text-xs text-[#714B67] font-semibold">
+                      {p.invoiceNumber}
+                    </td>
+                    <td className="py-4 px-6 font-semibold text-slate-900">{p.customerName}</td>
+                    <td className="py-4 px-6">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                        {p.paymentMethod}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 font-mono font-bold text-slate-900">
+                      ₹{p.amount.toLocaleString("en-IN")}
+                    </td>
+                    <td className="py-4 px-6 text-xs text-slate-500">{p.paidAt}</td>
+                    <td className="py-4 px-6">
+                      <Badge variant="active">{p.status}</Badge>
                     </td>
                   </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
-                      No payment settlements found.
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-4 px-6 font-mono font-bold text-[#714B67] text-xs">
-                        {p.transactionRef}
-                      </td>
-                      <td className="py-4 px-6 font-mono text-xs font-bold text-slate-900">
-                        {p.invoiceNumber}
-                      </td>
-                      <td className="py-4 px-6 font-semibold text-slate-900">{p.customerName}</td>
-                      <td className="py-4 px-6">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                          {p.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 font-mono font-bold text-emerald-700">
-                        ₹{p.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-4 px-6 text-xs text-slate-500 font-mono">{p.paidAt}</td>
-                      <td className="py-4 px-6">
-                        <Badge variant="success">{p.status}</Badge>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
