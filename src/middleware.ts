@@ -11,9 +11,9 @@ interface ProtectedRoute {
 const protectedRoutes: ProtectedRoute[] = [
   { prefix: "/admin", roles: ["ADMIN"], isApi: false },
   { prefix: "/staff", roles: ["ADMIN", "STAFF"], isApi: false },
-  { prefix: "/customer", roles: ["CUSTOMER", "ADMIN"], isApi: false },
+  { prefix: "/customer", roles: ["CUSTOMER"], isApi: false },
   { prefix: "/api/admin", roles: ["ADMIN"], isApi: true },
-  { prefix: "/api/customer", roles: ["CUSTOMER", "ADMIN"], isApi: true },
+  { prefix: "/api/customer", roles: ["CUSTOMER"], isApi: true },
 ];
 
 function decodeBase64Url(value: string): Uint8Array {
