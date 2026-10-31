@@ -74,7 +74,7 @@ export function CustomerHeader({
     },
     {
       id: "subscriptions",
-      label: "Subscriptions",
+      label: "My Subscriptions",
       icon: RotateCcw,
       href: "/customer/dashboard?tab=subscriptions",
       tabKey: "subscriptions",
@@ -102,7 +102,7 @@ export function CustomerHeader({
     },
     {
       id: "profile",
-      label: "My Profile",
+      label: "Billing Profile & GSTIN",
       icon: User,
       href: "/customer/profile",
       tabKey: "profile",
@@ -182,7 +182,7 @@ export function CustomerHeader({
 
             <div className="hidden xl:flex items-center gap-2">
               <Badge variant="outline" className="font-mono text-[11px] font-bold text-slate-700 bg-slate-50 border-slate-200">
-                {customer.customerNumber}
+                {customer?.customerNumber}
               </Badge>
             </div>
           </div>

@@ -50,7 +50,7 @@ export function CustomerWelcomeBanner({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2.5">
             <Badge variant="active" className="gap-1.5 py-1 px-3 text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-[#714B67] animate-pulse"></span>
               {customer.status} Account
             </Badge>
 
