@@ -99,6 +99,15 @@ function CustomerDashboardContent() {
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
+  // Subscriptions tab status filter
+  const [subStatusFilter, setSubStatusFilter] = useState<"ALL" | "ACTIVE" | "PAUSED" | "CLOSED">("ALL");
+
+  const filteredSubscriptions = useMemo(() => {
+    if (!data) return [];
+    if (subStatusFilter === "ALL") return data.subscriptions;
+    return data.subscriptions.filter((s) => s.status === subStatusFilter);
+  }, [data, subStatusFilter]);
+
   // Fetch real portal data from API (zero dependencies to avoid infinite re-render loop)
   const fetchPortalData = useCallback(async () => {
     try {
@@ -333,34 +342,35 @@ function CustomerDashboardContent() {
             </div>
             <button
               onClick={() => setActionMessage(null)}
-              className="font-bold hover:underline ml-4"
+              className="font-bold hover:underline ml-4 cursor-pointer"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* 2. Welcome & Account Overview Banner */}
-        <CustomerWelcomeBanner
-          customer={data.customer}
-          metrics={data.metrics}
-          onEditProfile={() => router.push("/customer/profile")}
-          onPayBalance={handlePayBalance}
-          onSelectTab={(tab) => setActiveTab(tab)}
-        />
-
-        {/* 3. Subscription & Financial Summary Cards (6 Compact Metrics) */}
-        <CustomerOverviewCards
-          metrics={data.metrics}
-          onSelectTab={(tab) => setActiveTab(tab)}
-          onPayBalance={handlePayBalance}
-        />
-
-        {/* 4. Tab Content Sections */}
-
-        {/* Tab 1: OVERVIEW COMPREHENSIVE VIEW */}
+        {/* ========================================================================= */}
+        {/* TAB 1: OVERVIEW PAGE ONLY (Welcome Banner, 6 Summary Cards, Snapshots)    */}
+        {/* ========================================================================= */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* 1. Welcome & Account Overview Banner */}
+            <CustomerWelcomeBanner
+              customer={data.customer}
+              metrics={data.metrics}
+              onEditProfile={() => router.push("/customer/profile")}
+              onPayBalance={handlePayBalance}
+              onSelectTab={(tab) => setActiveTab(tab)}
+            />
+
+            {/* 2. Subscription & Financial Summary Cards (6 Compact Metrics) */}
+            <CustomerOverviewCards
+              metrics={data.metrics}
+              onSelectTab={(tab) => setActiveTab(tab)}
+              onPayBalance={handlePayBalance}
+            />
+
+            {/* 3. Overview Split Column: SaaS Subscriptions & Invoices Snapshot */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Left Column: Subscriptions Snapshot */}
               <div className="xl:col-span-2 space-y-4">
@@ -371,7 +381,7 @@ function CustomerDashboardContent() {
                   </h3>
                   <button
                     onClick={() => setActiveTab("subscriptions")}
-                    className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-[#714B67] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     View All &rarr;
                   </button>
@@ -393,7 +403,7 @@ function CustomerDashboardContent() {
                 </div>
               </div>
 
-              {/* Right Column: Pending Invoices & Profile Quick Summary */}
+              {/* Right Column: Recent Invoices & Organization Quick Summary */}
               <div className="space-y-6">
                 {/* Recent Invoices Card */}
                 <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
@@ -404,7 +414,7 @@ function CustomerDashboardContent() {
                     </h3>
                     <button
                       onClick={() => setActiveTab("invoices")}
-                      className="text-xs font-bold text-[#714B67] hover:underline"
+                      className="text-xs font-bold text-[#714B67] hover:underline cursor-pointer"
                     >
                       All ({data.invoices.length}) &rarr;
                     </button>
@@ -435,7 +445,7 @@ function CustomerDashboardContent() {
                             onClick={() => setSelectedInvId(inv.id)}
                             variant="ghost"
                             size="sm"
-                            className="text-[11px] font-bold h-7 px-2"
+                            className="text-[11px] font-bold h-7 px-2 cursor-pointer"
                           >
                             View
                           </Button>
@@ -482,31 +492,53 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* Tab 2: Subscriptions Management */}
+        {/* ========================================================================= */}
+        {/* TAB 2: MY SUBSCRIPTIONS (Subscriptions Only + Status Filters)             */}
+        {/* ========================================================================= */}
         {activeTab === "subscriptions" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
               <div>
-                <h2 className="text-base font-black text-slate-900 tracking-tight">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
                   Contracted Subscriptions &amp; Active SaaS Licenses
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Manage deployment tiers, pause schedules, and auto-renewal policies.
                 </p>
               </div>
 
-              <Badge variant="outline" className="text-xs font-semibold">
-                {data.subscriptions.filter((s) => s.status === "ACTIVE").length} active services
-              </Badge>
+              {/* Status Filter Chips: ALL, ACTIVE, PAUSED, CLOSED */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                {(
+                  [
+                    { id: "ALL", label: `All (${data.subscriptions.length})` },
+                    { id: "ACTIVE", label: `Active (${data.subscriptions.filter((s) => s.status === "ACTIVE").length})` },
+                    { id: "PAUSED", label: `Paused (${data.subscriptions.filter((s) => s.status === "PAUSED").length})` },
+                    { id: "CLOSED", label: `Cancelled (${data.subscriptions.filter((s) => s.status === "CLOSED").length})` },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSubStatusFilter(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                      subStatusFilter === tab.id
+                        ? "bg-[#714B67] text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {data.subscriptions.length === 0 ? (
+            {filteredSubscriptions.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs text-slate-400">
-                No active or historical subscriptions found for this account.
+                No subscriptions matched the selected filter.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
-                {data.subscriptions.map((sub) => (
+                {filteredSubscriptions.map((sub) => (
                   <SubscriptionCard
                     key={sub.id}
                     subscription={sub}
@@ -523,14 +555,16 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* Tab 3: Invoices & Receipts Management */}
+        {/* ========================================================================= */}
+        {/* TAB 3: INVOICES & RECEIPTS (Invoice Table Only)                           */}
+        {/* ========================================================================= */}
         {activeTab === "invoices" && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <h2 className="text-base font-black text-slate-900 tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
                 Invoices, Statements &amp; Tax Receipts
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Download verified tax invoices, review line-item GST calculations, and settle outstanding balances.
               </p>
             </div>
@@ -543,14 +577,16 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* Tab 4: Payment History */}
+        {/* ========================================================================= */}
+        {/* TAB 4: PAYMENT HISTORY (Reconciled Transactions Only)                     */}
+        {/* ========================================================================= */}
         {activeTab === "payments" && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <h2 className="text-base font-black text-slate-900 tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
                 Payment History &amp; Bank Reconciliation
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Audited ledger of all received wire transfers, UPI remittances, and card charges.
               </p>
             </div>
@@ -563,17 +599,25 @@ function CustomerDashboardContent() {
           </div>
         )}
 
-        {/* Tab 5: Billing & Account Profile */}
+        {/* ========================================================================= */}
+        {/* TAB 5: BILLING PROFILE & GSTIN                                            */}
+        {/* ========================================================================= */}
         {activeTab === "billing" && (
-          <BillingProfileSection
-            customer={data.customer}
-            onProfileUpdated={fetchPortalData}
-          />
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <BillingProfileSection
+              customer={data.customer}
+              onProfileUpdated={fetchPortalData}
+            />
+          </div>
         )}
 
-        {/* Tab 6: Subscription Activity & Timeline */}
+        {/* ========================================================================= */}
+        {/* TAB 6: ACTIVITY TIMELINE                                                 */}
+        {/* ========================================================================= */}
         {activeTab === "activity" && (
-          <ActivityTimeline timeline={data.timeline} />
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <ActivityTimeline timeline={data.timeline} />
+          </div>
         )}
       </main>
 

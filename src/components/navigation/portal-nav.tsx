@@ -32,7 +32,7 @@ export function PortalNav({
   portalTitle,
   userName,
   userRole,
-  companyName = "SSN Technology Labs",
+  companyName = "Subscriber",
 }: PortalNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 

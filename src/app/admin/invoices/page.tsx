@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import Link from "next/link";
 import { AdminNav } from "@/components/navigation/admin-nav";
 import { Button } from "@/components/ui/button";
@@ -37,111 +37,68 @@ interface InvoiceItem {
   status: "DRAFT" | "CONFIRMED" | "PAID" | "OVERDUE" | "CANCELLED";
 }
 
-const INITIAL_INVOICES: InvoiceItem[] = [
-  {
-    id: "inv-1",
-    invoiceNumber: "INV-2026-0086",
-    subscriptionNumber: "SUB-2026-0042",
-    customerName: "SSN Technology Labs Pvt. Ltd.",
-    customerGstin: "GSTIN33SSN1234F1Z1",
-    date: "2026-10-31",
-    dueDate: "2026-11-15",
-    subtotal: 101694.92,
-    taxAmount: 18305.08,
-    totalAmount: 120000,
-    paidAmount: 120000,
-    status: "PAID",
-  },
-  {
-    id: "inv-2",
-    invoiceNumber: "INV-2026-0085",
-    subscriptionNumber: "SUB-2026-0041",
-    customerName: "Kalyan Retailers LLP",
-    customerGstin: "GSTIN33KLY7788P1Z4",
-    date: "2026-10-30",
-    dueDate: "2026-11-14",
-    subtotal: 15677.97,
-    taxAmount: 2822.03,
-    totalAmount: 18500,
-    paidAmount: 0,
-    status: "CONFIRMED",
-  },
-  {
-    id: "inv-3",
-    invoiceNumber: "INV-2026-0084",
-    subscriptionNumber: "SUB-2026-0036",
-    customerName: "Apex Logistics & Supply",
-    customerGstin: "GSTIN29APX9922Q1Z9",
-    date: "2026-10-15",
-    dueDate: "2026-10-25",
-    subtotal: 30084.75,
-    taxAmount: 5415.25,
-    totalAmount: 35500,
-    paidAmount: 0,
-    status: "OVERDUE",
-  },
-  {
-    id: "inv-4",
-    invoiceNumber: "INV-2026-0083",
-    subscriptionNumber: "SUB-2026-0037",
-    customerName: "Digital Dynamics Corp",
-    customerGstin: "GSTIN33DIG4411M1Z2",
-    date: "2026-10-28",
-    dueDate: "2026-11-12",
-    subtotal: 12033.9,
-    taxAmount: 2166.1,
-    totalAmount: 14200,
-    paidAmount: 14200,
-    status: "PAID",
-  },
-  {
-    id: "inv-5",
-    invoiceNumber: "INV-2026-0082",
-    subscriptionNumber: "SUB-2026-0038",
-    customerName: "BlueHorizon Logistics",
-    customerGstin: "GSTIN33BLU8822N1Z8",
-    date: "2026-10-20",
-    dueDate: "2026-11-04",
-    subtotal: 38135.59,
-    taxAmount: 6864.41,
-    totalAmount: 45000,
-    paidAmount: 25000,
-    status: "CONFIRMED",
-  },
-];
+import { Loader2 } from "lucide-react";
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<InvoiceItem[]>(INITIAL_INVOICES);
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceItem | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  const handleRegisterPayment = (inv: InvoiceItem) => {
-    const outstanding = inv.totalAmount - inv.paidAmount;
-    setInvoices((prev) =>
-      prev.map((item) => {
-        if (item.id === inv.id) {
-          return {
-            ...item,
-            paidAmount: item.totalAmount,
-            status: "PAID" as const,
-          };
-        }
-        return item;
-      })
-    );
-    if (selectedInvoice?.id === inv.id) {
-      setSelectedInvoice({
-        ...inv,
-        paidAmount: inv.totalAmount,
-        status: "PAID",
-      });
+  const fetchInvoices = async () => {
+    try {
+      const res = await fetch("/api/admin/invoices", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setInvoices(data.invoices || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch invoices", err);
+    } finally {
+      setLoading(false);
     }
-    setAlertMessage(
-      `Payment of ₹${outstanding.toLocaleString("en-IN")} settled for ${inv.invoiceNumber}. Invoice updated to PAID.`
-    );
-    setTimeout(() => setAlertMessage(null), 4000);
+  };
+
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const handleRegisterPayment = async (inv: InvoiceItem) => {
+    const outstanding = inv.totalAmount - inv.paidAmount;
+    try {
+      const res = await fetch("/api/admin/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceId: inv.id,
+          amount: outstanding,
+          paymentMethod: "BANK_TRANSFER",
+          notes: `Settled via Admin Invoice reconciliation`,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setAlertMessage(
+          `Payment of ₹${outstanding.toLocaleString("en-IN")} settled for ${inv.invoiceNumber}. Invoice recorded as PAID in PostgreSQL.`
+        );
+        fetchInvoices();
+        if (selectedInvoice?.id === inv.id) {
+          setSelectedInvoice({
+            ...inv,
+            paidAmount: inv.totalAmount,
+            status: "PAID",
+          });
+        }
+      } else {
+        setAlertMessage(`Payment error: ${data.error || "Failed to record payment"}`);
+      }
+    } catch (err: any) {
+      setAlertMessage(`Error: ${err.message || "Failed to record payment"}`);
+    }
+    setTimeout(() => setAlertMessage(null), 5000);
   };
 
   const filteredInvoices = invoices.filter((inv) => {
@@ -168,7 +125,7 @@ export default function InvoicesPage() {
     <div className="min-h-screen bg-[#F8F9FA] text-slate-900 pb-16 font-sans">
       <AdminNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6 animate-fadeIn">
+      <main className="dashboard-container pt-8 space-y-6 animate-fadeIn">
         {/* Page Sub-header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -323,10 +280,24 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredInvoices.map((inv) => {
-                  const balanceDue = inv.totalAmount - inv.paidAmount;
-                  const isPaid = inv.status === "PAID";
-                  const isOverdue = inv.status === "OVERDUE";
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#714B67]" />
+                      <p className="mt-2 text-xs">Loading tax invoices from database...</p>
+                    </td>
+                  </tr>
+                ) : filteredInvoices.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
+                      No invoices found matching criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredInvoices.map((inv) => {
+                    const balanceDue = inv.totalAmount - inv.paidAmount;
+                    const isPaid = inv.status === "PAID";
+                    const isOverdue = inv.status === "OVERDUE";
 
                   return (
                     <tr
@@ -416,7 +387,7 @@ export default function InvoicesPage() {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

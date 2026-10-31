@@ -34,3 +34,7 @@ Thumbs.db
 .vscode/
 .idea/
 AGENTS.md
+
+# Local Database Cluster
+.pgdata/
+*.tsbuildinfo

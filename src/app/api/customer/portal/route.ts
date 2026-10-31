@@ -1,17 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import Decimal from "decimal.js";
+import { getServerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email") || "billing@ssntechlabs.com";
+    const session = await getServerSession();
+    const queryEmail = searchParams.get("email");
+    const queryCustomerId = searchParams.get("customerId");
+
+    let customerWhere: any = undefined;
+    if (session?.customerId) {
+      customerWhere = { id: session.customerId };
+    } else if (session?.email && session.role === "CUSTOMER") {
+      customerWhere = { email: session.email };
+    } else if (queryCustomerId) {
+      customerWhere = { id: queryCustomerId };
+    } else if (queryEmail) {
+      customerWhere = { email: queryEmail };
+    }
 
     // 1. Fetch Customer
     const customer = await prisma.customer.findFirst({
-      where: { email },
+      where: customerWhere,
       include: {
         subscriptions: {
           include: {

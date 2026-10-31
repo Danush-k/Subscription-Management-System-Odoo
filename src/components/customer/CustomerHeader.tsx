@@ -9,6 +9,7 @@ import {
   FileText,
   CreditCard,
   User,
+  Clock,
   Building2,
   MapPin,
   Settings,
@@ -91,6 +92,13 @@ export function CustomerHeader({
       icon: CreditCard,
       href: "/customer/dashboard?tab=payments",
       tabKey: "payments",
+    },
+    {
+      id: "activity",
+      label: "Activity Timeline",
+      icon: Clock,
+      href: "/customer/dashboard?tab=activity",
+      tabKey: "activity",
     },
     {
       id: "profile",
